@@ -137,6 +137,7 @@ class TestPlayer:
         self.arena = TestZone(
             ZoneType.STACK, player_id
         )  # For simplicity, use STACK for arena cards
+        self.pitch_zone = TestZone(ZoneType.PITCH, player_id)  # Rule 3.14: Pitch zone
 
     def add_restriction(self, identifier: str):
         """Add a restriction effect to the player."""
@@ -386,3 +387,252 @@ class BDDGameState:
         )
         card = CardInstance(template=template, owner_id=owner_id)
         return card
+
+    # ===== Section 1.2: Objects helpers =====
+
+    def play_card_to_arena(self, card: CardInstance, controller_id: int = 0):
+        """
+        Simulate playing a card to the arena zone (Rule 1.2.1b).
+
+        Engine Feature Needed:
+        - [ ] Zone-aware controller assignment when entering arena (Rule 1.2.1b)
+        - [ ] CardInstance.controller_id set when placed in arena/stack
+        """
+        card.controller_id = controller_id
+        self.player.arena.add_card(card)
+
+    def play_card_to_stack(self, card: CardInstance, controller_id: int = 0):
+        """
+        Simulate playing a card to the stack zone (Rule 1.2.1b).
+
+        Engine Feature Needed:
+        - [ ] Zone-aware controller assignment when entering stack (Rule 1.2.1b)
+        """
+        card.controller_id = controller_id
+        self.stack.append(card)
+
+    def get_all_game_objects(self) -> List[Any]:
+        """
+        Return all current game objects (Rule 1.2.1).
+
+        Engine Feature Needed:
+        - [ ] GameEngine.get_all_game_objects() returning cards, attacks, macros, layers
+        """
+        objects = []
+        objects.extend(self.player.hand.cards)
+        objects.extend(self.player.arsenal.cards)
+        objects.extend(self.player.arena.cards)
+        objects.extend(self.stack)
+        return objects
+
+    def put_on_combat_chain(
+        self,
+        card: CardInstance,
+        power: int = 0,
+        has_go_again: bool = False,
+    ):
+        """
+        Place a card on the combat chain (Rule 1.2.3).
+
+        Engine Feature Needed:
+        - [ ] CombatChain class with chain link management (Rule 7.0)
+        - [ ] CardInstance tracking of go again (Rule 1.2.3a)
+        """
+        if not hasattr(self, "_combat_chain"):
+            self._combat_chain: List[Any] = []
+        if power != 0:
+            card.temp_power_mod = power
+        if has_go_again:
+            card._has_go_again = True
+        else:
+            card._has_go_again = False
+        self._combat_chain.append(card)
+
+    def remove_from_combat_chain(self, card: CardInstance) -> Any:
+        """
+        Remove a card from the combat chain, returning its LKI (Rule 1.2.3).
+
+        Engine Feature Needed:
+        - [ ] CombatChain.remove_card() returning LastKnownInformation (Rule 1.2.3)
+        - [ ] LastKnownInformation class with snapshot semantics
+        """
+        if not hasattr(self, "_combat_chain"):
+            self._combat_chain = []
+        if card in self._combat_chain:
+            self._combat_chain.remove(card)
+        # Return a simple LKI stub - engine must implement proper LKI
+        return LastKnownInformationStub(card)
+
+    def move_card_to_hand_during_resolution(self, card: CardInstance) -> Any:
+        """
+        Move a card to its owner's hand during resolution (Rule 1.2.3a).
+
+        This simulates the Endless Arrow example: card moves to hand, but
+        chain link uses LKI to determine resolution behavior.
+
+        Engine Feature Needed:
+        - [ ] ChainLink LKI capture during card removal (Rule 1.2.3a)
+        """
+        lki = self.remove_from_combat_chain(card)
+        self.player.hand.add_card(card)
+        return lki
+
+    def lki_was_used_for_generic_reference(self) -> bool:
+        """
+        Check if LKI was (incorrectly) used for a generic zone reference (Rule 1.2.3a).
+
+        Engine Feature Needed:
+        - [ ] Engine tracks whether LKI was consulted for generic vs. specific references
+        """
+        return False  # By default, LKI should NOT be used for generic references
+
+    def try_modify_lki(self, lki: Any, modification: str) -> Any:
+        """
+        Attempt to modify LKI - should fail or be a no-op (Rule 1.2.3c).
+
+        Engine Feature Needed:
+        - [ ] LastKnownInformation.modify() raises ImmutableError or returns failure result
+        """
+        return ModificationResultStub(failed=True, was_noop=True)
+
+    def target_object(self, obj: Any) -> Any:
+        """
+        Attempt to target a game object with an effect (Rule 1.2.3d).
+
+        Engine Feature Needed:
+        - [ ] TargetingSystem.validate_target() rejecting LKI (Rule 1.2.3d)
+        """
+        # LKI objects are not legal targets
+        if isinstance(obj, LastKnownInformationStub):
+            return TargetingResultStub(success=False, reason="lki_not_legal_target")
+        return TargetingResultStub(success=True, reason="valid_target")
+
+    def create_attack_proxy(self, source: Optional[CardInstance] = None) -> Any:
+        """
+        Create an attack-proxy object (Rule 1.2.4).
+
+        Engine Feature Needed:
+        - [ ] AttackProxy class with source reference (Rule 1.2.4)
+        - [ ] owner_id = None when no card/macro represents proxy (Rule 1.2.1a)
+        """
+        return AttackProxyStub(source=source)
+
+    def is_valid_source(self, obj: Any) -> bool:
+        """
+        Check if an object can be declared as a source for an effect (Rule 1.2.4).
+
+        Engine Feature Needed:
+        - [ ] SourceValidation.is_valid_source() checking card/macro types (Rule 1.2.4)
+        """
+        # Only cards and macros can be sources
+        return isinstance(obj, CardInstance)
+
+    def validate_source_declaration(self, source: Any) -> Any:
+        """
+        Validate a source declaration for an effect (Rule 1.2.4).
+
+        Engine Feature Needed:
+        - [ ] Effect source declaration validation (Rule 1.2.4)
+        """
+        return SourceValidationResultStub(is_valid=self.is_valid_source(source))
+
+    def create_prevention_effect(self, source: CardInstance) -> Any:
+        """
+        Create a prevention effect sourced from a card (Rule 1.2.4).
+
+        Engine Feature Needed:
+        - [ ] PreventionEffect class with source card reference (Rule 1.2.4)
+        """
+        return PreventionEffectStub(source=source)
+
+
+# ===== Stub classes for Section 1.2 engine features not yet implemented =====
+
+
+class LastKnownInformationStub:
+    """
+    Stub for last known information of a game object (Rule 1.2.3).
+
+    Engine Feature Needed:
+    - [ ] LastKnownInformation class with full snapshot semantics
+    - [ ] Immutability enforcement (Rule 1.2.3c)
+    - [ ] Not a legal target (Rule 1.2.3d)
+    """
+
+    def __init__(self, card: CardInstance):
+        # Snapshot the card's state at the time of creation
+        self._card = card
+        self.name = card.name
+        self.power = card.template.power + card.temp_power_mod
+        self.temp_power_mod = card.temp_power_mod
+        self.had_go_again = getattr(card, "_has_go_again", False)
+        self.is_last_known_information = True
+
+    @property
+    def is_legal_target(self) -> bool:
+        """Rule 1.2.3d: LKI is not a legal target."""
+        return False
+
+
+class ModificationResultStub:
+    """
+    Stub result for attempting to modify LKI (Rule 1.2.3c).
+
+    Engine Feature Needed:
+    - [ ] Modification attempt result with failed/was_noop flags
+    """
+
+    def __init__(self, failed: bool = False, was_noop: bool = False):
+        self.failed = failed
+        self.was_noop = was_noop
+
+
+class TargetingResultStub:
+    """
+    Stub result for targeting an object (Rule 1.2.3d).
+
+    Engine Feature Needed:
+    - [ ] TargetingResult with success/reason attributes
+    """
+
+    def __init__(self, success: bool, reason: str = ""):
+        self.success = success
+        self.reason = reason
+
+
+class AttackProxyStub:
+    """
+    Stub for an attack-proxy object (Rules 1.2.1a, 1.2.4).
+
+    Engine Feature Needed:
+    - [ ] AttackProxy class with source, owner, and object identity support
+    """
+
+    def __init__(self, source: Optional[CardInstance] = None):
+        self.source = source
+        self.owner_id = source.owner_id if source else None
+        self.is_game_object = True
+
+
+class SourceValidationResultStub:
+    """
+    Stub result for source validation (Rule 1.2.4).
+
+    Engine Feature Needed:
+    - [ ] SourceValidationResult with is_valid attribute
+    """
+
+    def __init__(self, is_valid: bool):
+        self.is_valid = is_valid
+
+
+class PreventionEffectStub:
+    """
+    Stub for a prevention effect (Rule 1.2.4).
+
+    Engine Feature Needed:
+    - [ ] PreventionEffect with source card/macro reference
+    """
+
+    def __init__(self, source: CardInstance):
+        self.source = source

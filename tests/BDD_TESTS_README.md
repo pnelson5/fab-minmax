@@ -214,6 +214,137 @@ This section tests the player participation rules:
 - `Supertype.LIGHT` enum value (Rule 1.1.3 - Light supertypes exist in the game)
 - HybridCard support with dual supertype sets in CardTemplate (Rule 1.1.3b)
 
+### Section 1.2: Objects
+
+**File**: `features/section_1_2_objects.feature`
+**Step Definitions**: `step_defs/test_section_1_2_objects.py`
+
+This section tests object concepts in Flesh and Blood:
+- **Rule 1.2.1**: An object is an element of the game with properties in a zone or player inventory
+- **Rule 1.2.1a**: Owner of an object = owner of the card/macro/layer representing it
+- **Rule 1.2.1b**: Controller of an object; no controller outside arena/stack
+- **Rule 1.2.2**: Objects have one or more object identities
+- **Rule 1.2.2a**: All objects have the identity "object"
+- **Rule 1.2.2b**: Named objects have their name as an identity
+- **Rule 1.2.2c**: Card's traits, types, subtypes are identities (except subtype "attack")
+- **Rule 1.2.2d**: Attack-card/proxy/layer has the identity "attack"
+- **Rule 1.2.2e**: All cards have the identity "card"
+- **Rule 1.2.2f**: Permanents have the identity "permanent"
+- **Rule 1.2.2g/h**: Activated/triggered layers have their respective identities
+- **Rule 1.2.3**: Last known information = snapshot before object ceases to exist
+- **Rule 1.2.3a**: LKI used when specific object no longer exists (Endless Arrow example)
+- **Rule 1.2.3b**: LKI includes all parameters, history, and effects at snapshot time
+- **Rule 1.2.3c**: LKI is immutable (Luminaris example)
+- **Rule 1.2.3d**: LKI is not a legal target for rules/effects
+- **Rule 1.2.4**: Cards and macros are sources of abilities, effects, attack-proxies
+
+#### Test Scenarios:
+
+1. **test_card_in_zone_is_object**
+   - Tests: Rule 1.2.1 - Cards in zones are game objects
+   - Verifies: CardInstance has `is_game_object` property
+
+2. **test_different_game_elements_are_objects**
+   - Tests: Rule 1.2.1 - Cards, attacks, macros, and layers are objects
+   - Verifies: Both cards and attacks are recognized as game objects
+
+3. **test_object_owner_matches_card_owner**
+   - Tests: Rule 1.2.1a - Object owner = card owner
+   - Verifies: Card object's `owner_id` matches the player who owns the card
+
+4. **test_object_without_card_has_no_owner**
+   - Tests: Rule 1.2.1a - Objects without card/macro/layer have no owner
+   - Verifies: Attack-proxy with no source has `owner_id = None`
+
+5. **test_card_in_hand_has_no_controller**
+   - Tests: Rule 1.2.1b - Cards outside arena/stack have no controller
+   - Verifies: Card in hand has `controller_id = None`
+
+6. **test_card_in_arena_has_controller**
+   - Tests: Rule 1.2.1b - Cards in arena have a controller
+   - Verifies: Card placed in arena has `controller_id` set to 0
+
+7. **test_card_on_stack_has_controller**
+   - Tests: Rule 1.2.1b - Cards on stack have a controller
+   - Verifies: Card played to stack has `controller_id` set to 0
+
+8. **test_every_object_has_object_identity**
+   - Tests: Rule 1.2.2a - All objects have the "object" identity
+   - Verifies: `get_object_identities()` includes "object"
+
+9. **test_name_is_object_identity**
+   - Tests: Rule 1.2.2b - Card name is an object identity
+   - Verifies: "Lunging Press" card has "Lunging Press" as identity
+
+10. **test_weapon_card_has_weapon_identity**
+    - Tests: Rule 1.2.2c - Type is an object identity
+    - Verifies: Weapon card has "weapon" as an identity
+
+11. **test_attack_subtype_not_object_identity**
+    - Tests: Rule 1.2.2c - Exception: "attack" subtype excluded from identities
+    - Verifies: attack subtype does NOT appear via `get_object_identities_from_subtypes()`
+
+12. **test_attack_card_has_attack_identity**
+    - Tests: Rule 1.2.2d - Attack-cards have "attack" identity
+    - Verifies: Attack action card has "attack" object identity (via Rule 1.2.2d, not subtype)
+
+13. **test_every_card_has_card_identity**
+    - Tests: Rule 1.2.2e - All cards have "card" identity
+    - Verifies: Every card has "card" in `get_object_identities()`
+
+14. **test_permanent_has_permanent_identity**
+    - Tests: Rule 1.2.2f - Permanents in arena have "permanent" identity
+    - Verifies: Equipment in arena has "permanent" as an object identity
+
+15. **test_lki_captured_when_object_leaves**
+    - Tests: Rule 1.2.3 - LKI is captured as snapshot
+    - Verifies: LKI captures power=6 when attack card leaves combat chain
+
+16. **test_lki_used_when_object_gone**
+    - Tests: Rule 1.2.3a - LKI used for specific object references (Endless Arrow)
+    - Verifies: Chain link uses LKI, go again still granted after card moved to hand
+
+17. **test_lki_not_used_for_generic_references**
+    - Tests: Rule 1.2.3a - LKI not used for generic zone references
+    - Verifies: Generic "all cards in zone" reference doesn't use LKI
+
+18. **test_lki_includes_all_effects**
+    - Tests: Rule 1.2.3b - LKI includes all active effects
+    - Verifies: LKI snapshot includes the +3 power buff that was active
+
+19. **test_lki_is_immutable**
+    - Tests: Rule 1.2.3c - LKI cannot be altered
+    - Verifies: Effect fails to grant go again to LKI of gone card
+
+20. **test_luminaris_lki_immutability**
+    - Tests: Rule 1.2.3c - Luminaris example from the rules
+    - Verifies: Adding yellow card to pitch AFTER card removed doesn't grant go again via LKI
+
+21. **test_lki_is_not_legal_target**
+    - Tests: Rule 1.2.3d - LKI is not a legal target
+    - Verifies: Targeting LKI fails with "lki_not_legal_target" reason
+
+22. **test_card_is_source_of_abilities**
+    - Tests: Rule 1.2.4 - Cards are sources of abilities/effects
+    - Verifies: Only CardInstance or macro can be declared as an effect source
+
+23. **test_attack_proxy_source_is_card**
+    - Tests: Rule 1.2.4 - Attack-proxies are sourced from cards/macros
+    - Verifies: Attack-proxy's `source` attribute is the creating card
+
+#### Engine Features Needed:
+- `CardInstance.is_game_object` property (Rule 1.2.1)
+- `TestAttack.is_game_object` property (Rule 1.2.1)
+- `CardInstance.get_object_identities()` -> Set[str] (Rules 1.2.2a-h)
+- `CardInstance.get_object_identities_from_subtypes()` -> Set[str] (Rule 1.2.2c exception)
+- `CardInstance.controller_id` properly set via zone entry (Rule 1.2.1b)
+- `LastKnownInformation` class with snapshot semantics (Rule 1.2.3)
+- `LastKnownInformation.is_immutable` enforcement (Rule 1.2.3c)
+- `LastKnownInformation.is_legal_target = False` (Rule 1.2.3d)
+- `CombatChain` with LKI tracking (Rules 1.2.3, 1.2.3a)
+- `AttackProxy` class with source card reference (Rule 1.2.4)
+- `CardInstance.is_permanent` property (for zone-aware identity, Rule 1.2.2f)
+
 ### Section 1.3.1a: Card Ownership
 
 **File**: `features/section_1_3_1a_card_ownership.feature`
@@ -321,7 +452,7 @@ The ultimate goal is to have **complete test coverage** of the Flesh and Blood C
   - [x] 1.0.1: Rule Hierarchy (rules vs effects vs tournament rules)
   - [x] 1.0.2: Precedence (Restrictions/Requirements/Allowances)
 - [x] 1.1: Players
-- [ ] 1.2: Objects
+- [x] 1.2: Objects
 - [ ] 1.3: Cards
   - [x] 1.3.1a: Card Ownership
 - [ ] 1.4: Attacks
