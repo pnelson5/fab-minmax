@@ -124,6 +124,96 @@ This section tests the fundamental precedence system:
    - Tests: Rule 1.0.2 - Allowance alone permits action
    - Verifies: Allowance permits action when no higher precedence effects exist
 
+### Section 1.1: Players
+
+**File**: `features/section_1_1_players.feature`
+**Step Definitions**: `step_defs/test_section_1_1_players.py`
+
+This section tests the player participation rules:
+- **Rule 1.1.1**: A player is a person participating in the game
+- **Rule 1.1.1a**: Participation requirements (hero, card-pool, zones, life total)
+- **Rule 1.1.2**: A player's hero is a hero-card
+- **Rule 1.1.2a/b**: Player vs hero distinction; "you" refers to hero, "opponent" to opponent's hero
+- **Rule 1.1.3**: Card-pool supertype subset validation
+- **Rule 1.1.3a**: Effect-based exception to supertype validation
+- **Rule 1.1.3b**: Hybrid card inclusion via either supertype set
+- **Rule 1.1.4**: Party concept (players who win together)
+- **Rule 1.1.4a**: A player is always in a party with themselves
+- **Rule 1.1.5**: Opponents are players not in the same party
+- **Rule 1.1.6**: Clockwise order
+
+#### Test Scenarios:
+
+1. **test_player_must_have_hero_to_participate**
+   - Tests: Rule 1.1.1/1.1.1a - Players without a hero cannot participate
+   - Verifies: A player without a hero is not eligible to participate
+
+2. **test_player_requires_all_components**
+   - Tests: Rule 1.1.1a - All participation requirements
+   - Verifies: A player with hero, card-pool, zones, and life tracker is eligible
+
+3. **test_player_hero_is_hero_card**
+   - Tests: Rule 1.1.2 - Player's hero must be a hero-card type
+   - Verifies: The hero has CardType.HERO and `is_hero` property
+
+4. **test_you_refers_to_player_hero**
+   - Tests: Rule 1.1.2b - "you" and "opponent" refer to heroes
+   - Verifies: resolve_you_reference() and resolve_opponent_reference() return hero cards
+
+5. **test_card_with_matching_supertypes_in_card_pool**
+   - Tests: Rule 1.1.3 - Card supertypes must be a subset of hero's supertypes
+   - Verifies: A Warrior/Light card is valid for a Warrior/Light hero
+
+6. **test_generic_card_in_any_card_pool**
+   - Tests: Rule 1.1.3 - Generic cards (no supertypes) always valid
+   - Verifies: Empty supertype set is a subset of any set
+
+7. **test_non_matching_supertypes_rejected**
+   - Tests: Rule 1.1.3 - Non-matching supertypes are rejected
+   - Verifies: A Wizard card is invalid for a Warrior-only hero
+
+8. **test_partial_supertype_match_is_eligible**
+   - Tests: Rule 1.1.3 - Subset means all card supertypes are in hero's supertypes
+   - Verifies: A Warrior-only card is valid for a Warrior/Light hero
+
+9. **test_effect_allows_non_matching_supertypes**
+   - Tests: Rule 1.1.3a - Effects can grant supertype exceptions
+   - Verifies: An effect can allow a normally-ineligible card in the card-pool
+
+10. **test_hybrid_card_either_supertype_set**
+    - Tests: Rule 1.1.3b - Hybrid card eligible if EITHER supertype set matches
+    - Verifies: Hybrid card with Warrior/Wizard sets is valid for a Warrior hero
+
+11. **test_player_in_party_with_themselves**
+    - Tests: Rule 1.1.4a - A player is always in a party with themselves
+    - Verifies: is_in_party_with(self) returns True
+
+12. **test_two_players_not_in_same_party**
+    - Tests: Rule 1.1.4a - Each player is in their own party in 1v1
+    - Verifies: Player 0 and Player 1 are NOT in the same party
+
+13. **test_opponents_are_not_in_same_party**
+    - Tests: Rule 1.1.5 - Opponents are players not in the same party
+    - Verifies: is_opponent_of() is symmetric between the two players
+
+14. **test_clockwise_order**
+    - Tests: Rule 1.1.6 - Clockwise order in a 3-player game
+    - Verifies: Next player clockwise wraps correctly (0→1→2→0)
+
+#### Engine Features Needed:
+- `TestPlayer.is_eligible_to_participate()` (Rule 1.1.1a)
+- `TestPlayer.hero` property with hero card assignment (Rule 1.1.2)
+- `TestPlayer.resolve_you_reference()` (Rule 1.1.2b)
+- `TestPlayer.resolve_opponent_reference(opponent)` (Rule 1.1.2b)
+- `BDDGameState.validate_card_in_card_pool(card, hero, effect_exceptions, is_hybrid, hybrid_supertype_sets)` (Rule 1.1.3/3a/3b)
+- `TestPlayer.is_in_party_with(other)` (Rule 1.1.4/1.1.4a)
+- `TestPlayer.get_party()` (Rule 1.1.4)
+- `TestPlayer.is_opponent_of(other)` (Rule 1.1.5)
+- `BDDGameState.get_clockwise_order(starting_player_id, num_players)` (Rule 1.1.6)
+- `BDDGameState.get_next_clockwise_player(current_player_id, num_players)` (Rule 1.1.6)
+- `Supertype.LIGHT` enum value (Rule 1.1.3 - Light supertypes exist in the game)
+- HybridCard support with dual supertype sets in CardTemplate (Rule 1.1.3b)
+
 ### Section 1.3.1a: Card Ownership
 
 **File**: `features/section_1_3_1a_card_ownership.feature`
@@ -230,7 +320,7 @@ The ultimate goal is to have **complete test coverage** of the Flesh and Blood C
 - [x] 1.0: General
   - [x] 1.0.1: Rule Hierarchy (rules vs effects vs tournament rules)
   - [x] 1.0.2: Precedence (Restrictions/Requirements/Allowances)
-- [ ] 1.1: Players
+- [x] 1.1: Players
 - [ ] 1.2: Objects
 - [ ] 1.3: Cards
   - [x] 1.3.1a: Card Ownership
