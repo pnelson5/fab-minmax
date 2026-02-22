@@ -30,7 +30,8 @@ Your job is **NOT**:
 3. Plans and writes BDD test scenarios (feature file + step definitions)
 4. Verifies tests were written correctly
 5. Updates the checklist to mark section complete
-6. Exits so you can review and start next iteration
+6. Commits and pushes changes to git
+7. Exits so you can review and start next iteration
 
 ## Usage
 
@@ -443,7 +444,34 @@ Use the Edit tool to make this change.
 - [ ] 1.1: Players           <- Leave unchecked
 ```
 
-### Step 10: Report and Exit
+### Step 10: Git Commit and Push
+
+Commit all new and modified files, then push to remote:
+
+1. **Stage all relevant files**:
+   ```bash
+   git add tests/features/section_X_Y_name.feature tests/step_defs/test_section_X_Y_name.py tests/BDD_TESTS_README.md tests/bdd_helpers.py
+   ```
+   Only include `tests/bdd_helpers.py` if it was modified. Do NOT stage files outside the `tests/` directory or any files in `fab_engine/`.
+
+2. **Commit with a descriptive message**:
+   ```bash
+   git commit -m "feat: add BDD tests for section X.Y Name (N scenarios)
+
+   Covers Rules X.Y.Z-X.Y.W: brief description of what rules cover."
+   ```
+
+3. **Push to remote**:
+   ```bash
+   git push
+   ```
+
+4. **If push fails** (e.g., remote has new commits), pull first then push:
+   ```bash
+   git pull --rebase && git push
+   ```
+
+### Step 11: Report and Exit
 
 Provide a clear summary, then EXIT:
 
@@ -730,6 +758,7 @@ Before marking complete and exiting, verify:
 - [ ] Tests do NOT fail with SyntaxError, ImportError, NameError
 - [ ] `tests/BDD_TESTS_README.md` is updated with test documentation
 - [ ] Section is marked `[x]` in checklist
+- [ ] Changes are committed and pushed to git
 - [ ] Summary report is provided
 - [ ] You are about to EXIT (not continue to next rule)
 
