@@ -9,16 +9,80 @@ This directory contains behavioral acceptance tests written using pytest-bdd tha
 ```
 tests/
 ├── features/                    # Gherkin feature files
-│   └── section_1_0_2_precedence.feature
+│   ├── section_1_0_general.feature
+│   ├── section_1_0_2_precedence.feature
+│   └── section_1_3_1a_card_ownership.feature
 ├── step_defs/                   # Step definitions (test implementation)
 │   ├── conftest.py
-│   └── test_section_1_0_2_precedence.py
-└── BDD_TESTS_README.md         # This file
+│   ├── test_section_1_0_general.py
+│   ├── test_section_1_0_2_precedence.py
+│   └── test_section_1_3_1a_ownership.py
+├── bdd_helpers.py               # Shared test helpers (BDDGameState, TestZone, etc.)
+└── BDD_TESTS_README.md          # This file
 ```
 
 ## Test Organization
 
 Each test is mapped to a specific rule from the Comprehensive Rules document:
+
+### Section 1.0: General (Rule Hierarchy)
+
+**File**: `features/section_1_0_general.feature`
+**Step Definitions**: `step_defs/test_section_1_0_general.py`
+
+This section tests the three-tier rule hierarchy in Flesh and Blood:
+- **Rule 1.0.1**: Comprehensive rules apply to any game of Flesh and Blood
+- **Rule 1.0.1a**: Card effects supersede comprehensive rules when they directly contradict
+- **Rule 1.0.1b**: Tournament rules supersede both comprehensive rules and card effects
+
+NOTE: Rule 1.0.2 (Restrictions/Requirements/Allowances) is covered separately below.
+
+#### Test Scenarios:
+
+1. **test_comprehensive_rules_apply_to_all_games**
+   - Tests: Rule 1.0.1 - Rules apply to all games
+   - Verifies: The game engine has a rule hierarchy governing all gameplay
+
+2. **test_comprehensive_rules_define_default_behavior**
+   - Tests: Rule 1.0.1 - Rules define default legality
+   - Verifies: When no effects are active, comprehensive rules determine action legality
+
+3. **test_effect_supersedes_rule**
+   - Tests: Rule 1.0.1a - Card effect overrides a comprehensive rule
+   - Verifies: An allowance effect permits an action normally prohibited by the rules
+
+4. **test_card_effect_overrides_default_rule_restriction**
+   - Tests: Rule 1.0.1a - Specific card effect overrides a default rule restriction
+   - Verifies: "You may play this from your graveyard" effect overrides the default prohibition
+
+5. **test_full_hierarchy_tournament_beats_effect_beats_rule**
+   - Tests: Rule 1.0.1a + 1.0.1b - Full hierarchy: tournament > effect > rule
+   - Verifies: Tournament rule overrides both card effect and comprehensive rule
+
+6. **test_tournament_rule_supersedes_comprehensive_rule**
+   - Tests: Rule 1.0.1b - Tournament rule overrides comprehensive rule
+   - Verifies: A tournament prohibition blocks an action the comprehensive rules permit
+
+7. **test_tournament_rule_supersedes_card_effect**
+   - Tests: Rule 1.0.1b - Tournament rule overrides card effects
+   - Verifies: Tournament prohibition blocks an action that a card effect permits
+
+8. **test_rule_hierarchy_priority_ordering**
+   - Tests: Rule 1.0.1/1.0.1a/1.0.1b - The complete three-tier hierarchy
+   - Verifies: tournament_rules > card_effects > comprehensive_rules priority order
+
+#### Engine Features Needed:
+- `GameEngine.has_rule_hierarchy()` method
+- `GameEngine.evaluate_action(action, player_id)` with `ActionEvaluationResult`
+- `GameEngine.apply_card_effect(action, effect_type, source)`
+- `GameEngine.apply_tournament_rule(action, effect_type, source)`
+- `GameEngine.check_base_rule(action)` returning bool
+- `GameEngine.evaluate_default_action(action)` with `governed_by` attribute
+- `GameEngine.evaluate_card_play(card, from_zone, player_id)`
+- `GameEngine.register_card_effect(card, action, effect_type)`
+- `GameEngine.get_rule_hierarchy()` returning `RuleHierarchy`
+- `RuleHierarchy` class with `highest_priority`, `second_priority`, `base_priority`
+- `ActionEvaluationResult` with `permitted`, `governed_by`, `superseded_by` attributes
 
 ### Section 1.0.2: Restriction, Requirement, and Allowance Precedence
 
@@ -59,6 +123,44 @@ This section tests the fundamental precedence system:
 7. **test_allowance_permits_when_no_conflicts**
    - Tests: Rule 1.0.2 - Allowance alone permits action
    - Verifies: Allowance permits action when no higher precedence effects exist
+
+### Section 1.3.1a: Card Ownership
+
+**File**: `features/section_1_3_1a_card_ownership.feature`
+**Step Definitions**: `step_defs/test_section_1_3_1a_ownership.py`
+
+This section tests card ownership rules:
+- **Rule 1.3.1a**: The owner of a card is the player who started the game with that card as their hero or as part of their card-pool, or the player instructed to create it or otherwise put it into the game.
+
+#### Test Scenarios:
+
+1. **test_starting_deck_ownership**
+   - Tests: Rule 1.3.1a - Ownership established at game start
+   - Verifies: Cards in starting deck are owned by the player who started with them
+
+2. **test_hero_card_ownership**
+   - Tests: Rule 1.3.1a - Hero ownership
+   - Verifies: Hero card is owned by the player who started with it
+
+3. **test_token_ownership**
+   - Tests: Rule 1.3.1a - Token ownership
+   - Verifies: Token created by a player is owned by that player
+
+4. **test_ownership_persists_across_zones**
+   - Tests: Rule 1.3.1a - Ownership persistence
+   - Verifies: Card ownership persists when card moves between zones
+
+5. **test_ownership_vs_control**
+   - Tests: Rule 1.3.1a/b - Ownership vs control
+   - Verifies: Card ownership is independent of who controls it
+
+6. **test_card_pool_ownership**
+   - Tests: Rule 1.3.1a - Card-pool ownership
+   - Verifies: Cards included in a player's card-pool are owned by that player
+
+7. **test_ownership_doesnt_transfer**
+   - Tests: Rule 1.3.1a - Ownership doesn't transfer
+   - Verifies: Cards stolen or copied remain owned by original owner
 
 ## Running Tests
 
@@ -125,12 +227,13 @@ To add tests for a new rule section:
 The ultimate goal is to have **complete test coverage** of the Flesh and Blood Comprehensive Rules:
 
 ### Section 1: Game Concepts
-- [ ] 1.0: General
-  - [ ] 1.0.1: Rule Hierarchy (rules vs effects vs tournament rules)
+- [x] 1.0: General
+  - [x] 1.0.1: Rule Hierarchy (rules vs effects vs tournament rules)
   - [x] 1.0.2: Precedence (Restrictions/Requirements/Allowances)
 - [ ] 1.1: Players
 - [ ] 1.2: Objects
 - [ ] 1.3: Cards
+  - [x] 1.3.1a: Card Ownership
 - [ ] 1.4: Attacks
 - [ ] 1.5: Macros
 - [ ] 1.6: Layers

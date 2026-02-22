@@ -6,9 +6,8 @@ set -e  # Exit on error
 
 # Parse optional model argument (defaults to anthropic/claude-sonnet-4-6)
 MODEL_ID="${1:-anthropic/claude-sonnet-4-6}"
-MODEL="--model $MODEL_ID"
 
-echo "🚀 Starting Ralph Loop Iteration..."
+echo "Starting Ralph Loop Iteration..."
 echo ""
 echo "Using model: $MODEL_ID"
 echo ""
@@ -22,11 +21,11 @@ echo ""
 echo "Press Ctrl+C to cancel, or Enter to continue..."
 read -r
 
-# Run opencode with the /ralph-loop command
-opencode run $MODEL "/ralph-loop"
+# Use --command to invoke the ralph_loop slash command directly
+opencode run --model "$MODEL_ID" --command ralph_loop
 
 echo ""
-echo "✅ Ralph loop iteration complete!"
+echo "Ralph loop iteration complete!"
 echo ""
 echo "Next steps:"
 echo "  1. Review the tests that were just created"
