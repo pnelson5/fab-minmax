@@ -124,26 +124,111 @@ To add tests for a new rule section:
 
 The ultimate goal is to have **complete test coverage** of the Flesh and Blood Comprehensive Rules:
 
-- [ ] Section 1: Game Concepts
+### Section 1: Game Concepts
+- [ ] 1.0: General
+  - [ ] 1.0.1: Rule Hierarchy (rules vs effects vs tournament rules)
   - [x] 1.0.2: Precedence (Restrictions/Requirements/Allowances)
-  - [ ] 1.1: Players
-  - [ ] 1.2: Objects
-  - [ ] 1.3: Cards
-  - [ ] 1.4: Attacks
-  - [ ] 1.5: Macros
-  - [ ] 1.6: Layers
-  - [ ] 1.7: Abilities
-  - [ ] 1.8: Effects
-  - [ ] 1.9: Events
-- [ ] Section 2: Card Properties
-- [ ] Section 3: Zones
-- [ ] Section 4: Game Setup
-- [ ] Section 5: Abilities and Effects
-- [ ] Section 6: Priority and the Stack
-- [ ] Section 7: Combat
-- [ ] Section 8: Keywords and Ability Words
-- [ ] Section 9: Turn Structure
-- [ ] Section 10: Additional Rules
+- [ ] 1.1: Players
+- [ ] 1.2: Objects
+- [ ] 1.3: Cards
+- [ ] 1.4: Attacks
+- [ ] 1.5: Macros
+- [ ] 1.6: Layers
+- [ ] 1.7: Abilities
+- [ ] 1.8: Effects
+- [ ] 1.9: Events
+- [ ] 1.10: Game State
+- [ ] 1.11: Priority
+- [ ] 1.12: Numbers and Symbols
+- [ ] 1.13: Assets
+- [ ] 1.14: Costs
+- [ ] 1.15: Counters
+
+### Section 2: Object Properties
+- [ ] 2.0: General
+- [ ] 2.1: Color
+- [ ] 2.2: Cost
+- [ ] 2.3: Defense
+- [ ] 2.4: Intellect
+- [ ] 2.5: Life
+- [ ] 2.6: Metatype
+- [ ] 2.7: Name
+- [ ] 2.8: Pitch
+- [ ] 2.9: Power
+- [ ] 2.10: Subtypes
+- [ ] 2.11: Supertypes
+- [ ] 2.12: Text Box
+- [ ] 2.13: Traits
+- [ ] 2.14: Type Box
+- [ ] 2.15: Types
+
+### Section 3: Zones
+- [ ] 3.0: General
+- [ ] 3.1: Arena
+- [ ] 3.2: Arms
+- [ ] 3.3: Arsenal
+- [ ] 3.4: Banished
+- [ ] 3.5: Chest
+- [ ] 3.6: Combat Chain
+- [ ] 3.7: Deck
+- [ ] 3.8: Graveyard
+- [ ] 3.9: Hand
+- [ ] 3.10: Head
+- [ ] 3.11: Hero
+- [ ] 3.12: Legs
+- [ ] 3.13: Permanent
+- [ ] 3.14: Pitch
+- [ ] 3.15: Stack
+- [ ] 3.16: Weapon
+
+### Section 4: Game Structure
+- [ ] 4.0: General
+- [ ] 4.1: Starting a Game
+- [ ] 4.2: Start Phase
+- [ ] 4.3: Action Phase
+- [ ] 4.4: End Phase
+- [ ] 4.5: Ending a Game
+
+### Section 5: Layers, Cards, & Abilities
+- [ ] 5.0: General
+- [ ] 5.1: Playing Cards
+- [ ] 5.2: Activated Abilities
+- [ ] 5.3: Resolution Abilities & Resolving Layers
+- [ ] 5.4: Static Abilities
+
+### Section 6: Effects
+- [ ] 6.0: General
+- [ ] 6.1: Discrete Effects
+- [ ] 6.2: Continuous Effects
+- [ ] 6.3: Continuous Effect Interactions
+- [ ] 6.4: Replacement Effects
+- [ ] 6.5: Replacement Effect Interactions
+- [ ] 6.6: Triggered Effects
+
+### Section 7: Combat
+- [ ] 7.0: General
+- [ ] 7.1: Layer Step
+- [ ] 7.2: Attack Step
+- [ ] 7.3: Defend Step
+- [ ] 7.4: Reaction Step
+- [ ] 7.5: Damage Step
+- [ ] 7.6: Resolution Step
+- [ ] 7.7: Close Step
+
+### Section 8: Keywords
+- [ ] 8.0: General
+- [ ] 8.1: Type Keywords
+- [ ] 8.2: Subtype Keywords
+- [ ] 8.3: Ability Keywords
+- [ ] 8.4: Label Keywords
+- [ ] 8.5: Effect Keywords
+- [ ] 8.6: Token Keywords
+
+### Section 9: Additional Rules
+- [ ] 9.0: General
+- [ ] 9.1: Double-Faced Cards
+- [ ] 9.2: Split-Cards
+- [ ] 9.3: Marked
 
 ## Real Engine Integration ⭐
 
