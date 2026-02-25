@@ -468,6 +468,181 @@ This section tests card definitions, categories, permanents, and distinctness:
 - `CardInstance.is_permanent` property with zone/subtype logic (Rule 1.3.3)
 - `CardTemplate.is_distinct_from(other)` method (Rule 1.3.4)
 
+### Section 1.4: Attacks
+
+**File**: `features/section_1_4_attacks.feature`
+**Step Definitions**: `step_defs/test_section_1_4_attacks.py`
+
+This section tests attack concepts in Flesh and Blood:
+- **Rule 1.4.1**: Attacks as objects (attack-cards, attack-proxies, attack-layers)
+- **Rule 1.4.1a**: Attack owner = owner of the card or activated ability
+- **Rule 1.4.1b**: Attack controller = controller of the representing object
+- **Rule 1.4.2**: Attack-cards: cards with attack subtype on stack or combat chain
+- **Rule 1.4.2a**: Context-dependent attack status (only on stack/chain)
+- **Rule 1.4.3**: Attack-proxies: non-card objects representing another object's attack
+- **Rule 1.4.3a**: Property inheritance (not a copy; excludes resolution abilities)
+- **Rule 1.4.3b**: Attack-source is the object an attack-proxy represents
+- **Rule 1.4.3c**: Proxy lifetime tied to attack-source on same chain link
+- **Rule 1.4.3d**: Modified source properties inherited; direct effects not transitive
+- **Rule 1.4.3e**: Proxy-specific effects don't apply to attack-source
+- **Rule 1.4.4**: Attack-layers: attacks with no properties on stack
+- **Rule 1.4.4a**: Attack-layer is either a typical layer or an attack, not both
+- **Rule 1.4.4b**: Attack-layer separate from source for attack-specific effects
+- **Rule 1.4.5**: Attack-targets: opponent-controlled attackable objects
+- **Rule 1.4.5a**: Attackable = living object or made attackable by effect (Spectra)
+- **Rule 1.4.5b**: Target persists until chain closes; new targets don't close chain
+- **Rule 1.4.5c**: Multiple targets must be separate and legal
+- **Rule 1.4.6**: Attack prevention by rule or effect
+
+#### Test Scenarios:
+
+1. **test_attack_card_on_stack_is_attack**
+   - Tests: Rule 1.4.1 - Attack-card on stack recognized as attack
+   - Verifies: `is_on_stack` + `is_attack_card` flags identify attack
+
+2. **test_attack_card_on_combat_chain_is_attack**
+   - Tests: Rule 1.4.1 - Attack-card on combat chain recognized as attack
+   - Verifies: `_is_on_combat_chain` + `_was_put_on_chain_as_attack` flags
+
+3. **test_attack_owner_matches_card_owner**
+   - Tests: Rule 1.4.1a - Attack owner = card owner
+   - Verifies: `attack.owner_id` matches player who owns the card
+
+4. **test_attack_controller_matches_card_controller**
+   - Tests: Rule 1.4.1b - Attack controller = object controller
+   - Verifies: `controller_id` is set when card is played to stack (FAILS - missing engine feature)
+
+5. **test_attack_subtype_card_on_stack_is_attack_card**
+   - Tests: Rule 1.4.2 - Card with attack subtype on stack is attack-card
+   - Verifies: Zone-aware attack recognition
+
+6. **test_attack_subtype_card_in_hand_not_attack**
+   - Tests: Rule 1.4.2a - Attack subtype card in hand is NOT an attack
+   - Verifies: Non-stack/chain cards not recognized as attacks
+
+7. **test_attack_subtype_card_in_graveyard_not_attack**
+   - Tests: Rule 1.4.2a - Attack subtype card in graveyard is NOT an attack
+   - Verifies: Zone-aware attack check
+
+8. **test_card_put_on_combat_chain_as_attack_is_attack_card**
+   - Tests: Rule 1.4.2a - Card put on chain as attack IS an attack-card
+   - Verifies: `_was_put_on_chain_as_attack` tracking
+
+9. **test_attack_proxy_represents_attack_source**
+   - Tests: Rule 1.4.3 - Attack-proxy represents weapon's attack (Bone Basher)
+   - Verifies: `proxy.source` references the weapon
+
+10. **test_attack_proxy_inherits_properties**
+    - Tests: Rule 1.4.3a - Proxy inherits power and supertype (Edge of Autumn)
+    - Verifies: Power and supertype inherited from attack-source
+
+11. **test_attack_proxy_not_inherit_resolution_abilities**
+    - Tests: Rule 1.4.3a - Proxy does NOT inherit resolution abilities
+    - Verifies: `_has_go_again_resolution_ability` not inherited by proxy
+
+12. **test_attack_proxy_is_separate_not_copy**
+    - Tests: Rule 1.4.3a - Proxy is a separate object, not a copy
+    - Verifies: `proxy is not source`
+
+13. **test_attack_source_represented_by_proxy**
+    - Tests: Rule 1.4.3b - Attack-source is the object represented (Cintari Sellsword)
+    - Verifies: `proxy.source.name == "Cintari Sellsword"`
+
+14. **test_attack_proxy_ceases_when_source_on_different_chain_link**
+    - Tests: Rule 1.4.3c - Proxy ceases when source moves to different chain link
+    - Verifies: `_has_ceased` flag and LKI captured
+
+15. **test_attack_proxy_persists_when_ability_creator_gone**
+    - Tests: Rule 1.4.3c - Proxy persists even if ability-granting card ceases (Iris of Reality)
+    - Verifies: Proxy does NOT cease when `_ability_granter_ceased = True`
+
+16. **test_modified_source_properties_inherited_by_proxy**
+    - Tests: Rule 1.4.3d - Modified source properties inherited (Ironsong Determination)
+    - Verifies: Proxy has modified power value (3+1=4)
+
+17. **test_effect_on_source_not_directly_on_proxy**
+    - Tests: Rule 1.4.3d - Direct source effects don't apply to proxy (Fog Down)
+    - Verifies: `_fog_down_applies` is False on proxy
+
+18. **test_effect_on_proxy_not_on_source**
+    - Tests: Rule 1.4.3e - Proxy effects don't apply to source (Sharpen Steel)
+    - Verifies: Power bonus on proxy doesn't carry to weapon
+
+19. **test_attack_layer_is_attack_with_no_properties**
+    - Tests: Rule 1.4.4 - Attack-layer has no properties (Emperor example)
+    - Verifies: `AttackLayerStub.has_no_properties == True`
+
+20. **test_attack_layer_not_both_layer_and_attack**
+    - Tests: Rule 1.4.4a - Attack-layer is layer OR attack, not both
+    - Verifies: Draconic attack effect doesn't match attack-layer
+
+21. **test_attack_layer_separate_from_source_for_attack_effects**
+    - Tests: Rule 1.4.4b - Attack-layer separate from source for attack effects
+    - Verifies: Attack-specific effect applies to layer, source checkable separately
+
+22. **test_player_must_declare_attack_target**
+    - Tests: Rule 1.4.5 - Player must declare attack-target on stack
+    - Verifies: Attack on stack has null target (engine must enforce declaration)
+
+23. **test_attack_target_must_be_opponent_controlled**
+    - Tests: Rule 1.4.5 - Target must be opponent-controlled
+    - Verifies: Attacker is player 0; target must be from player 1+
+
+24. **test_living_object_is_valid_attack_target**
+    - Tests: Rule 1.4.5a - Living objects are attackable
+    - Verifies: Hero `_is_living_object = True` -> valid target
+
+25. **test_non_living_object_not_attackable_by_default**
+    - Tests: Rule 1.4.5a - Non-living objects not attackable by default
+    - Verifies: Equipment without Spectra -> invalid target
+
+26. **test_effect_can_make_object_attackable**
+    - Tests: Rule 1.4.5a - Spectra makes non-living object attackable
+    - Verifies: `_made_attackable = True` -> valid target
+
+27. **test_attack_target_persists_until_chain_closes**
+    - Tests: Rule 1.4.5b - Target persists until chain closes
+    - Verifies: Chain doesn't close with different target on second attack
+
+28. **test_different_target_does_not_close_chain**
+    - Tests: Rule 1.4.5b - Different target doesn't close chain
+    - Verifies: Chain remains open; second attack has its own target
+
+29. **test_multiple_targets_must_be_separate_and_legal**
+    - Tests: Rule 1.4.5c - Multiple targets must be separate and legal
+    - Verifies: Two different legal targets are valid
+
+30. **test_cannot_declare_same_object_as_multiple_targets**
+    - Tests: Rule 1.4.5c - Same object cannot be two targets
+    - Verifies: Duplicate targets rejected (`multi_targets_valid = False`)
+
+31. **test_attack_prevented_by_rule**
+    - Tests: Rule 1.4.6 - "cannot_attack" restriction prevents attack play
+    - Verifies: `attack_play_result = False` when restriction active
+
+32. **test_weapon_attack_prevented_by_effect**
+    - Tests: Rule 1.4.6 - "cannot_attack_with_weapons" prevents weapon activation
+    - Verifies: `weapon_attack_result = False` when restriction active
+
+#### Engine Features Needed:
+- `CardInstance.controller_id` set when card is played to stack (Rule 1.4.1b)
+- `CardInstance.is_attack_in_context(zone)` property (Rules 1.4.1, 1.4.2)
+- `Attack.owner_id` and `Attack.controller_id` properties (Rules 1.4.1a/b)
+- `AttackProxy` class with `source`, `_power`, `_chain_link` attributes (Rule 1.4.3)
+- `AttackProxy.inherits_properties()` from source (Rule 1.4.3a)
+- `AttackProxy` excludes resolution abilities from inheritance (Rule 1.4.3a)
+- `CombatChain` class with chain link management (Rules 1.4.3c, 1.4.5b)
+- `CombatChain.advance_chain_link()` causing proxy cessation (Rule 1.4.3c)
+- LKI capture for ceased attack-proxies (Rules 1.4.3c, 1.2.3)
+- Effect system scoping to proxy vs source (Rules 1.4.3d, 1.4.3e)
+- `AttackLayer` class (Rule 1.4.4) with `has_no_properties = True`
+- `AttackLayer` treated as layer OR attack, not both (Rule 1.4.4a)
+- `AttackTargetDeclaration.validate_attackable()` (Rule 1.4.5a)
+- `AttackTargetDeclaration.validate_opponent_controlled()` (Rule 1.4.5)
+- `CombatChain.does_not_close_on_different_target()` (Rule 1.4.5b)
+- Multi-target validation rejecting duplicates (Rule 1.4.5c)
+- Attack prevention check via `PrecedenceManager` (Rule 1.4.6)
+
 ### Section 1.3.1a: Card Ownership
 
 **File**: `features/section_1_3_1a_card_ownership.feature`
@@ -578,7 +753,7 @@ The ultimate goal is to have **complete test coverage** of the Flesh and Blood C
 - [x] 1.2: Objects
 - [x] 1.3: Cards
   - [x] 1.3.1a: Card Ownership
-- [ ] 1.4: Attacks
+- [x] 1.4: Attacks
 - [ ] 1.5: Macros
 - [ ] 1.6: Layers
 - [ ] 1.7: Abilities
