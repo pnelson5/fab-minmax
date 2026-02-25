@@ -468,6 +468,74 @@ This section tests card definitions, categories, permanents, and distinctness:
 - `CardInstance.is_permanent` property with zone/subtype logic (Rule 1.3.3)
 - `CardTemplate.is_distinct_from(other)` method (Rule 1.3.4)
 
+### Section 1.5: Macros
+
+**File**: `features/section_1_5_macros.feature`
+**Step Definitions**: `step_defs/test_section_1_5_macros.py`
+
+This section tests macro object rules in Flesh and Blood:
+- **Rule 1.5.1**: A macro is a non-card object in the arena
+- **Rule 1.5.1a**: A macro has no owner
+- **Rule 1.5.1b**: The controller of a macro is determined by the tournament rule that created it
+- **Rule 1.5.2**: A macro cannot be and is not considered part of a player's card-pool
+- **Rule 1.5.3**: If a macro leaves the arena, it is removed from the game
+- **Rule 8.1.13a**: Only macro objects have the macro type
+
+#### Test Scenarios:
+
+1. **test_macro_is_non_card_game_object**
+   - Tests: Rule 1.5.1 - Macro is a non-card object
+   - Verifies: Macro is recognized as a game object but NOT as a card
+
+2. **test_macro_exists_in_arena_zone**
+   - Tests: Rule 1.5.1 - Macro is located in the arena
+   - Verifies: Macro is in the arena and not in any other zone
+
+3. **test_macro_has_no_owner**
+   - Tests: Rule 1.5.1a - Macro has no owner
+   - Verifies: `owner_id` is None
+
+4. **test_macro_controller_set_by_tournament_rule**
+   - Tests: Rule 1.5.1b - Controller assigned by tournament rule
+   - Verifies: `controller_id` set to the player designated by tournament rule
+
+5. **test_macro_controller_can_be_any_player**
+   - Tests: Rule 1.5.1b - Any player can be assigned as controller
+   - Verifies: `controller_id` can be set to player 1 (not just player 0)
+
+6. **test_macro_not_part_of_card_pool**
+   - Tests: Rule 1.5.2 - Macro is not in card-pool
+   - Verifies: `is_in_card_pool` returns False
+
+7. **test_macro_represented_by_physical_card_not_in_card_pool**
+   - Tests: Rule 1.5.2 - Even physical-card-represented macros are not in card-pool
+   - Verifies: Physical card representation doesn't change card-pool exclusion
+
+8. **test_macro_leaving_arena_removed_from_game**
+   - Tests: Rule 1.5.3 - Macro removed from game when leaving arena
+   - Verifies: `is_removed_from_game` becomes True after leaving arena
+
+9. **test_macro_destroyed_removed_not_graveyard**
+   - Tests: Rule 1.5.3 - Macro goes to removed-from-game, not graveyard
+   - Verifies: Macro not in graveyard after destruction
+
+10. **test_only_macros_have_macro_type**
+    - Tests: Rule 8.1.13a - Only macros have the macro type
+    - Verifies: Macro has type_name 'macro'; regular card does not
+
+11. **test_macro_has_abilities_from_creating_rule**
+    - Tests: Rule 1.7.1 - Macro abilities come from creating rule/effect
+    - Verifies: Macro has abilities defined by the creating tournament rule or effect
+
+#### Engine Features Needed:
+- `MacroObject` class (Rule 1.5.1) - non-card arena object
+- `MacroObject.owner_id = None` always (Rule 1.5.1a)
+- `MacroObject.controller_id` set by tournament rule (Rule 1.5.1b)
+- `MacroObject.is_in_card_pool = False` (Rule 1.5.2)
+- `Engine.remove_from_game(macro)` when macro leaves arena (Rule 1.5.3)
+- `MacroObject.type_name = 'macro'` (Rule 8.1.13a)
+- `MacroObject.abilities` list set by creating rule/effect (Rule 1.7.1)
+
 ### Section 1.4: Attacks
 
 **File**: `features/section_1_4_attacks.feature`
@@ -754,7 +822,7 @@ The ultimate goal is to have **complete test coverage** of the Flesh and Blood C
 - [x] 1.3: Cards
   - [x] 1.3.1a: Card Ownership
 - [x] 1.4: Attacks
-- [ ] 1.5: Macros
+- [x] 1.5: Macros
 - [ ] 1.6: Layers
 - [ ] 1.7: Abilities
 - [ ] 1.8: Effects
