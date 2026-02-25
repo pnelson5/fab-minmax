@@ -814,6 +814,88 @@ This section tests attack concepts in Flesh and Blood:
 - Multi-target validation rejecting duplicates (Rule 1.4.5c)
 - Attack prevention check via `PrecedenceManager` (Rule 1.4.6)
 
+### Section 1.7: Abilities
+
+**File**: `features/section_1_7_abilities.feature`
+**Step Definitions**: `step_defs/test_section_1_7_abilities.py`
+
+This section tests ability rules in Flesh and Blood:
+- **Rule 1.7.1**: An ability is a property of an object influencing the game
+- **Rule 1.7.1a**: Source of an ability; activated/triggered-layers exist independently
+- **Rule 1.7.1b**: Controller of activated-layer (activating player) and triggered-layer (source controller)
+- **Rule 1.7.2**: Object with ability is considered card with that ability; base vs. derived
+- **Rule 1.7.3**: Three ability categories: activated, resolution, static
+- **Rule 1.7.4**: Ability functionality conditions (when source is public and in arena)
+- **Rule 1.7.4a**: Defending card ability exceptions
+- **Rule 1.7.4b**: Activated ability outside arena when cost only payable outside
+- **Rule 1.7.4c**: Resolution ability functional when resolving as layer
+- **Rule 1.7.4d**: Meta-static ability functional outside the game
+- **Rule 1.7.4e**: Play-static ability functional when source public and being played
+- **Rule 1.7.4f**: Property-static ability functional in any zone
+- **Rule 1.7.4g**: While-static ability functional when while-condition met
+- **Rule 1.7.4j**: Zone-movement replacement static ability
+- **Rule 1.7.5**: Modal abilities - choice of modes
+- **Rule 1.7.5a-e**: Modal ability selection rules
+- **Rule 1.7.6**: Connected ability pairs
+- **Rule 1.7.6a-c**: Connected pair rules
+- **Rule 1.7.7**: Abilities can be modified
+
+#### Test Scenarios:
+
+1. **test_ability_is_property_of_object** - Tests Rule 1.7.1 - Ability is a property of an object
+2. **test_base_abilities_from_rules_text** - Tests Rule 1.7.1 - Base abilities from rules text for non-token cards
+3. **test_token_base_abilities_from_creating_effect** - Tests Rule 1.7.1 - Token abilities from creating effect
+4. **test_ability_source_is_card_that_has_it** - Tests Rule 1.7.1a - Source of ability is the card
+5. **test_activated_layer_source_is_same_as_creating_ability_source** - Tests Rule 1.7.1a - Activated-layer source
+6. **test_activated_layer_survives_source_destruction** - Tests Rule 1.7.1a - Layer exists independently
+7. **test_triggered_layer_survives_source_leaving_play** - Tests Rule 1.7.1a - Triggered-layer exists independently
+8. **test_activated_layer_controller_is_activating_player** - Tests Rule 1.7.1b - Activated-layer controller
+9. **test_triggered_layer_controller_is_controller_at_trigger_time** - Tests Rule 1.7.1b - Triggered-layer controller
+10. **test_triggered_layer_controller_is_owner_when_source_has_no_controller** - Tests Rule 1.7.1b - Uses owner
+11. **test_object_with_ability_considered_card_with_ability** - Tests Rule 1.7.2 - Object with ability
+12. **test_triggered_go_again_not_base_go_again** - Tests Rule 1.7.2 - Torrent of Tempo example
+13. **test_card_with_triggered_go_again_gains_ability_after_trigger** - Tests Rule 1.7.2 - After triggering
+14. **test_there_are_three_categories_of_abilities** - Tests Rule 1.7.3 - Exactly 3 categories
+15. **test_activated_ability_creates_activated_layer_on_stack** - Tests Rule 1.7.3a - Activated ability
+16. **test_resolution_ability_generates_effects_on_resolution** - Tests Rule 1.7.3b - Resolution ability
+17. **test_static_ability_generates_effects_continuously** - Tests Rule 1.7.3c - Static ability
+18. **test_ability_functional_when_source_in_arena** - Tests Rule 1.7.4 - Functional in arena
+19. **test_ability_nonfunctional_when_source_in_hand** - Tests Rule 1.7.4 - Non-functional outside arena
+20. **test_defending_card_ability_nonfunctional_by_default** - Tests Rule 1.7.4a - Defending card
+21. **test_defending_card_ability_functional_when_specified_as_defending_only** - Tests Rule 1.7.4a - Rally
+22. **test_activated_ability_functional_when_cost_only_payable_outside_arena** - Tests Rule 1.7.4b - Mighty Windup
+23. **test_resolution_ability_functional_when_layer_resolves** - Tests Rule 1.7.4c - Sigil of Solace
+24. **test_resolution_ability_nonfunctional_when_source_not_resolving** - Tests Rule 1.7.4c - Non-resolving
+25. **test_meta_static_ability_functional_outside_game** - Tests Rule 1.7.4d - Specialization keyword
+26. **test_play_static_ability_functional_when_source_being_played** - Tests Rule 1.7.4e - Ghostly Visit
+27. **test_property_static_ability_functional_in_any_zone** - Tests Rule 1.7.4f - Mutated Mass
+28. **test_while_static_ability_functional_when_condition_met** - Tests Rule 1.7.4g - Yinti Yanti
+29. **test_while_static_ability_nonfunctional_when_condition_not_met** - Tests Rule 1.7.4g - Condition not met
+30. **test_zone_movement_replacement_static_functional_when_condition_met** - Tests Rule 1.7.4j - Drone of Brutality
+31. **test_modal_ability_provides_choice_of_modes** - Tests Rule 1.7.5 - Art of War
+32. **test_cannot_select_same_mode_twice_without_permission** - Tests Rule 1.7.5b - Duplicate modes
+33. **test_can_only_select_available_modes** - Tests Rule 1.7.5b - Maximum modes
+34. **test_selected_modes_become_base_abilities** - Tests Rule 1.7.5d - Modes become base abilities
+35. **test_mode_count_evaluated_at_mode_selection_time** - Tests Rule 1.7.5e - Sacred Art example
+36. **test_connected_ability_pair_following_refers_to_leading** - Tests Rule 1.7.6 - Reckless Swing
+37. **test_following_ability_fails_when_leading_events_unavailable** - Tests Rule 1.7.6b - Following fails
+38. **test_connected_pair_added_together_is_connected** - Tests Rule 1.7.6c - Added pair is connected
+39. **test_object_abilities_can_be_modified** - Tests Rule 1.7.7 - Ability modification
+
+#### Engine Features Needed:
+- `CardInstance.has_ability(name)` and `has_base_ability(name)` properties (Rule 1.7.2)
+- `CardInstance.get_base_abilities()` method (Rule 1.7.1)
+- `CardInstance.get_ability_source(name)` method (Rule 1.7.1a)
+- `CardInstance.static_ability_is_active(name)` method (Rule 1.7.3c)
+- `fab_engine.engine.abilities` module with `AbilityCategory` enum (Rule 1.7.3)
+- Ability class hierarchy: `ActivatedAbility`, `ResolutionAbility`, `StaticAbility` (Rule 1.7.3)
+- `Ability.is_functional(context)` method with full functionality check (Rule 1.7.4)
+- `ActivatedLayer` and `TriggeredLayer` classes with `source`, `controller_id`, and `exists_independently_of_source` (Rules 1.7.1a, 1.7.1b)
+- `ModalAbility` with `declare_modes()` validation (Rule 1.7.5)
+- `ConnectedAbilityPair` with following/leading tracking (Rule 1.7.6)
+- Effect system supporting ability modification (Rule 1.7.7)
+- Play-static ability granting allowances in the PrecedenceManager (Rule 1.7.4e)
+
 ### Section 1.3.1a: Card Ownership
 
 **File**: `features/section_1_3_1a_card_ownership.feature`
@@ -927,7 +1009,7 @@ The ultimate goal is to have **complete test coverage** of the Flesh and Blood C
 - [x] 1.4: Attacks
 - [x] 1.5: Macros
 - [x] 1.6: Layers
-- [ ] 1.7: Abilities
+- [x] 1.7: Abilities
 - [ ] 1.8: Effects
 - [ ] 1.9: Events
 - [ ] 1.10: Game State

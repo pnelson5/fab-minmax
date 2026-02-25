@@ -897,6 +897,259 @@ class BDDGameState:
         """
         card.is_tapped = False
 
+    # ===== Section 1.7: Abilities helpers =====
+
+    def activate_ability(
+        self,
+        source_card: CardInstance,
+        ability_text: str,
+        activating_player_id: int = 0,
+    ) -> Any:
+        """
+        Simulate activating an ability, creating an activated-layer on the stack.
+
+        Engine Feature Needed:
+        - [ ] ActivatedAbility.activate(player_id) creating an ActivatedLayer (Rule 1.7.3a)
+        - [ ] ActivatedLayer.source reference (Rule 1.7.1a)
+        - [ ] ActivatedLayer.controller_id = activating player (Rule 1.7.1b)
+        - [ ] ActivatedLayer.exists_independently_of_source = True (Rule 1.7.1a)
+        """
+        return ActivatedLayerStub(
+            source=source_card,
+            controller_id=activating_player_id,
+            ability_text=ability_text,
+        )
+
+    def create_triggered_layer(
+        self,
+        source_card: CardInstance,
+        ability_text: str,
+        controller_id: Optional[int] = None,
+    ) -> Any:
+        """
+        Simulate creating a triggered-layer (two-step: create then put on stack).
+
+        Engine Feature Needed:
+        - [ ] TriggeredLayer class (Rule 1.6.2c)
+        - [ ] TriggeredLayer.source reference (Rule 1.7.1a)
+        - [ ] TriggeredLayer.controller_id = controller at trigger time or owner (Rule 1.7.1b)
+        - [ ] TriggeredLayer.exists_independently_of_source = True (Rule 1.7.1a)
+        """
+        if controller_id is None:
+            # Rule 1.7.1b: If source has no controller, use owner
+            ctrl = source_card.owner_id
+        else:
+            ctrl = controller_id
+        return TriggeredLayerStub(
+            source=source_card,
+            controller_id=ctrl,
+            ability_text=ability_text,
+        )
+
+    def check_ability_functional(
+        self,
+        card: CardInstance,
+        ability_text: str,
+        in_arena: bool = False,
+        is_public: bool = False,
+        is_defending: bool = False,
+        is_permanent: bool = True,
+        is_resolving: bool = False,
+        ability_type: str = "activated",
+        context: str = "in_game",
+        cost_only_payable_outside_arena: bool = False,
+        current_zone: str = "hand",
+        specifies_defending: bool = False,
+        while_condition_met: bool = False,
+        destination_zone: str = "",
+        is_being_played: bool = False,
+    ) -> bool:
+        """
+        Check whether an ability is functional given a context.
+
+        Engine Feature Needed:
+        - [ ] Ability.is_functional(context) method (Rule 1.7.4)
+        - [ ] FunctionalityContext class with zone, is_defending, is_resolving, etc.
+
+        Reference: Rules 1.7.4 through 1.7.4j
+        """
+        # Meta-static: always functional outside game
+        if ability_type == "meta_static":
+            return True  # Rule 1.7.4d
+
+        # Property-static: functional in any zone or outside game
+        if ability_type == "property_static":
+            return True  # Rule 1.7.4f
+
+        # Zone-movement replacement static: functional when destination matches
+        if ability_type == "zone_replacement_static":
+            replacement_from = getattr(card, "zone_replacement_from", None)
+            return destination_zone == replacement_from  # Rule 1.7.4j
+
+        # Play-static: functional when source is public and being played
+        if ability_type == "play_static":
+            return is_public and is_being_played  # Rule 1.7.4e
+
+        # While-static: functional when while-condition is met
+        if ability_type == "while_static":
+            return while_condition_met  # Rule 1.7.4g
+
+        # Resolution ability: functional only when resolving on the stack
+        if ability_type == "resolution":
+            return is_resolving  # Rule 1.7.4c
+
+        # Default (activated / static): functional when source is public and in arena
+        # Exceptions:
+        # - Rule 1.7.4b: Cost can only be paid outside arena
+        if cost_only_payable_outside_arena and not in_arena:
+            return True  # Rule 1.7.4b
+
+        # Rule 1.7.4a: Non-permanent defending card - non-functional unless...
+        if is_defending and not is_permanent:
+            if specifies_defending:
+                return True  # Ability specifies it can be activated while defending
+            return False
+
+        # Default: functional only when source is public and in arena (Rule 1.7.4)
+        return in_arena and is_public
+
+    def resolve_top_of_stack(self) -> Any:
+        """
+        Simulate resolving the top item from the stack.
+
+        Engine Feature Needed:
+        - [ ] Stack.resolve_top() returning ResolutionResult (Rule 5.3)
+        - [ ] ResolutionResult.effects_generated list
+        """
+        if not self.stack:
+            return ResolutionResultStub(effects_generated=[])
+        top = self.stack.pop()
+        # Simulate resolution abilities generating effects
+        effects = []
+        if hasattr(top, "resolution_abilities"):
+            effects.extend(top.resolution_abilities)
+        elif hasattr(top, "functional_text"):
+            effects.append(top.functional_text)
+        return ResolutionResultStub(effects_generated=effects)
+
+    def declare_modal_modes(self, card: CardInstance, modes: List[str]) -> Any:
+        """
+        Declare modes for a modal ability.
+
+        Engine Feature Needed:
+        - [ ] ModalAbility.declare_modes(modes) with validation (Rules 1.7.5a, 1.7.5b)
+        - [ ] ModalAbilityResult with success, reason, requires_distinct_modes
+        """
+        if not getattr(card, "is_modal", False):
+            return ModalModeResultStub(
+                success=False, reason="not_modal", requires_distinct_modes=False
+            )
+        allows_duplicates = getattr(card, "allows_duplicate_modes", False)
+        if not allows_duplicates and len(modes) != len(set(modes)):
+            return ModalModeResultStub(
+                success=False,
+                reason="duplicate_mode_not_allowed",
+                requires_distinct_modes=True,
+            )
+        choose_count = getattr(card, "modal_choose_count", 1)
+        available = getattr(card, "available_modes", [])
+        max_selectable = min(choose_count, len(available))
+        if len(modes) > max_selectable:
+            return ModalModeResultStub(
+                success=False,
+                reason="too_many_modes",
+                requires_distinct_modes=False,
+            )
+        # Mode selection is valid - set selected modes
+        if not hasattr(card, "selected_modes"):
+            card.selected_modes = []  # type: ignore[attr-defined]
+        card.selected_modes = modes  # type: ignore[attr-defined]
+        return ModalModeResultStub(
+            success=True, reason="valid", requires_distinct_modes=False
+        )
+
+    def get_max_selectable_modes(self, card: CardInstance) -> int:
+        """
+        Get the maximum number of modes a player can select.
+
+        Engine Feature Needed:
+        - [ ] ModalAbility.max_selectable_count property (Rule 1.7.5b)
+        """
+        choose_count = getattr(card, "modal_choose_count", 1)
+        available = getattr(card, "available_modes", [])
+        return min(choose_count, len(available))
+
+    def evaluate_modal_count(self, card: CardInstance, game_state_context: dict) -> int:
+        """
+        Evaluate the number of modes to select, using current game state context.
+
+        Engine Feature Needed:
+        - [ ] ModalAbility.evaluate_count(game_state) (Rule 1.7.5e)
+        """
+        if getattr(card, "conditional_modal_count", False):
+            return getattr(card, "conditional_modal_count_value", 1)
+        return getattr(card, "modal_choose_count", 1)
+
+    def check_following_can_refer_to_leading(
+        self, card: CardInstance, leading_events: dict
+    ) -> bool:
+        """
+        Check if a following ability can refer to the leading ability's events.
+
+        Engine Feature Needed:
+        - [ ] ConnectedAbilityPair.following_can_refer_to_leading() (Rule 1.7.6b)
+        """
+        if not leading_events:
+            return False  # Rule 1.7.6b: No events means following ability fails
+        return True
+
+    def add_connected_ability_pair(
+        self,
+        card: CardInstance,
+        leading_ability: str,
+        following_ability: str,
+    ) -> Any:
+        """
+        Add a connected ability pair to a card.
+
+        Engine Feature Needed:
+        - [ ] Effect.add_connected_ability_pair(card, leading, following) (Rule 1.7.6c)
+        - [ ] ConnectedAbilityPair class tracking connection
+        """
+        return ConnectedAbilityPairResultStub(
+            leading_ability=leading_ability,
+            following_ability=following_ability,
+            is_connected=True,
+            follows_only_added_leading=True,
+        )
+
+    def modify_card_ability(
+        self,
+        card: CardInstance,
+        old_ability: str,
+        new_ability: str,
+    ) -> Any:
+        """
+        Modify an ability on a card.
+
+        Engine Feature Needed:
+        - [ ] Effect.modify_ability(card, old, new) (Rule 1.7.7)
+        - [ ] CardInstance.abilities mutation tracking
+        """
+        if not hasattr(card, "abilities"):
+            return AbilityModificationResultStub(
+                success=False, original_ability_replaced=False
+            )
+        if old_ability in card.abilities:
+            card.abilities.remove(old_ability)
+            card.abilities.append(new_ability)
+            return AbilityModificationResultStub(
+                success=True, original_ability_replaced=True
+            )
+        return AbilityModificationResultStub(
+            success=False, original_ability_replaced=False
+        )
+
     def are_cards_distinct(self, card_a: CardInstance, card_b: CardInstance) -> bool:
         """
         Check if two cards are distinct from each other (Rule 1.3.4).
@@ -1012,3 +1265,135 @@ class PreventionEffectStub:
 
     def __init__(self, source: CardInstance):
         self.source = source
+
+
+# ===== Stub classes for Section 1.7 engine features not yet implemented =====
+
+
+class ActivatedLayerStub:
+    """
+    Stub for an activated-layer created by an activated ability (Rule 1.6.2b, 1.7.1a).
+
+    Engine Feature Needed:
+    - [ ] ActivatedLayer class (Rule 1.6.2b)
+    - [ ] ActivatedLayer.source reference (Rule 1.7.1a)
+    - [ ] ActivatedLayer.controller_id = activating player (Rule 1.7.1b)
+    - [ ] ActivatedLayer.exists_independently_of_source = True (Rule 1.7.1a)
+    - [ ] ActivatedLayer.is_resolved property (Rule 1.6.1)
+    - [ ] ActivatedLayer.can_resolve property (Rule 1.7.1a)
+    - [ ] ActivatedLayer.layer_category = "activated-layer" (Rule 1.6.2b)
+    """
+
+    def __init__(
+        self,
+        source: Optional[CardInstance],
+        controller_id: int = 0,
+        ability_text: str = "",
+    ):
+        self.source = source
+        self.controller_id = controller_id
+        self.ability_text = ability_text
+        self.is_resolved = False
+        self.can_resolve = True
+        self.exists_independently_of_source = True
+        self.layer_category = "activated-layer"
+        self.is_layer = True
+
+
+class TriggeredLayerStub:
+    """
+    Stub for a triggered-layer created by a triggered effect (Rule 1.6.2c, 1.7.1a).
+
+    Engine Feature Needed:
+    - [ ] TriggeredLayer class (Rule 1.6.2c)
+    - [ ] TriggeredLayer.source reference (Rule 1.7.1a)
+    - [ ] TriggeredLayer.controller_id = controller at trigger time or owner (Rule 1.7.1b)
+    - [ ] TriggeredLayer.exists_independently_of_source = True (Rule 1.7.1a)
+    - [ ] TriggeredLayer.can_resolve property (Rule 1.7.1a)
+    - [ ] TriggeredLayer.layer_category = "triggered-layer" (Rule 1.6.2c)
+    """
+
+    def __init__(
+        self,
+        source: Optional[CardInstance],
+        controller_id: int = 0,
+        ability_text: str = "",
+    ):
+        self.source = source
+        self.controller_id = controller_id
+        self.ability_text = ability_text
+        self.is_resolved = False
+        self.can_resolve = True
+        self.exists_independently_of_source = True
+        self.layer_category = "triggered-layer"
+        self.is_layer = True
+
+
+class ResolutionResultStub:
+    """
+    Stub for the result of resolving a layer from the stack (Rule 5.3).
+
+    Engine Feature Needed:
+    - [ ] ResolutionResult class with effects_generated list
+    - [ ] Stack.resolve_top() returning ResolutionResult
+    """
+
+    def __init__(self, effects_generated: Optional[List[str]] = None):
+        self.effects_generated = effects_generated or []
+        self.success = True
+
+
+class ModalModeResultStub:
+    """
+    Stub result for modal mode declaration (Rules 1.7.5a, 1.7.5b).
+
+    Engine Feature Needed:
+    - [ ] ModalAbility.declare_modes() return value
+    - [ ] ModalAbilityResult with success, reason, requires_distinct_modes
+    """
+
+    def __init__(
+        self,
+        success: bool,
+        reason: str = "",
+        requires_distinct_modes: bool = False,
+    ):
+        self.success = success
+        self.reason = reason
+        self.requires_distinct_modes = requires_distinct_modes
+
+
+class ConnectedAbilityPairResultStub:
+    """
+    Stub result for adding a connected ability pair to a card (Rule 1.7.6c).
+
+    Engine Feature Needed:
+    - [ ] ConnectedAbilityPair class tracking leading/following connection
+    - [ ] Effect.add_connected_ability_pair() return value
+    """
+
+    def __init__(
+        self,
+        leading_ability: str,
+        following_ability: str,
+        is_connected: bool = True,
+        follows_only_added_leading: bool = True,
+    ):
+        self.leading_ability = leading_ability
+        self.following_ability = following_ability
+        self.is_connected = is_connected
+        self.follows_only_added_leading = follows_only_added_leading
+
+
+class AbilityModificationResultStub:
+    """
+    Stub result for modifying a card's ability (Rule 1.7.7).
+
+    Engine Feature Needed:
+    - [ ] Effect.modify_ability() return value
+    - [ ] CardInstance.abilities mutable list
+    """
+
+    def __init__(self, success: bool, original_ability_replaced: bool = False):
+        self.success = success
+        self.original_ability_replaced = original_ability_replaced
