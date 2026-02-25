@@ -536,6 +536,109 @@ This section tests macro object rules in Flesh and Blood:
 - `MacroObject.type_name = 'macro'` (Rule 8.1.13a)
 - `MacroObject.abilities` list set by creating rule/effect (Rule 1.7.1)
 
+### Section 1.6: Layers
+
+**File**: `features/section_1_6_layers.feature`
+**Step Definitions**: `step_defs/test_section_1_6_layers.py`
+
+This section tests layer objects in Flesh and Blood. Layers are objects on the stack awaiting resolution:
+- **Rule 1.6.1**: A layer is an object on the stack that is yet to be resolved
+- **Rule 1.6.1a**: Owner determination for each layer type (card-layer = card owner; activated-layer = activating player; triggered-layer = source controller at trigger time)
+- **Rule 1.6.1b**: Controller of a layer = player who put it on the stack
+- **Rule 1.6.2**: Three layer categories: card-, activated-, triggered-layers
+- **Rule 1.6.2a**: A card-layer is a layer represented by a card on the stack
+- **Rule 1.6.2b**: An activated-layer is created by an activated ability; can only exist on the stack (Energy Potion example)
+- **Rule 1.6.2c**: A triggered-layer is created by a triggered effect; created before placement on stack (Snatch example)
+
+#### Test Scenarios:
+
+1. **test_layer_is_object_on_stack_yet_to_be_resolved**
+   - Tests: Rule 1.6.1 - Layers are stack objects
+   - Verifies: Card played to stack creates a layer that hasn't resolved yet
+
+2. **test_all_three_layer_types_are_layers**
+   - Tests: Rule 1.6.1 - All three layer types recognized as layers
+   - Verifies: Card-layer, activated-layer, triggered-layer all have `is_layer = True`
+
+3. **test_card_layer_owner_is_card_owner**
+   - Tests: Rule 1.6.1a - Card-layer owner = card owner
+   - Verifies: `owner_id` of card-layer matches owner of the card
+
+4. **test_activated_layer_owner_is_activating_player**
+   - Tests: Rule 1.6.1a - Activated-layer owner = activating player
+   - Verifies: `owner_id` of activated-layer is the player who activated the ability
+
+5. **test_triggered_layer_owner_is_controller_at_trigger_time**
+   - Tests: Rule 1.6.1a - Triggered-layer owner = source controller when triggered
+   - Verifies: `owner_id` of triggered-layer is the controller at trigger time
+
+6. **test_triggered_layer_owner_uses_controller_at_trigger_time**
+   - Tests: Rule 1.6.1a - Owner tracks controller at trigger time, not current controller
+   - Verifies: When controller changes before triggering, owner reflects new controller
+
+7. **test_card_layer_controller_is_player_who_put_on_stack**
+   - Tests: Rule 1.6.1b - Controller = player who put layer on stack
+   - Verifies: `controller_id` is player 0 for card played by player 0
+
+8. **test_activated_layer_controller_is_activating_player**
+   - Tests: Rule 1.6.1b - Controller of activated-layer = activating player
+   - Verifies: `controller_id` is set correctly
+
+9. **test_triggered_layer_controller_is_player_who_put_on_stack**
+   - Tests: Rule 1.6.1b - Controller of triggered-layer = player who put it on stack
+   - Verifies: `controller_id` set when triggered-layer placed on stack
+
+10. **test_there_are_exactly_3_layer_categories**
+    - Tests: Rule 1.6.2 - Exactly 3 layer categories exist
+    - Verifies: `LayerCategory` enum has exactly 3 values (FAILS - missing engine feature)
+
+11. **test_card_played_to_stack_becomes_card_layer**
+    - Tests: Rule 1.6.2a - Card on stack is a card-layer
+    - Verifies: `layer_category == "card-layer"` and card reference preserved
+
+12. **test_card_layer_retains_card_properties**
+    - Tests: Rule 1.6.2a - Card-layer retains card properties (name, etc.)
+    - Verifies: Layer name matches original card name ("Lunging Press")
+
+13. **test_activating_ability_creates_activated_layer**
+    - Tests: Rule 1.6.2b - Activated ability creates activated-layer (Energy Potion)
+    - Verifies: `layer_category == "activated-layer"` with correct resolution ability
+
+14. **test_activated_layer_can_only_exist_on_stack**
+    - Tests: Rule 1.6.2b - Activated-layer restricted to stack zone
+    - Verifies: `can_only_exist_on_stack == True`, no other zones valid
+
+15. **test_triggered_effect_creates_triggered_layer**
+    - Tests: Rule 1.6.2c - Triggered effect creates triggered-layer (Snatch)
+    - Verifies: `layer_category == "triggered-layer"` with correct resolution ability
+
+16. **test_triggered_layer_created_before_put_on_stack**
+    - Tests: Rule 1.6.2c - Triggered-layer creation is two-step process
+    - Verifies: Layer created as object first, then placed on stack
+
+17. **test_triggered_layer_can_only_exist_on_stack**
+    - Tests: Rule 1.6.2c - Triggered-layer restricted to stack zone
+    - Verifies: `can_only_exist_on_stack == True`
+
+18. **test_activated_layer_survives_source_destruction**
+    - Tests: Rule 1.7.1a cross-ref - Activated-layers exist independently of source
+    - Verifies: Layer persists on stack after source (Energy Potion) is destroyed
+
+19. **test_triggered_layer_survives_source_leaving_play**
+    - Tests: Rule 1.7.1a cross-ref - Triggered-layers exist independently of source
+    - Verifies: Layer persists on stack after source moves to graveyard
+
+#### Engine Features Needed:
+- `fab_engine.engine.layers` module with `LayerCategory` enum (Rule 1.6.2)
+- `CardLayer` class wrapping CardInstance on the stack (Rule 1.6.2a)
+- `ActivatedLayer` class created by activated ability (Rule 1.6.2b)
+- `TriggeredLayer` class created by triggered effect (Rule 1.6.2c)
+- `Layer.owner_id` per layer type rules (Rule 1.6.1a)
+- `Layer.controller_id = player who put it on stack` (Rule 1.6.1b)
+- `Layer.can_only_exist_on_stack` property (Rules 1.6.2b, 1.6.2c)
+- `Layer.is_prevented_by_source_absence = False` (Rule 1.7.1a)
+- `Stack` zone tracking all layer types
+
 ### Section 1.4: Attacks
 
 **File**: `features/section_1_4_attacks.feature`
@@ -823,7 +926,7 @@ The ultimate goal is to have **complete test coverage** of the Flesh and Blood C
   - [x] 1.3.1a: Card Ownership
 - [x] 1.4: Attacks
 - [x] 1.5: Macros
-- [ ] 1.6: Layers
+- [x] 1.6: Layers
 - [ ] 1.7: Abilities
 - [ ] 1.8: Effects
 - [ ] 1.9: Events
