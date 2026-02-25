@@ -345,6 +345,129 @@ This section tests object concepts in Flesh and Blood:
 - `AttackProxy` class with source card reference (Rule 1.2.4)
 - `CardInstance.is_permanent` property (for zone-aware identity, Rule 1.2.2f)
 
+### Section 1.3: Cards
+
+**File**: `features/section_1_3_cards.feature`
+**Step Definitions**: `step_defs/test_section_1_3_cards.py`
+
+This section tests card definitions, categories, permanents, and distinctness:
+- **Rule 1.3.1**: A card is an object represented by an official Flesh and Blood card
+- **Rule 1.3.1b**: Controller assignment (None outside arena/stack; owner as it enters arena or player who played it)
+- **Rule 1.3.2**: Four card categories: hero-, token-, deck-, and arena-cards
+- **Rule 1.3.2a**: Hero-cards have the type hero and start as a player's hero
+- **Rule 1.3.2b**: Token-cards have the type token and are NOT part of a player's card-pool
+- **Rule 1.3.2c**: Deck-cards (Action, Attack Reaction, Block, Defense Reaction, Instant, Mentor, Resource) may start in deck
+- **Rule 1.3.2d**: Arena-cards (non-hero, non-token, non-deck) cannot start in deck
+- **Rule 1.3.3**: Permanents (hero-, arena-, token-cards in arena; deck-cards with permanent subtypes in arena)
+- **Rule 1.3.3a**: Permanents lose that status when they leave the arena
+- **Rule 1.3.3b**: Permanents have untapped/tapped states; default untapped on entry
+- **Rule 1.3.4**: Card distinctness based on face name and/or pitch value
+
+#### Test Scenarios:
+
+1. **test_card_in_hand_has_no_controller**
+   - Tests: Rule 1.3.1b - Cards outside arena/stack have no controller
+   - Verifies: `controller_id` is None for cards in hand
+
+2. **test_card_in_deck_has_no_controller**
+   - Tests: Rule 1.3.1b - Cards in deck have no controller
+   - Verifies: `controller_id` is None for cards in deck
+
+3. **test_card_in_graveyard_has_no_controller**
+   - Tests: Rule 1.3.1b - Cards in graveyard have no controller
+   - Verifies: `controller_id` is None for cards in graveyard
+
+4. **test_card_entering_arena_gets_controller**
+   - Tests: Rule 1.3.1b - Card entering arena gets controller set to its owner
+   - Verifies: `controller_id` set to 0 when card enters arena
+
+5. **test_card_played_to_stack_has_controller**
+   - Tests: Rule 1.3.1b - Card played to stack gets controller assigned
+   - Verifies: `controller_id` set to 0 when card played to stack
+
+6. **test_hero_card_classified_as_hero_card**
+   - Tests: Rule 1.3.2a - Cards with type HERO are hero-cards
+   - Verifies: `get_card_category()` returns "hero" and not deck/token/arena
+
+7. **test_token_card_classified_and_excluded_from_card_pool**
+   - Tests: Rule 1.3.2b - Token cards are token-cards and not in card-pool
+   - Verifies: `get_card_category()` returns "token", `is_valid_for_card_pool()` returns False
+
+8. **test_action_card_classified_as_deck_card**
+   - Tests: Rule 1.3.2c - Action cards are deck-cards
+   - Verifies: Category is "deck" and can start in deck
+
+9. **test_attack_reaction_card_classified_as_deck_card**
+   - Tests: Rule 1.3.2c - Attack Reaction cards are deck-cards
+
+10. **test_defense_reaction_card_classified_as_deck_card**
+    - Tests: Rule 1.3.2c - Defense Reaction cards are deck-cards
+
+11. **test_instant_card_classified_as_deck_card**
+    - Tests: Rule 1.3.2c - Instant cards are deck-cards
+
+12. **test_resource_card_classified_as_deck_card**
+    - Tests: Rule 1.3.2c - Resource cards are deck-cards
+
+13. **test_mentor_card_classified_as_deck_card**
+    - Tests: Rule 1.3.2c - Mentor cards are deck-cards
+
+14. **test_equipment_card_classified_as_arena_card**
+    - Tests: Rule 1.3.2d - Equipment cards are arena-cards
+    - Verifies: Cannot start the game in a player's deck
+
+15. **test_weapon_card_classified_as_arena_card**
+    - Tests: Rule 1.3.2d - Weapon cards are arena-cards
+
+16. **test_hero_card_in_arena_is_permanent**
+    - Tests: Rule 1.3.3 - Hero-cards in arena are permanents
+
+17. **test_equipment_card_in_arena_is_permanent**
+    - Tests: Rule 1.3.3 - Arena-cards (equipment) in arena are permanents
+
+18. **test_token_card_in_arena_is_permanent**
+    - Tests: Rule 1.3.3 - Token-cards in arena are permanents
+
+19. **test_deck_card_with_ally_subtype_in_arena_is_permanent**
+    - Tests: Rule 1.3.3 - Deck-cards with permanent subtype (Ally) in arena are permanents
+
+20. **test_deck_card_without_permanent_subtype_not_permanent**
+    - Tests: Rule 1.3.3 - Action cards without permanent subtypes in arena are NOT permanents
+
+21. **test_deck_card_on_combat_chain_not_permanent**
+    - Tests: Rule 1.3.3 - Cards on combat chain are never permanents
+
+22. **test_permanent_leaving_arena_loses_permanent_status**
+    - Tests: Rule 1.3.3a - Permanents lose status when leaving arena
+
+23. **test_permanent_enters_arena_untapped**
+    - Tests: Rule 1.3.3b - Permanents enter arena in untapped state
+
+24. **test_permanent_can_be_tapped**
+    - Tests: Rule 1.3.3b - Permanents can transition to tapped state
+
+25. **test_tapped_permanent_can_be_untapped**
+    - Tests: Rule 1.3.3b - Tapped permanents can be untapped
+
+26. **test_cards_with_different_names_are_distinct**
+    - Tests: Rule 1.3.4 - Cards with different names are distinct
+
+27. **test_cards_with_same_name_different_pitch_are_distinct**
+    - Tests: Rule 1.3.4 - Sink Below red (pitch 1) is distinct from Sink Below blue (pitch 2)
+
+28. **test_cards_with_identical_name_and_pitch_not_distinct**
+    - Tests: Rule 1.3.4 - Cards with same name and pitch are NOT distinct
+
+#### Engine Features Needed:
+- `CardType.TOKEN` enum value (Rule 1.3.2b)
+- `CardType.BLOCK`, `CardType.RESOURCE`, `CardType.MENTOR` enum values (Rule 1.3.2c)
+- `Subtype.ALLY`, `Subtype.AFFLICTION`, `Subtype.ASH`, `Subtype.CONSTRUCT`, `Subtype.FIGMENT`, `Subtype.INVOCATION`, `Subtype.LANDMARK` (Rule 1.3.3)
+- `CardTemplate.get_category()` -> str ("hero"/"token"/"deck"/"arena") (Rule 1.3.2)
+- `CardTemplate.can_start_in_deck` property (Rule 1.3.2c/d)
+- `CardTemplate.is_part_of_card_pool` property returning False for tokens (Rule 1.3.2b)
+- `CardInstance.is_permanent` property with zone/subtype logic (Rule 1.3.3)
+- `CardTemplate.is_distinct_from(other)` method (Rule 1.3.4)
+
 ### Section 1.3.1a: Card Ownership
 
 **File**: `features/section_1_3_1a_card_ownership.feature`
@@ -453,7 +576,7 @@ The ultimate goal is to have **complete test coverage** of the Flesh and Blood C
   - [x] 1.0.2: Precedence (Restrictions/Requirements/Allowances)
 - [x] 1.1: Players
 - [x] 1.2: Objects
-- [ ] 1.3: Cards
+- [x] 1.3: Cards
   - [x] 1.3.1a: Card Ownership
 - [ ] 1.4: Attacks
 - [ ] 1.5: Macros

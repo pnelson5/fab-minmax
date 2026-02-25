@@ -545,6 +545,382 @@ class BDDGameState:
         """
         return PreventionEffectStub(source=source)
 
+    # ===== Section 1.3: Cards helpers =====
+
+    def create_token_card(
+        self, name: str = "Test Token", owner_id: int = 0
+    ) -> CardInstance:
+        """
+        Create a token card (Rule 1.3.2b).
+
+        Engine Feature Needed:
+        - [ ] CardType.TOKEN enum value (Rule 1.3.2b)
+        """
+        # TOKEN type not yet in engine - use a stub approach
+        template = CardTemplate(
+            unique_id=f"token_{name}_{id(self)}",
+            name=name,
+            types=frozenset(),  # Will need frozenset([CardType.TOKEN]) when implemented
+            supertypes=frozenset(),
+            subtypes=frozenset(),
+            color=Color.COLORLESS,
+            pitch=0,
+            has_pitch=False,
+            cost=0,
+            has_cost=False,
+            power=0,
+            has_power=False,
+            defense=0,
+            has_defense=False,
+            arcane=0,
+            has_arcane=False,
+            life=0,
+            intellect=0,
+            keywords=frozenset(),
+            keyword_params=tuple(),
+            functional_text="",
+        )
+        card = CardInstance(template=template, owner_id=owner_id)
+        # Mark as token via metadata until engine supports CardType.TOKEN
+        card._is_token = True  # type: ignore[attr-defined]
+        return card
+
+    def create_resource_card(
+        self, name: str = "Test Resource", owner_id: int = 0
+    ) -> CardInstance:
+        """
+        Create a resource card (Rule 1.3.2c).
+
+        Engine Feature Needed:
+        - [ ] CardType.RESOURCE enum value (Rule 1.3.2c)
+        """
+        template = CardTemplate(
+            unique_id=f"resource_{name}_{id(self)}",
+            name=name,
+            types=frozenset(),  # Will need frozenset([CardType.RESOURCE]) when implemented
+            supertypes=frozenset(),
+            subtypes=frozenset(),
+            color=Color.COLORLESS,
+            pitch=0,
+            has_pitch=False,
+            cost=0,
+            has_cost=False,
+            power=0,
+            has_power=False,
+            defense=0,
+            has_defense=False,
+            arcane=0,
+            has_arcane=False,
+            life=0,
+            intellect=0,
+            keywords=frozenset(),
+            keyword_params=tuple(),
+            functional_text="",
+        )
+        card = CardInstance(template=template, owner_id=owner_id)
+        card._is_resource = True  # type: ignore[attr-defined]
+        return card
+
+    def create_mentor_card(
+        self, name: str = "Test Mentor", owner_id: int = 0
+    ) -> CardInstance:
+        """
+        Create a mentor card (Rule 1.3.2c).
+
+        Engine Feature Needed:
+        - [ ] CardType.MENTOR enum value (Rule 1.3.2c)
+        """
+        template = CardTemplate(
+            unique_id=f"mentor_{name}_{id(self)}",
+            name=name,
+            types=frozenset(),  # Will need frozenset([CardType.MENTOR]) when implemented
+            supertypes=frozenset(),
+            subtypes=frozenset(),
+            color=Color.COLORLESS,
+            pitch=0,
+            has_pitch=False,
+            cost=0,
+            has_cost=False,
+            power=0,
+            has_power=False,
+            defense=0,
+            has_defense=False,
+            arcane=0,
+            has_arcane=False,
+            life=0,
+            intellect=0,
+            keywords=frozenset(),
+            keyword_params=tuple(),
+            functional_text="",
+        )
+        card = CardInstance(template=template, owner_id=owner_id)
+        card._is_mentor = True  # type: ignore[attr-defined]
+        return card
+
+    def create_card_with_permanent_subtype(
+        self,
+        name: str = "Test Permanent",
+        subtype: str = "ally",
+        owner_id: int = 0,
+    ) -> CardInstance:
+        """
+        Create a deck card with a permanent-granting subtype (Rule 1.3.3).
+
+        Engine Feature Needed:
+        - [ ] Subtype.ALLY, AFFLICTION, ASH, AURA, CONSTRUCT, FIGMENT, INVOCATION,
+               ITEM, LANDMARK enum values (Rule 1.3.3)
+        """
+        # Check if subtype is already in engine
+        permanent_subtypes_engine = {
+            Subtype.AURA,
+            Subtype.ITEM,
+        }
+        # Map name to engine Subtype if available
+        subtype_lower = subtype.lower()
+        if subtype_lower == "aura":
+            subtypes_set = frozenset([Subtype.AURA])
+        elif subtype_lower == "item":
+            subtypes_set = frozenset([Subtype.ITEM])
+        else:
+            # Subtype not yet in engine - track as metadata
+            subtypes_set = frozenset()
+
+        template = CardTemplate(
+            unique_id=f"permanent_{name}_{id(self)}",
+            name=name,
+            types=frozenset([CardType.ACTION]),
+            supertypes=frozenset(),
+            subtypes=subtypes_set,
+            color=Color.COLORLESS,
+            pitch=0,
+            has_pitch=False,
+            cost=0,
+            has_cost=False,
+            power=0,
+            has_power=False,
+            defense=0,
+            has_defense=False,
+            arcane=0,
+            has_arcane=False,
+            life=0,
+            intellect=0,
+            keywords=frozenset(),
+            keyword_params=tuple(),
+            functional_text="",
+        )
+        card = CardInstance(template=template, owner_id=owner_id)
+        card._permanent_subtype = subtype_lower  # type: ignore[attr-defined]
+        return card
+
+    def create_card_with_name_and_pitch(
+        self, name: str, pitch: int, owner_id: int = 0
+    ) -> CardInstance:
+        """
+        Create a card with a specific name and pitch value (Rule 1.3.4).
+
+        Used for card distinctness testing.
+        """
+        template = CardTemplate(
+            unique_id=f"distinct_{name}_{pitch}_{id(self)}",
+            name=name,
+            types=frozenset([CardType.ACTION]),
+            supertypes=frozenset(),
+            subtypes=frozenset([Subtype.ATTACK]),
+            color=Color.COLORLESS,
+            pitch=pitch,
+            has_pitch=True,
+            cost=0,
+            has_cost=True,
+            power=0,
+            has_power=True,
+            defense=0,
+            has_defense=True,
+            arcane=0,
+            has_arcane=False,
+            life=0,
+            intellect=0,
+            keywords=frozenset(),
+            keyword_params=tuple(),
+            functional_text="",
+        )
+        return CardInstance(template=template, owner_id=owner_id)
+
+    def get_card_category(self, card: CardInstance) -> str:
+        """
+        Return the card category: 'hero', 'token', 'deck', or 'arena' (Rule 1.3.2).
+
+        Engine Feature Needed:
+        - [ ] CardTemplate.get_category() -> str returning the card category
+        - [ ] CardType.TOKEN, RESOURCE, MENTOR, BLOCK enum values
+        """
+        # Delegate to engine if implemented
+        if hasattr(card.template, "get_category"):
+            return card.template.get_category()
+
+        # Fallback logic using current engine types
+        if CardType.HERO in card.template.types:
+            return "hero"
+
+        # TOKEN check - engine doesn't have CardType.TOKEN yet
+        if getattr(card, "_is_token", False):
+            return "token"
+
+        # Deck-card types as per Rule 1.3.2c
+        deck_types = {
+            CardType.ACTION,
+            CardType.ATTACK_REACTION,
+            CardType.DEFENSE_REACTION,
+            CardType.INSTANT,
+        }
+        # Resource, Mentor, Block not yet in engine - check via metadata
+        if getattr(card, "_is_resource", False):
+            return "deck"
+        if getattr(card, "_is_mentor", False):
+            return "deck"
+
+        if card.template.types & deck_types:
+            return "deck"
+
+        # Arena-card: not hero, not token, not deck
+        if (
+            CardType.EQUIPMENT in card.template.types
+            or CardType.WEAPON in card.template.types
+        ):
+            return "arena"
+
+        # If types are empty (stub), check metadata
+        if not card.template.types:
+            return "unknown"
+
+        return "arena"
+
+    def can_start_in_deck(self, card: CardInstance) -> bool:
+        """
+        Check if a card can start in a player's deck (Rule 1.3.2c/d).
+
+        Engine Feature Needed:
+        - [ ] CardTemplate.can_start_in_deck property
+        """
+        if hasattr(card.template, "can_start_in_deck"):
+            return card.template.can_start_in_deck
+
+        category = self.get_card_category(card)
+        return category == "deck"
+
+    def is_valid_for_card_pool(self, card: CardInstance) -> bool:
+        """
+        Check if a card can be part of a player's card-pool (Rule 1.3.2b).
+
+        Token cards are NOT part of a player's card-pool.
+
+        Engine Feature Needed:
+        - [ ] CardTemplate.is_part_of_card_pool property
+        """
+        if hasattr(card.template, "is_part_of_card_pool"):
+            return card.template.is_part_of_card_pool
+
+        category = self.get_card_category(card)
+        # Token cards cannot be part of card-pool (Rule 1.3.2b)
+        return category != "token"
+
+    def is_card_a_permanent(
+        self,
+        card: CardInstance,
+        in_arena: bool = True,
+        in_combat_chain: bool = False,
+    ) -> bool:
+        """
+        Check if a card qualifies as a permanent (Rule 1.3.3).
+
+        A card is a permanent if:
+        - It is in the arena (not combat chain), AND
+        - It is a hero-card, arena-card, or token-card, OR
+        - It is a deck-card with one of the permanent subtypes:
+          Affliction, Ally, Ash, Aura, Construct, Figment, Invocation, Item, Landmark
+
+        Engine Feature Needed:
+        - [ ] CardInstance.is_permanent property with full zone + subtype logic
+        """
+        if hasattr(card, "is_permanent"):
+            return card.is_permanent  # type: ignore[return-value]
+
+        if not in_arena:
+            return False
+        if in_combat_chain:
+            return False
+
+        category = self.get_card_category(card)
+
+        # Hero, arena, and token cards are always permanents in the arena
+        if category in ("hero", "arena", "token"):
+            return True
+
+        # Deck cards: only with permanent subtypes
+        if category == "deck":
+            # Check engine-known permanent subtypes
+            permanent_subtypes_engine = {Subtype.AURA, Subtype.ITEM}
+            if card.template.subtypes & permanent_subtypes_engine:
+                return True
+            # Check metadata-tracked subtypes (for engine types not yet implemented)
+            perm_subtype = getattr(card, "_permanent_subtype", None)
+            if perm_subtype in {
+                "affliction",
+                "ally",
+                "ash",
+                "aura",
+                "construct",
+                "figment",
+                "invocation",
+                "item",
+                "landmark",
+            }:
+                return True
+            return False
+
+        return False
+
+    def tap_permanent(self, card: CardInstance) -> None:
+        """
+        Tap a permanent (Rule 1.3.3b).
+
+        Engine Feature Needed:
+        - [ ] Dedicated tap() method on CardInstance or game engine
+        """
+        card.is_tapped = True
+
+    def untap_permanent(self, card: CardInstance) -> None:
+        """
+        Untap a permanent (Rule 1.3.3b).
+
+        Engine Feature Needed:
+        - [ ] Dedicated untap() method on CardInstance or game engine
+        """
+        card.is_tapped = False
+
+    def are_cards_distinct(self, card_a: CardInstance, card_b: CardInstance) -> bool:
+        """
+        Check if two cards are distinct from each other (Rule 1.3.4).
+
+        Two cards are distinct if one or more of their faces has a different
+        name and/or pitch value.
+
+        Engine Feature Needed:
+        - [ ] CardTemplate.is_distinct_from(other) method
+        - [ ] Multi-face card support (Rule 9.1: double-faced cards)
+        """
+        if hasattr(card_a.template, "is_distinct_from"):
+            return card_a.template.is_distinct_from(card_b.template)
+
+        # Simple single-face comparison: name or pitch differs
+        name_differs = card_a.template.name != card_b.template.name
+        pitch_differs = (
+            card_a.template.has_pitch
+            and card_b.template.has_pitch
+            and card_a.template.pitch != card_b.template.pitch
+        ) or (card_a.template.has_pitch != card_b.template.has_pitch)
+
+        return name_differs or pitch_differs
+
 
 # ===== Stub classes for Section 1.2 engine features not yet implemented =====
 
