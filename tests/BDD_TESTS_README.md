@@ -1539,6 +1539,203 @@ This section tests the four types of assets in Flesh and Blood:
 - `PitchEffect` generating assets based on card pitch type and value (Rules 1.13.3a, 1.13.5a)
 - Pitch restriction: only pitch if card generates needed asset type (Rule 1.14.3b)
 
+### Section 1.14: Costs
+
+**File**: `features/section_1_14_costs.feature`
+**Step Definitions**: `step_defs/test_section_1_14_costs.py`
+
+This section tests the cost system for playing cards and activating abilities:
+- **Rule 1.14.1**: Playing a card or activating an ability incurs a cost
+- **Rule 1.14.2**: Asset-costs are paid by spending assets
+- **Rule 1.14.2a**: Multi-asset costs paid in order: chi → resource → life → action
+- **Rule 1.14.2b**: If a mandatory cost cannot be paid, the entire action is reversed
+- **Rule 1.14.2c**: Chi point costs are paid using chi points
+- **Rule 1.14.2d**: Resource point costs are paid using chi first, then resource points
+- **Rule 1.14.2e**: Life point costs are paid using life points only
+- **Rule 1.14.2f**: Action point costs are paid using action points
+- **Rule 1.14.3**: Pitching a card moves it to the pitch zone and grants assets
+- **Rule 1.14.3a**: Only cards with the pitch property can be pitched (unless effect instructs)
+- **Rule 1.14.3b**: A card can only be pitched if it generates the needed asset type
+- **Rule 1.14.3c**: Pitching is an event that can trigger and be replaced by effects
+- **Rule 1.14.4**: Effect-costs require generating and resolving a specific effect
+- **Rule 1.14.4a**: Player declares the order when paying multiple effect-costs
+- **Rule 1.14.4b**: Unpayable effect-costs reverse game state to before activation
+- **Rule 1.14.4c**: A replaced effect-cost still counts as paid
+- **Rule 1.14.5**: Zero cost is still a cost that must be acknowledged
+
+#### Test Scenarios:
+
+1. **test_cost_incurred_by_playing_card**
+   - Tests: Rule 1.14.1 - Playing a card incurs its cost
+   - Verifies: Card play result confirms a cost was incurred
+
+2. **test_cost_incurred_by_activating_ability**
+   - Tests: Rule 1.14.1 - Activating an ability incurs its cost
+   - Verifies: Ability activation result confirms a cost was incurred
+
+3. **test_cost_can_require_both_asset_and_effect_components**
+   - Tests: Rule 1.14.1 - Costs can have asset and effect components
+   - Verifies: Full cost exposes both asset-cost and effect-cost components
+
+4. **test_player_pays_asset_cost_with_exact_assets**
+   - Tests: Rule 1.14.2 - Asset-cost paid with exact resources
+   - Verifies: Cost paid, 0 resource points remaining
+
+5. **test_player_pays_asset_cost_with_surplus_assets**
+   - Tests: Rule 1.14.2 - Surplus resources remain after payment
+   - Verifies: Cost paid, 2 resource points remaining from 4 with cost 2
+
+6. **test_player_cannot_pay_asset_cost_with_insufficient_assets**
+   - Tests: Rule 1.14.2b - Insufficient assets prevent payment
+   - Verifies: Payment fails when 1 resource point cannot pay cost 3
+
+7. **test_multi_asset_cost_paid_in_correct_order**
+   - Tests: Rule 1.14.2a - Multi-asset payment order enforcement
+   - Verifies: Chi paid first (order 1), resource second (2), life third (3), action last (4)
+
+8. **test_each_asset_type_paid_in_full_before_next**
+   - Tests: Rule 1.14.2a - Each asset type fully paid before next begins
+   - Verifies: Chi payment fails first, resource payment does not start
+
+9. **test_mandatory_asset_cost_failure_reverses_entire_action**
+   - Tests: Rule 1.14.2b - Mandatory cost failure reverses entire action
+   - Verifies: Entire action reversed, card returned to starting zone
+
+10. **test_pitching_during_payment_provides_needed_assets**
+    - Tests: Rule 1.14.2d - Pitching during payment supplements resources
+    - Verifies: 1 + 2 = 3 resource points after pitching 2-pitch card
+
+11. **test_paying_chi_cost_uses_chi_points**
+    - Tests: Rule 1.14.2c - Chi costs paid from chi points
+    - Verifies: 2 chi points spent, 1 chi remaining from 3
+
+12. **test_player_pitches_chi_card_to_gain_chi_for_chi_cost**
+    - Tests: Rule 1.14.2c - Chi gained by pitching chi cards
+    - Verifies: 2 chi gained from pitching, chi cost paid successfully
+
+13. **test_paying_resource_cost_uses_chi_first_then_resource**
+    - Tests: Rule 1.14.2d - Chi used before resource for resource costs
+    - Verifies: 1 chi spent, then 1 resource spent
+
+14. **test_player_pitches_resource_card_during_resource_cost_payment**
+    - Tests: Rule 1.14.2d - Pitching resource card during resource cost
+    - Verifies: 2 resource points gained from pitch
+
+15. **test_pitching_stops_when_resource_cost_paid**
+    - Tests: Rule 1.14.2d - Pitching stops when cost fully paid
+    - Verifies: Cost paid, 1 resource left over, no further pitching needed
+
+16. **test_paying_life_cost_uses_life_points**
+    - Tests: Rule 1.14.2e - Life costs use life points
+    - Verifies: Life total decreases from 20 to 18 after paying 2 life
+
+17. **test_life_cost_cannot_be_paid_with_chi_points**
+    - Tests: Rule 1.14.2e - Chi cannot substitute for life costs
+    - Verifies: Payment fails, game state not changed
+
+18. **test_paying_action_cost_uses_action_points**
+    - Tests: Rule 1.14.2f - Action costs use action points
+    - Verifies: 1 action point spent, 0 remaining
+
+19. **test_pitching_card_moves_to_pitch_zone_and_grants_assets**
+    - Tests: Rule 1.14.3 - Pitching moves card and grants resources
+    - Verifies: Card in pitch zone, 2 resource points gained
+
+20. **test_pitch_property_determines_type_and_amount_of_assets**
+    - Tests: Rule 1.14.3 - Pitch property determines assets granted
+    - Verifies: 3-chi-pitch card grants 3 chi points
+
+21. **test_card_without_pitch_property_cannot_be_pitched**
+    - Tests: Rule 1.14.3a - No-pitch cards cannot be pitched normally
+    - Verifies: Pitch attempt fails, card remains in hand
+
+22. **test_card_with_pitch_property_can_be_pitched**
+    - Tests: Rule 1.14.3a - Cards with pitch property can be pitched
+    - Verifies: Pitch succeeds, card moves to pitch zone
+
+23. **test_player_can_only_pitch_card_if_gains_needed_asset_type**
+    - Tests: Rule 1.14.3b - Wrong asset type pitch rejected
+    - Verifies: Resource-pitch card rejected when chi is needed
+
+24. **test_player_can_pitch_card_if_gains_needed_asset_type**
+    - Tests: Rule 1.14.3b - Correct asset type pitch accepted
+    - Verifies: Chi-pitch card accepted when chi is needed
+
+25. **test_player_can_pitch_card_if_instructed_by_effect**
+    - Tests: Rule 1.14.3b - Effect instruction bypasses normal pitch restrictions
+    - Verifies: No-pitch card accepted when effect instructs pitch
+
+26. **test_pitching_card_triggers_pitch_watchers**
+    - Tests: Rule 1.14.3c - Pitching is an event that triggers effects
+    - Verifies: Pitch trigger fires when card is pitched
+
+27. **test_pitching_card_can_be_replaced_by_replacement_effects**
+    - Tests: Rule 1.14.3c - Pitch event can be replaced
+    - Verifies: Replacement effect modifies the pitch event
+
+28. **test_effect_cost_requires_generating_and_resolving_effect**
+    - Tests: Rule 1.14.4 - Effect-cost requires generating the specified effect
+    - Verifies: Destroy effect generated and target destroyed as cost
+
+29. **test_hope_merchants_hood_effect_cost_example**
+    - Tests: Rule 1.14.4 - Hope Merchant's Hood canonical example
+    - Verifies: Destroying Hood is the effect-cost, hand shuffled as the ability
+
+30. **test_player_declares_order_for_multi_effect_cost**
+    - Tests: Rule 1.14.4a - Player declares order for multiple effect-costs
+    - Verifies: Discard and damage effects generated in declared order
+
+31. **test_effect_cost_that_cannot_be_generated_reverses_game_state**
+    - Tests: Rule 1.14.4b - Unpayable effect-cost reverses to before activation
+    - Verifies: Effect-cost fails, game state reversed
+
+32. **test_mandatory_effect_cost_failure_reverses_entire_action**
+    - Tests: Rule 1.14.4b - Mandatory effect-cost failure reverses entire action
+    - Verifies: Entire card play action reversed when discard impossible
+
+33. **test_effect_cost_replaced_but_considered_paid**
+    - Tests: Rule 1.14.4c - Replaced effect-cost still counts as paid
+    - Verifies: Discard replaced by banishment, cost still considered paid
+
+34. **test_card_with_cost_zero_still_has_cost_to_pay**
+    - Tests: Rule 1.14.5 - Zero cost is still a cost
+    - Verifies: Zero-cost card has cost acknowledged and play proceeds
+
+35. **test_asset_costs_reduced_to_zero_still_require_acknowledgment**
+    - Tests: Rule 1.14.5 - Reduced-to-zero cost still acknowledged
+    - Verifies: Cost reduced from 3 to 0, zero cost acknowledged
+
+36. **test_zero_cost_with_no_effect_costs_is_still_a_cost**
+    - Tests: Rule 1.14.5 - Zero cost with no effect-costs still valid
+    - Verifies: Zero cost acknowledged as paid via acknowledgment
+
+#### Implementation Notes:
+- New stub classes: `MultiAssetAbilityStub`, `EffectCostAbilityStub`, `TwoEffectCostAbilityStub`, `PitchInstructionEffectStub`, `PitchTriggerEffectStub`, `PitchReplacementEffectStub`, `GeneralReplacementEffectStub`, `CostReductionEffectStub`, `AssetPaymentResultStub`, `MultiAssetPaymentResultStub`, `CardPlayResultStub`, `AbilityActivationResultStub`, `FullCostStub`, `PitchPaymentResultStub`, `PitchAttemptResultStub`, `ChiCostPaymentResultStub`, `ResourceCostPaymentResultStub`, `LifeCostPaymentResultStub`, `ActionCostPaymentResultStub`, `EffectCostPaymentResultStub`, `HoodActivationResultStub`, `MultiEffectCostResultStub`
+- New helper methods: `create_card_with_resource_cost`, `create_chi_pitch_card`, `create_multi_asset_ability`, `create_ability_with_chi_cost`, `create_ability_with_action_cost`, `create_ability_with_effect_cost`, `create_ability_with_two_effect_costs`, `create_pitch_instruction_effect`, `create_pitch_trigger_effect`, `create_pitch_replacement_effect`, `create_replacement_effect`, `create_cost_reduction_effect`, `attempt_card_play_1_14`, `attempt_ability_activation_1_14`, `get_full_cost_1_14`, `pay_asset_cost_1_14`, `attempt_pay_asset_cost_1_14`, `pay_multi_asset_cost_1_14`, `attempt_pay_multi_asset_cost_1_14`, `pitch_card_during_payment_1_14`, `pay_chi_cost_1_14`, `pay_resource_cost_tracked_1_14`, `pay_life_cost_1_14`, `pay_action_cost_1_14`, `attempt_pitch_card_1_14`, `pitch_card_via_effect_instruction_1_14`, `pitch_card_with_trigger_check_1_14`, `count_pitch_triggers_fired_1_14`, `pitch_card_with_replacement_check_1_14`, `pay_effect_cost_1_14`, `activate_ability_with_effect_cost_1_14`, `pay_multi_effect_cost_1_14`, `attempt_pay_effect_cost_1_14`, `play_card_with_cost_reduction_1_14`, `attempt_pitch_another_card_1_14`
+- `pitch_card_for_chi` and `pitch_card_for_resources` updated to return `PitchPaymentResultStub` instead of `AssetSpendResultStub`
+- `attempt_pitch_for_wrong_type` updated to return `PitchAttemptResultStub` with `_pitch_rejected`/`_pitch_succeeded`
+
+#### Engine Features Needed:
+- `Cost` class hierarchy: `AssetCost`, `EffectCost` (Rule 1.14.1)
+- `Cost.cost_type` attribute (`"asset_cost"` or `"effect_cost"`) (Rule 1.14.1)
+- `AssetCost.pay(player)` subtracting assets and returning success (Rule 1.14.2)
+- `AssetCost.can_be_paid(player)` check (Rule 1.14.2b)
+- Multi-asset payment order enforcement: chi → resource → life → action (Rule 1.14.2a)
+- `GameEngine.reverse_illegal_action()` when mandatory cost cannot be paid (Rules 1.14.2b, 1.10.3)
+- `AssetCost.pay_chi_cost(player, amount)` (Rule 1.14.2c)
+- `AssetCost.pay_resource_cost(player, amount)` - chi before resource (Rule 1.14.2d)
+- `AssetCost.pay_life_cost(player, amount)` (Rule 1.14.2e)
+- `AssetCost.pay_action_cost(player, amount)` (Rule 1.14.2f)
+- `PitchAction.execute(player, card)` moving hand → pitch zone (Rule 1.14.3)
+- `CardTemplate.has_pitch` property (Rule 1.14.3a)
+- `PitchAction.validate(player, card, needed_asset_type)` (Rule 1.14.3b)
+- `PitchEvent` that can trigger and be replaced by effects (Rule 1.14.3c)
+- `EffectCost.pay(player)` generating and resolving the specified effects (Rule 1.14.4)
+- `EffectCost.can_be_paid(player)` check before payment (Rule 1.14.4b)
+- `EffectCost` with multiple effects: player declares order (Rule 1.14.4a)
+- `EffectCost.replaced_event_still_counts_as_paid = True` (Rule 1.14.4c)
+- Zero cost acknowledgment system (Rule 1.14.5)
+
 ### Section 1.12: Numbers and Symbols
 
 **File**: `features/section_1_12_numbers_and_symbols.feature`
@@ -1742,7 +1939,7 @@ The ultimate goal is to have **complete test coverage** of the Flesh and Blood C
 - [x] 1.11: Priority
 - [x] 1.12: Numbers and Symbols
 - [x] 1.13: Assets
-- [ ] 1.14: Costs
+- [x] 1.14: Costs
 - [ ] 1.15: Counters
 
 ### Section 2: Object Properties

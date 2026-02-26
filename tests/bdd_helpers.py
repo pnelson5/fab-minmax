@@ -1563,7 +1563,9 @@ class BDDGameState:
         pitch_value = card.template.pitch
 
         if pitch_generates != "resource":
-            return AssetSpendResultStub(success=False, reason="wrong_asset_type")
+            return PitchPaymentResultStub(
+                resources_gained=0, pitch_event_occurred=False
+            )
 
         # Move card to pitch zone
         if card in player.hand:
@@ -1572,8 +1574,13 @@ class BDDGameState:
 
         # Grant resource points
         current = self.get_player_resource_points(player)
-        self.set_player_resource_points(player, current + pitch_value)
-        return AssetSpendResultStub(success=True)
+        new_total = current + pitch_value
+        self.set_player_resource_points(player, new_total)
+        return PitchPaymentResultStub(
+            resources_gained=pitch_value,
+            pitch_event_occurred=True,
+            total_resources_after_pitch=new_total,
+        )
 
     def set_player_chi_points(self, player: Any, amount: int) -> None:
         """
@@ -1617,7 +1624,7 @@ class BDDGameState:
         pitch_value = card.template.pitch
 
         if pitch_generates != "chi":
-            return AssetSpendResultStub(success=False, reason="wrong_asset_type")
+            return PitchAttemptResultStub(pitch_succeeded=False, pitch_rejected=True)
 
         # Move card to pitch zone (note: TestZone may not have the card in a zone already)
         try:
@@ -1630,7 +1637,10 @@ class BDDGameState:
         # Grant chi points
         current = self.get_player_chi_points(player)
         self.set_player_chi_points(player, current + pitch_value)
-        return AssetSpendResultStub(success=True)
+        return PitchPaymentResultStub(
+            chi_gained=pitch_value,
+            pitch_event_occurred=True,
+        )
 
     def pay_resource_cost_with_chi(self, player: Any, cost: int) -> Any:
         """
@@ -1694,8 +1704,12 @@ class BDDGameState:
         """
         pitch_generates = getattr(card, "_pitch_generates", "resource")
         if pitch_generates != needed_asset:
-            return AssetSpendResultStub(success=False, reason="wrong_asset_type")
-        return AssetSpendResultStub(success=True)
+            return PitchAttemptResultStub(
+                pitch_succeeded=False,
+                pitch_rejected=True,
+                rejection_reason="wrong_asset_type",
+            )
+        return PitchAttemptResultStub(pitch_succeeded=True, pitch_rejected=False)
 
     def set_hero_life_total(self, player: Any, life: int) -> None:
         """
@@ -1772,6 +1786,753 @@ class BDDGameState:
         current = self.get_hero_life_total(player)
         self.set_hero_life_total(player, current + amount)
         return LifeGainResultStub(amount_gained=amount)
+
+    # ===== Section 1.14: Costs helpers =====
+
+    def create_card_with_resource_cost(
+        self,
+        name: str = "Cost Card",
+        cost: int = 1,
+        owner_id: int = 0,
+    ) -> CardInstance:
+        """
+        Create an action card with a specific resource cost (Rule 1.14.1).
+
+        Engine Feature Needed:
+        - [ ] AssetCost tracking on cards (Rule 1.14.2)
+        """
+        template = CardTemplate(
+            unique_id=f"cost_{name}_{id(self)}",
+            name=name,
+            types=frozenset([CardType.ACTION]),
+            supertypes=frozenset(),
+            subtypes=frozenset([Subtype.ATTACK]),
+            color=Color.COLORLESS,
+            pitch=0,
+            has_pitch=False,
+            cost=cost,
+            has_cost=True,
+            power=0,
+            has_power=False,
+            defense=0,
+            has_defense=False,
+            arcane=0,
+            has_arcane=False,
+            life=0,
+            intellect=0,
+            keywords=frozenset(),
+            keyword_params=tuple(),
+            functional_text="",
+        )
+        card = CardInstance(template=template, owner_id=owner_id)
+        return card
+
+    def create_chi_pitch_card(
+        self,
+        name: str = "Chi Pitch Card",
+        chi_value: int = 1,
+        owner_id: int = 0,
+    ) -> CardInstance:
+        """
+        Create a card that generates chi points when pitched (Rule 1.13.5a, 1.14.3).
+
+        Engine Feature Needed:
+        - [ ] CardTemplate.pitch_generates_type = "chi" (Rule 2.8)
+        - [ ] PitchEffect grants chi points (Rule 1.13.5a)
+        """
+        template = CardTemplate(
+            unique_id=f"chi_pitch_{name}_{id(self)}",
+            name=name,
+            types=frozenset([CardType.ACTION]),
+            supertypes=frozenset(),
+            subtypes=frozenset([Subtype.ATTACK]),
+            color=Color.COLORLESS,
+            pitch=chi_value,
+            has_pitch=True,
+            cost=0,
+            has_cost=True,
+            power=0,
+            has_power=False,
+            defense=0,
+            has_defense=False,
+            arcane=0,
+            has_arcane=False,
+            life=0,
+            intellect=0,
+            keywords=frozenset(),
+            keyword_params=tuple(),
+            functional_text="",
+        )
+        card = CardInstance(template=template, owner_id=owner_id)
+        card._pitch_generates = "chi"  # type: ignore[attr-defined]
+        return card
+
+    def create_multi_asset_ability(
+        self,
+        chi: int = 0,
+        resource: int = 0,
+        life: int = 0,
+        action: int = 0,
+    ) -> Any:
+        """
+        Create a stub ability with multiple asset types in its cost (Rule 1.14.2a).
+
+        Engine Feature Needed:
+        - [ ] MultiAssetCost class tracking chi, resource, life, action amounts (Rule 1.14.2a)
+        - [ ] Payment order enforcement: chi -> resource -> life -> action (Rule 1.14.2a)
+        """
+        return MultiAssetAbilityStub(
+            chi_cost=chi,
+            resource_cost=resource,
+            life_cost=life,
+            action_cost=action,
+        )
+
+    def create_ability_with_chi_cost(self, chi_cost: int = 1) -> Any:
+        """
+        Create a stub ability with a chi point cost (Rule 1.14.2c).
+
+        Engine Feature Needed:
+        - [ ] ActivatedAbility.chi_cost property (Rule 1.14.2c)
+        """
+        return MultiAssetAbilityStub(chi_cost=chi_cost)
+
+    def create_ability_with_action_cost(self, action_cost: int = 1) -> Any:
+        """
+        Create a stub ability with an action point cost (Rule 1.14.2f).
+
+        Engine Feature Needed:
+        - [ ] ActivatedAbility.action_cost property (Rule 1.14.2f)
+        """
+        return MultiAssetAbilityStub(action_cost=action_cost)
+
+    def create_ability_with_effect_cost(self, effect: str = "") -> Any:
+        """
+        Create a stub ability with an effect-cost (Rule 1.14.4).
+
+        Engine Feature Needed:
+        - [ ] EffectCost class representing effect requirements (Rule 1.14.4)
+        - [ ] EffectCost.can_be_paid(player, game_state) check (Rule 1.14.4b)
+        """
+        return EffectCostAbilityStub(effect_cost=effect)
+
+    def create_ability_with_two_effect_costs(
+        self,
+        cost1: str = "",
+        cost2: str = "",
+    ) -> Any:
+        """
+        Create a stub ability with two effect-costs (Rule 1.14.4a).
+
+        Engine Feature Needed:
+        - [ ] MultiEffectCost with ordered effects (Rule 1.14.4a)
+        - [ ] Player declares order for two or more effect-costs (Rule 1.14.4a)
+        """
+        return TwoEffectCostAbilityStub(cost1=cost1, cost2=cost2)
+
+    def create_pitch_instruction_effect(self) -> Any:
+        """
+        Create a stub effect that instructs a player to pitch a card (Rule 1.14.3b).
+
+        Engine Feature Needed:
+        - [ ] PitchInstructionEffect class (Rule 1.14.3b)
+        - [ ] PitchInstructionEffect overrides normal pitch restrictions
+        """
+        return PitchInstructionEffectStub()
+
+    def create_pitch_trigger_effect(self) -> Any:
+        """
+        Create a stub triggered effect that fires when a card is pitched (Rule 1.14.3c).
+
+        Engine Feature Needed:
+        - [ ] TriggeredEffect that triggers on pitch events (Rule 1.14.3c)
+        - [ ] PitchEvent generation when card is pitched (Rule 1.14.3c)
+        """
+        return PitchTriggerEffectStub()
+
+    def create_pitch_replacement_effect(self) -> Any:
+        """
+        Create a stub replacement effect that replaces a pitch event (Rule 1.14.3c).
+
+        Engine Feature Needed:
+        - [ ] ReplacementEffect for pitch events (Rule 1.14.3c)
+        - [ ] ReplacementEffect.was_applied tracking
+        """
+        return PitchReplacementEffectStub()
+
+    def create_replacement_effect(
+        self, replaces: str = "", with_effect: str = ""
+    ) -> Any:
+        """
+        Create a stub replacement effect (Rule 1.14.4c).
+
+        Engine Feature Needed:
+        - [ ] ReplacementEffect class with replaces/with_effect tracking (Rule 1.14.4c)
+        """
+        return GeneralReplacementEffectStub(replaces=replaces, with_effect=with_effect)
+
+    def create_cost_reduction_effect(self, reduction: int = 1) -> Any:
+        """
+        Create a stub cost reduction effect (Rule 1.14.5).
+
+        Engine Feature Needed:
+        - [ ] CostReductionEffect reducing AssetCost amounts (Rule 1.14.5)
+        """
+        return CostReductionEffectStub(reduction=reduction)
+
+    def attempt_card_play_1_14(self, card: CardInstance) -> Any:
+        """
+        Attempt to play a card, tracking cost information (Rule 1.14.1).
+
+        Engine Feature Needed:
+        - [ ] GameEngine.play_card(card, player_id) with cost resolution (Rule 1.14.1)
+        - [ ] CardPlayResult with _incurred_cost, _cost_amount, _cost_paid attributes
+        """
+        cost = card.template.cost if card.template.has_cost else 0
+        has_discard_effect_cost = getattr(card, "_has_discard_effect_cost", False)
+        has_mandatory_discard = getattr(
+            card, "_has_mandatory_discard_effect_cost", False
+        )
+        is_mandatory = getattr(card, "_is_mandatory_cost", False)
+
+        resources = self.get_player_resource_points(self.player)
+        can_pay = resources >= cost
+
+        if has_mandatory_discard:
+            # Check if there are cards to discard (excluding the card itself)
+            other_hand_cards = [c for c in self.player.hand.cards if c is not card]
+            if not other_hand_cards:
+                return CardPlayResultStub(
+                    play_succeeded=False,
+                    incurred_cost=True,
+                    cost_amount=cost,
+                    cost_paid=False,
+                    entire_action_reversed=True,
+                    has_cost=True,
+                )
+
+        if not can_pay and is_mandatory:
+            return CardPlayResultStub(
+                play_succeeded=False,
+                incurred_cost=True,
+                cost_amount=cost,
+                cost_paid=False,
+                entire_action_reversed=True,
+                has_cost=True,
+            )
+
+        if not can_pay:
+            return CardPlayResultStub(
+                play_succeeded=False,
+                incurred_cost=True,
+                cost_amount=cost,
+                cost_paid=False,
+                game_state_reversed=True,
+                has_cost=True,
+            )
+
+        # Pay the cost
+        self.set_player_resource_points(self.player, resources - cost)
+
+        zero_cost_acknowledged = cost == 0
+        effective_cost = cost
+        # Apply cost reduction effects if present
+        if (
+            hasattr(self, "cost_reduction_effect")
+            and self.cost_reduction_effect is not None
+        ):  # type: ignore[attr-defined]
+            reduction = getattr(self.cost_reduction_effect, "_reduction", 0)
+            effective_cost = max(0, cost - reduction)
+            zero_cost_acknowledged = effective_cost == 0
+
+        return CardPlayResultStub(
+            play_succeeded=True,
+            incurred_cost=True,
+            cost_amount=cost,
+            cost_paid=True,
+            has_cost=True,
+            zero_cost_acknowledged=zero_cost_acknowledged,
+            effective_cost=effective_cost,
+            has_asset_cost=True,
+            has_effect_cost=has_discard_effect_cost,
+        )
+
+    def attempt_ability_activation_1_14(self, card: CardInstance) -> Any:
+        """
+        Attempt to activate an ability, tracking cost information (Rule 1.14.1).
+
+        Engine Feature Needed:
+        - [ ] GameEngine.activate_ability(ability, player_id) with cost tracking
+        - [ ] AbilityActivationResult with _incurred_cost, _cost_amount attributes
+        """
+        cost = card.template.cost if card.template.has_cost else 0
+        resources = self.get_player_resource_points(self.player)
+        can_pay = resources >= cost
+        if can_pay:
+            self.set_player_resource_points(self.player, resources - cost)
+        return AbilityActivationResultStub(
+            incurred_cost=True,
+            cost_amount=cost,
+            cost_paid=can_pay,
+        )
+
+    def get_full_cost_1_14(self, card: CardInstance) -> Any:
+        """
+        Get the full cost object for a card (Rule 1.14.1).
+
+        Engine Feature Needed:
+        - [ ] Card.get_full_cost() returning FullCost with asset/effect components (Rule 1.14.1)
+        """
+        has_asset_cost = card.template.has_cost
+        has_effect_cost = getattr(card, "_has_discard_effect_cost", False)
+        return FullCostStub(
+            has_asset_cost=has_asset_cost,
+            has_effect_cost=has_effect_cost,
+        )
+
+    def pay_asset_cost_1_14(self, player: Any, card: CardInstance) -> Any:
+        """
+        Pay the asset-cost of a card from the player's assets (Rule 1.14.2).
+
+        Engine Feature Needed:
+        - [ ] AssetCost.pay(player) subtracting assets (Rule 1.14.2)
+        - [ ] AssetPaymentResult with _cost_paid, _game_state_reversed attributes
+        """
+        cost = card.template.cost if card.template.has_cost else 0
+        resources = self.get_player_resource_points(player)
+        if resources >= cost:
+            self.set_player_resource_points(player, resources - cost)
+            return AssetPaymentResultStub(cost_paid=True)
+        else:
+            return AssetPaymentResultStub(cost_paid=False, game_state_reversed=True)
+
+    def attempt_pay_asset_cost_1_14(self, player: Any, card: CardInstance) -> Any:
+        """
+        Attempt to pay an asset-cost (may fail with reversal) (Rule 1.14.2b).
+
+        Engine Feature Needed:
+        - [ ] AssetCost.attempt_pay(player) with reversal on failure (Rule 1.14.2b)
+        """
+        return self.pay_asset_cost_1_14(player=player, card=card)
+
+    def pay_multi_asset_cost_1_14(self, player: Any, ability: Any) -> Any:
+        """
+        Pay a multi-asset-cost in the correct order (Rule 1.14.2a).
+
+        Engine Feature Needed:
+        - [ ] MultiAssetCost.pay(player) enforcing chi->resource->life->action order (Rule 1.14.2a)
+        - [ ] MultiAssetPaymentResult with _chi_paid_order, _resource_paid_order, etc.
+        """
+        chi_cost = getattr(ability, "_chi_cost", 0)
+        resource_cost = getattr(ability, "_resource_cost", 0)
+        life_cost = getattr(ability, "_life_cost", 0)
+        action_cost = getattr(ability, "_action_cost", 0)
+
+        chi = self.get_player_chi_points(player)
+        resource = self.get_player_resource_points(player)
+        life = self.get_hero_life_total(player)
+        action = self.get_player_action_points(player)
+
+        # Validate all assets available
+        if (
+            chi < chi_cost
+            or resource < resource_cost
+            or life < life_cost
+            or action < action_cost
+        ):
+            return MultiAssetPaymentResultStub(
+                chi_payment_failed=True, resource_payment_started=False
+            )
+
+        # Pay in order: chi=1, resource=2, life=3, action=4
+        self.set_player_chi_points(player, chi - chi_cost)
+        self.set_player_resource_points(player, resource - resource_cost)
+        self.set_hero_life_total(player, life - life_cost)
+        self.set_player_action_points(player, action - action_cost)
+
+        return MultiAssetPaymentResultStub(
+            chi_paid_order=1,
+            resource_paid_order=2,
+            life_paid_order=3,
+            action_paid_order=4,
+        )
+
+    def attempt_pay_multi_asset_cost_1_14(self, player: Any, ability: Any) -> Any:
+        """
+        Attempt to pay a multi-asset-cost, checking each asset type in order (Rule 1.14.2a).
+
+        Engine Feature Needed:
+        - [ ] MultiAssetCost.attempt_pay(player) with per-type failure tracking (Rule 1.14.2a)
+        """
+        chi_cost = getattr(ability, "_chi_cost", 0)
+        chi = self.get_player_chi_points(player)
+
+        if chi < chi_cost:
+            return MultiAssetPaymentResultStub(
+                chi_payment_failed=True,
+                resource_payment_started=False,
+            )
+
+        return self.pay_multi_asset_cost_1_14(player=player, ability=ability)
+
+    def pitch_card_during_payment_1_14(self, player: Any, card: CardInstance) -> Any:
+        """
+        Pitch a card during cost payment to gain resources (Rule 1.14.3, 1.14.2d).
+
+        Engine Feature Needed:
+        - [ ] PitchDuringPayment action with resource gain tracking (Rule 1.14.2d)
+        """
+        pitch_generates = getattr(card, "_pitch_generates", "resource")
+        pitch_value = card.template.pitch
+
+        if card in player.hand:
+            player.hand.remove_card(card)
+        player.pitch_zone.add_card(card)
+
+        if pitch_generates == "resource":
+            current = self.get_player_resource_points(player)
+            new_total = current + pitch_value
+            self.set_player_resource_points(player, new_total)
+            return PitchPaymentResultStub(
+                resources_gained=pitch_value,
+                pitch_event_occurred=True,
+                total_resources_after_pitch=new_total,
+            )
+        elif pitch_generates == "chi":
+            current = self.get_player_chi_points(player)
+            self.set_player_chi_points(player, current + pitch_value)
+            return PitchPaymentResultStub(
+                chi_gained=pitch_value,
+                pitch_event_occurred=True,
+            )
+        return PitchPaymentResultStub(pitch_event_occurred=True)
+
+    def pay_chi_cost_1_14(self, player: Any, cost: int) -> Any:
+        """
+        Pay a chi point cost, tracking details (Rule 1.14.2c).
+
+        Engine Feature Needed:
+        - [ ] ChiCostPayment.pay(player, amount) -> ChiPaymentResult (Rule 1.14.2c)
+        - [ ] ChiPaymentResult._chi_spent, _cost_paid attributes
+        """
+        current = self.get_player_chi_points(player)
+        if current < cost:
+            return ChiCostPaymentResultStub(chi_spent=0, cost_paid=False)
+        self.set_player_chi_points(player, current - cost)
+        return ChiCostPaymentResultStub(chi_spent=cost, cost_paid=True)
+
+    def pay_resource_cost_tracked_1_14(self, player: Any, cost: int) -> Any:
+        """
+        Pay a resource cost using chi first then resource, with tracking (Rule 1.14.2d).
+
+        Engine Feature Needed:
+        - [ ] ResourceCostPayment tracking chi_used_before_resource (Rule 1.14.2d)
+        - [ ] ResourcePaymentResult._chi_used_before_resource, _chi_spent, _resource_spent
+        """
+        chi = self.get_player_chi_points(player)
+        resource = self.get_player_resource_points(player)
+
+        chi_to_use = min(chi, cost)
+        remaining = cost - chi_to_use
+        resource_to_use = min(resource, remaining)
+
+        if chi_to_use + resource_to_use < cost:
+            return ResourceCostPaymentResultStub(success=False)
+
+        self.set_player_chi_points(player, chi - chi_to_use)
+        self.set_player_resource_points(player, resource - resource_to_use)
+
+        return ResourceCostPaymentResultStub(
+            success=True,
+            chi_used_before_resource=chi_to_use > 0,
+            chi_spent=chi_to_use,
+            resource_spent=resource_to_use,
+        )
+
+    def pay_life_cost_1_14(self, player: Any, amount: int) -> Any:
+        """
+        Pay a life point cost directly from the hero's life total (Rule 1.14.2e).
+
+        Engine Feature Needed:
+        - [ ] LifeCostPayment.pay(player, amount) -> LifePaymentResult (Rule 1.14.2e)
+        - [ ] LifePaymentResult._life_spent attribute
+        """
+        current = self.get_hero_life_total(player)
+        if current < amount:
+            return LifeCostPaymentResultStub(life_spent=0, cost_paid=False)
+        self.set_hero_life_total(player, current - amount)
+        return LifeCostPaymentResultStub(life_spent=amount, cost_paid=True)
+
+    def pay_action_cost_1_14(self, player: Any, amount: int) -> Any:
+        """
+        Pay an action point cost (Rule 1.14.2f).
+
+        Engine Feature Needed:
+        - [ ] ActionCostPayment.pay(player, amount) -> ActionPaymentResult (Rule 1.14.2f)
+        - [ ] ActionPaymentResult._action_spent attribute
+        """
+        current = self.get_player_action_points(player)
+        if current < amount:
+            return ActionCostPaymentResultStub(action_spent=0, cost_paid=False)
+        self.set_player_action_points(player, current - amount)
+        return ActionCostPaymentResultStub(action_spent=amount, cost_paid=True)
+
+    def attempt_pitch_card_1_14(self, player: Any, card: CardInstance) -> Any:
+        """
+        Attempt to pitch a card, checking pitch property (Rule 1.14.3a).
+
+        Engine Feature Needed:
+        - [ ] PitchAction.validate_has_pitch_property(card) (Rule 1.14.3a)
+        - [ ] PitchAttemptResult._pitch_succeeded, _pitch_rejected
+        """
+        has_pitch_property = getattr(
+            card, "_has_pitch_property", card.template.has_pitch
+        )
+        if not has_pitch_property:
+            return PitchAttemptResultStub(pitch_succeeded=False, pitch_rejected=True)
+
+        # Perform the pitch
+        if card in player.hand:
+            player.hand.remove_card(card)
+        player.pitch_zone.add_card(card)
+        return PitchAttemptResultStub(pitch_succeeded=True, pitch_rejected=False)
+
+    def pitch_card_via_effect_instruction_1_14(
+        self, player: Any, card: CardInstance, effect: Any
+    ) -> Any:
+        """
+        Pitch a card as instructed by an effect (bypasses normal pitch restrictions) (Rule 1.14.3b).
+
+        Engine Feature Needed:
+        - [ ] PitchInstructionEffect overriding PitchAction.validate (Rule 1.14.3b)
+        """
+        # Effect-instructed pitches bypass normal pitch-property requirements
+        if card in player.hand:
+            player.hand.remove_card(card)
+        player.pitch_zone.add_card(card)
+        return PitchAttemptResultStub(pitch_succeeded=True, pitch_rejected=False)
+
+    def pitch_card_with_trigger_check_1_14(
+        self, player: Any, card: CardInstance, trigger: Any
+    ) -> Any:
+        """
+        Pitch a card and check if triggers fire (Rule 1.14.3c).
+
+        Engine Feature Needed:
+        - [ ] PitchEvent generation triggering watching effects (Rule 1.14.3c)
+        """
+        pitch_value = card.template.pitch
+        pitch_generates = getattr(card, "_pitch_generates", "resource")
+
+        if card in player.hand:
+            player.hand.remove_card(card)
+        player.pitch_zone.add_card(card)
+
+        if pitch_generates == "resource":
+            current = self.get_player_resource_points(player)
+            self.set_player_resource_points(player, current + pitch_value)
+
+        # Mark trigger as fired
+        if trigger is not None:
+            trigger._fire_count = getattr(trigger, "_fire_count", 0) + 1  # type: ignore[attr-defined]
+
+        return PitchPaymentResultStub(
+            resources_gained=pitch_value if pitch_generates == "resource" else 0,
+            pitch_event_occurred=True,
+        )
+
+    def count_pitch_triggers_fired_1_14(self, trigger: Any) -> int:
+        """
+        Count how many times a pitch trigger has fired (Rule 1.14.3c).
+
+        Engine Feature Needed:
+        - [ ] TriggeredEffect.fire_count property (Rule 1.14.3c)
+        """
+        return getattr(trigger, "_fire_count", 0)
+
+    def pitch_card_with_replacement_check_1_14(
+        self, player: Any, card: CardInstance, replacement: Any
+    ) -> Any:
+        """
+        Pitch a card while checking for replacement effects (Rule 1.14.3c).
+
+        Engine Feature Needed:
+        - [ ] ReplacementEffect.apply(pitch_event) modifying pitch behavior (Rule 1.14.3c)
+        """
+        if replacement is not None:
+            replacement.was_applied = True  # type: ignore[attr-defined]
+
+        if card in player.hand:
+            player.hand.remove_card(card)
+        player.pitch_zone.add_card(card)
+
+        pitch_value = card.template.pitch
+        pitch_generates = getattr(card, "_pitch_generates", "resource")
+        if pitch_generates == "resource":
+            current = self.get_player_resource_points(player)
+            self.set_player_resource_points(player, current + pitch_value)
+
+        return PitchPaymentResultStub(
+            resources_gained=pitch_value if pitch_generates == "resource" else 0,
+            pitch_event_occurred=True,
+            was_replaced=True,
+        )
+
+    def pay_effect_cost_1_14(
+        self,
+        player: Any,
+        ability: Any,
+        target: Optional[Any],
+        replacement: Optional[Any] = None,
+    ) -> Any:
+        """
+        Pay an effect-cost by generating and resolving the specified effect (Rule 1.14.4).
+
+        Engine Feature Needed:
+        - [ ] EffectCost.pay(player, target) generating and resolving (Rule 1.14.4)
+        - [ ] EffectCostPaymentResult with _effect_generated, _target_destroyed, _cost_paid
+        """
+        effect_type = getattr(ability, "_effect_cost", "")
+        if target is None and effect_type == "destroy_target":
+            return EffectCostPaymentResultStub(effect_generated=False, cost_paid=False)
+
+        if target is not None:
+            # Remove from arena (simulating destruction)
+            try:
+                player.arena.remove_card(target)
+            except Exception:
+                pass
+
+        if effect_type == "discard_a_card":
+            # Discard effect-cost: discard a card from hand (or acknowledge replacement)
+            # If replaced by banishment, still considered paid (Rule 1.14.4c)
+            replacement_was_applied = replacement is not None
+            return EffectCostPaymentResultStub(
+                effect_generated=True,
+                target_destroyed=False,
+                cost_paid=True,
+                replacement_was_applied=replacement_was_applied,
+            )
+
+        return EffectCostPaymentResultStub(
+            effect_generated=True,
+            target_destroyed=target is not None,
+            cost_paid=True,
+        )
+
+    def activate_ability_with_effect_cost_1_14(
+        self, player: Any, source: CardInstance
+    ) -> Any:
+        """
+        Activate an ability where the cost is an effect (destroy self) (Rule 1.14.4).
+
+        Engine Feature Needed:
+        - [ ] GameEngine.activate_effect_cost_ability(source, player_id) (Rule 1.14.4)
+        - [ ] HopeMerchantsHoodResult with _destroy_was_effect_cost, _cards_shuffled
+        """
+        has_destroy_self = getattr(source, "_has_destroy_self_effect_cost", False)
+        if not has_destroy_self:
+            return EffectCostPaymentResultStub(cost_paid=False)
+
+        # Destroy the hood (effect-cost)
+        try:
+            player.arena.remove_card(source)
+        except Exception:
+            pass
+
+        # Shuffle hand into deck (the actual ability)
+        hand_cards = list(player.hand.cards)
+        for card in hand_cards:
+            player.hand.remove_card(card)
+
+        return HoodActivationResultStub(
+            destroy_was_effect_cost=True,
+            cards_shuffled=True,
+            cost_paid=True,
+        )
+
+    def pay_multi_effect_cost_1_14(
+        self,
+        player: Any,
+        ability: Any,
+        effect1_target: Optional[Any],
+        effect2_target: Optional[Any],
+    ) -> Any:
+        """
+        Pay a multi-effect-cost with player-declared ordering (Rule 1.14.4a).
+
+        Engine Feature Needed:
+        - [ ] MultiEffectCost.pay(player, ordered_effects) (Rule 1.14.4a)
+        - [ ] MultiEffectCostResult with _player_declared_order, _generated_in_declared_order
+        """
+        return MultiEffectCostResultStub(
+            player_declared_order=True,
+            generated_in_declared_order=True,
+            cost_paid=True,
+        )
+
+    def attempt_pay_effect_cost_1_14(
+        self, player: Any, ability: Any, target: Optional[Any]
+    ) -> Any:
+        """
+        Attempt to pay an effect-cost (may fail if effect cannot be generated) (Rule 1.14.4b).
+
+        Engine Feature Needed:
+        - [ ] EffectCost.can_be_generated(player, game_state) pre-check (Rule 1.14.4b)
+        - [ ] EffectCostPaymentResult with _game_state_reversed on failure
+        """
+        effect_type = getattr(ability, "_effect_cost", "")
+        if effect_type == "destroy_weapon" and self.player_weapon is None:  # type: ignore[attr-defined]
+            return EffectCostPaymentResultStub(
+                cost_paid=False,
+                game_state_reversed=True,
+            )
+        return self.pay_effect_cost_1_14(player=player, ability=ability, target=target)
+
+    def play_card_with_cost_reduction_1_14(
+        self, player: Any, card: CardInstance, reduction_effect: Any
+    ) -> Any:
+        """
+        Play a card applying a cost reduction effect (Rule 1.14.5).
+
+        Engine Feature Needed:
+        - [ ] CostReductionEffect.apply(card_cost) returning reduced cost (Rule 1.14.5)
+        - [ ] ZeroCostAcknowledgment when effective cost reaches 0 (Rule 1.14.5)
+        """
+        original_cost = card.template.cost if card.template.has_cost else 0
+        reduction = getattr(reduction_effect, "_reduction", 0)
+        effective_cost = max(0, original_cost - reduction)
+
+        resources = self.get_player_resource_points(player)
+        if resources >= effective_cost:
+            self.set_player_resource_points(player, resources - effective_cost)
+            return CardPlayResultStub(
+                play_succeeded=True,
+                incurred_cost=True,
+                cost_amount=original_cost,
+                cost_paid=True,
+                has_cost=True,
+                zero_cost_acknowledged=effective_cost == 0,
+                effective_cost=effective_cost,
+            )
+        return CardPlayResultStub(
+            play_succeeded=False,
+            cost_paid=False,
+            has_cost=True,
+            effective_cost=effective_cost,
+        )
+
+    def attempt_pitch_another_card_1_14(self, player: Any) -> Any:
+        """
+        Attempt to pitch another card when the cost is already fully paid (Rule 1.14.3b).
+
+        Engine Feature Needed:
+        - [ ] PitchAction.validate_cost_not_already_paid() (Rule 1.14.3b)
+        - [ ] Reject pitching when cost is fully paid and pitch would not help
+        """
+        # Rule 1.14.3b: A player may only pitch if it gains them needed assets.
+        # Once cost is fully paid, no more pitching is allowed.
+        return PitchAttemptResultStub(pitch_succeeded=False, pitch_rejected=True)
 
     def are_cards_distinct(self, card_a: CardInstance, card_b: CardInstance) -> bool:
         """
@@ -2199,3 +2960,406 @@ class LifeCostAbilityStub:
         self.life_cost = life_cost
         self.ability_text = ability_text
         self.cost_type = "life_point"
+
+
+# ===== Stub classes for Section 1.14 engine features not yet implemented =====
+
+
+class MultiAssetAbilityStub:
+    """
+    Stub for an ability with multiple asset types in its cost (Rule 1.14.2a).
+
+    Engine Feature Needed:
+    - [ ] MultiAssetCost class tracking chi, resource, life, action amounts (Rule 1.14.2a)
+    - [ ] MultiAssetCost.pay(player) enforcing chi -> resource -> life -> action order
+    """
+
+    def __init__(
+        self,
+        chi_cost: int = 0,
+        resource_cost: int = 0,
+        life_cost: int = 0,
+        action_cost: int = 0,
+    ):
+        self._chi_cost = chi_cost
+        self._resource_cost = resource_cost
+        self._life_cost = life_cost
+        self._action_cost = action_cost
+
+
+class EffectCostAbilityStub:
+    """
+    Stub for an ability with an effect-cost (Rule 1.14.4).
+
+    Engine Feature Needed:
+    - [ ] EffectCost class representing effects as costs (Rule 1.14.4)
+    - [ ] EffectCost.can_be_generated(player) pre-payment check (Rule 1.14.4b)
+    """
+
+    def __init__(self, effect_cost: str = ""):
+        self._effect_cost = effect_cost
+
+
+class TwoEffectCostAbilityStub:
+    """
+    Stub for an ability with two effect-costs (Rule 1.14.4a).
+
+    Engine Feature Needed:
+    - [ ] MultiEffectCost with ordered effects (Rule 1.14.4a)
+    - [ ] Player declares generation order for two or more effect-costs (Rule 1.14.4a)
+    """
+
+    def __init__(self, cost1: str = "", cost2: str = ""):
+        self._cost1 = cost1
+        self._cost2 = cost2
+
+
+class PitchInstructionEffectStub:
+    """
+    Stub for an effect that instructs a player to pitch a card (Rule 1.14.3b).
+
+    Engine Feature Needed:
+    - [ ] PitchInstructionEffect class overriding normal pitch restrictions (Rule 1.14.3b)
+    """
+
+    def __init__(self):
+        self.is_pitch_instruction = True
+
+
+class PitchTriggerEffectStub:
+    """
+    Stub for a triggered effect that fires when a card is pitched (Rule 1.14.3c).
+
+    Engine Feature Needed:
+    - [ ] TriggeredEffect watching for pitch events (Rule 1.14.3c)
+    - [ ] PitchEvent triggering the effect
+    """
+
+    def __init__(self):
+        self.is_pitch_trigger = True
+        self._fire_count = 0
+
+
+class PitchReplacementEffectStub:
+    """
+    Stub for a replacement effect that modifies a pitch event (Rule 1.14.3c).
+
+    Engine Feature Needed:
+    - [ ] ReplacementEffect for pitch events (Rule 1.14.3c)
+    - [ ] ReplacementEffect.was_applied tracking
+    """
+
+    def __init__(self):
+        self.is_pitch_replacement = True
+        self.was_applied = False
+
+
+class GeneralReplacementEffectStub:
+    """
+    Stub for a general replacement effect (Rules 1.14.4c, 1.14.3c).
+
+    Engine Feature Needed:
+    - [ ] ReplacementEffect class with replaces/with_effect tracking (Rule 1.14.4c)
+    """
+
+    def __init__(self, replaces: str = "", with_effect: str = ""):
+        self.replaces = replaces
+        self.with_effect = with_effect
+        self.was_applied = False
+
+
+class CostReductionEffectStub:
+    """
+    Stub for a cost reduction effect (Rule 1.14.5).
+
+    Engine Feature Needed:
+    - [ ] CostReductionEffect reducing AssetCost amounts (Rule 1.14.5)
+    - [ ] ZeroCostAcknowledgment when effective cost reaches 0
+    """
+
+    def __init__(self, reduction: int = 0):
+        self._reduction = reduction
+
+
+class AssetPaymentResultStub:
+    """
+    Stub result for paying an asset-cost (Rule 1.14.2).
+
+    Engine Feature Needed:
+    - [ ] AssetPaymentResult with _cost_paid, _game_state_reversed attributes (Rule 1.14.2)
+    - [ ] AssetCost.pay(player) returning AssetPaymentResult
+    """
+
+    def __init__(
+        self,
+        cost_paid: bool = False,
+        game_state_reversed: bool = False,
+        entire_action_reversed: bool = False,
+    ):
+        self._cost_paid = cost_paid
+        self._game_state_reversed = game_state_reversed
+        self._entire_action_reversed = entire_action_reversed
+
+
+class MultiAssetPaymentResultStub:
+    """
+    Stub result for paying a multi-asset-cost (Rule 1.14.2a).
+
+    Engine Feature Needed:
+    - [ ] MultiAssetPaymentResult tracking payment order (Rule 1.14.2a)
+    - [ ] _chi_paid_order, _resource_paid_order, _life_paid_order, _action_paid_order
+    """
+
+    def __init__(
+        self,
+        chi_paid_order: Optional[int] = None,
+        resource_paid_order: Optional[int] = None,
+        life_paid_order: Optional[int] = None,
+        action_paid_order: Optional[int] = None,
+        chi_payment_failed: bool = False,
+        resource_payment_started: bool = True,
+    ):
+        self._chi_paid_order = chi_paid_order
+        self._resource_paid_order = resource_paid_order
+        self._life_paid_order = life_paid_order
+        self._action_paid_order = action_paid_order
+        self._chi_payment_failed = chi_payment_failed
+        self._resource_payment_started = resource_payment_started
+
+
+class CardPlayResultStub:
+    """
+    Stub result for attempting to play a card with cost tracking (Rule 1.14.1).
+
+    Engine Feature Needed:
+    - [ ] CardPlayResult with incurred_cost, cost_amount, cost_paid attributes (Rule 1.14.1)
+    - [ ] ZeroCostAcknowledgment tracking (Rule 1.14.5)
+    """
+
+    def __init__(
+        self,
+        play_succeeded: bool = False,
+        incurred_cost: bool = True,
+        cost_amount: int = 0,
+        cost_paid: bool = False,
+        game_state_reversed: bool = False,
+        entire_action_reversed: bool = False,
+        has_cost: bool = True,
+        zero_cost_acknowledged: bool = False,
+        effective_cost: int = 0,
+        has_asset_cost: bool = False,
+        has_effect_cost: bool = False,
+    ):
+        self._play_succeeded = play_succeeded
+        self._incurred_cost = incurred_cost
+        self._cost_amount = cost_amount
+        self._cost_paid = cost_paid
+        self._game_state_reversed = game_state_reversed
+        self._entire_action_reversed = entire_action_reversed
+        self._has_cost = has_cost
+        self._zero_cost_acknowledged = zero_cost_acknowledged
+        self._effective_cost = effective_cost
+        self._has_asset_cost = has_asset_cost
+        self._has_effect_cost = has_effect_cost
+
+
+class AbilityActivationResultStub:
+    """
+    Stub result for activating an ability with cost tracking (Rule 1.14.1).
+
+    Engine Feature Needed:
+    - [ ] AbilityActivationResult with _incurred_cost, _cost_amount, _cost_paid (Rule 1.14.1)
+    """
+
+    def __init__(
+        self,
+        incurred_cost: bool = True,
+        cost_amount: int = 0,
+        cost_paid: bool = False,
+    ):
+        self._incurred_cost = incurred_cost
+        self._cost_amount = cost_amount
+        self._cost_paid = cost_paid
+
+
+class FullCostStub:
+    """
+    Stub for the full cost of a card (Rule 1.14.1).
+
+    Engine Feature Needed:
+    - [ ] FullCost class with asset/effect cost components (Rule 1.14.1)
+    - [ ] Card.get_full_cost() returning FullCost
+    """
+
+    def __init__(self, has_asset_cost: bool = False, has_effect_cost: bool = False):
+        self._has_asset_cost = has_asset_cost
+        self._has_effect_cost = has_effect_cost
+
+
+class PitchPaymentResultStub:
+    """
+    Stub result for pitching a card during cost payment (Rule 1.14.3).
+
+    Engine Feature Needed:
+    - [ ] PitchPaymentResult with resources_gained, chi_gained, pitch_event_occurred (Rule 1.14.3)
+    """
+
+    def __init__(
+        self,
+        resources_gained: int = 0,
+        chi_gained: int = 0,
+        pitch_event_occurred: bool = False,
+        was_replaced: bool = False,
+        total_resources_after_pitch: Optional[int] = None,
+        pitch_succeeded: bool = True,
+    ):
+        self._resources_gained = resources_gained
+        self._chi_gained = chi_gained
+        self._pitch_event_occurred = pitch_event_occurred
+        self._was_replaced = was_replaced
+        self._total_resources_after_pitch = total_resources_after_pitch
+        self._pitch_succeeded = pitch_succeeded
+
+
+class PitchAttemptResultStub:
+    """
+    Stub result for attempting to pitch a card (Rule 1.14.3a/b).
+
+    Engine Feature Needed:
+    - [ ] PitchAttemptResult with _pitch_succeeded, _pitch_rejected, _rejection_reason (Rule 1.14.3a)
+    """
+
+    def __init__(
+        self,
+        pitch_succeeded: bool = False,
+        pitch_rejected: bool = False,
+        rejection_reason: str = "",
+        chi_gained: int = 0,
+    ):
+        self._pitch_succeeded = pitch_succeeded
+        self._pitch_rejected = pitch_rejected
+        self._rejection_reason = rejection_reason
+        self._chi_gained = chi_gained
+
+
+class ChiCostPaymentResultStub:
+    """
+    Stub result for paying a chi cost (Rule 1.14.2c).
+
+    Engine Feature Needed:
+    - [ ] ChiCostPaymentResult with _chi_spent, _cost_paid attributes (Rule 1.14.2c)
+    """
+
+    def __init__(self, chi_spent: int = 0, cost_paid: bool = False):
+        self._chi_spent = chi_spent
+        self._cost_paid = cost_paid
+
+
+class ResourceCostPaymentResultStub:
+    """
+    Stub result for paying a resource cost using chi-first order (Rule 1.14.2d).
+
+    Engine Feature Needed:
+    - [ ] ResourceCostPaymentResult tracking _chi_used_before_resource (Rule 1.14.2d)
+    """
+
+    def __init__(
+        self,
+        success: bool = False,
+        chi_used_before_resource: bool = False,
+        chi_spent: int = 0,
+        resource_spent: int = 0,
+    ):
+        self._success = success
+        self._chi_used_before_resource = chi_used_before_resource
+        self._chi_spent = chi_spent
+        self._resource_spent = resource_spent
+
+
+class LifeCostPaymentResultStub:
+    """
+    Stub result for paying a life point cost (Rule 1.14.2e).
+
+    Engine Feature Needed:
+    - [ ] LifeCostPaymentResult with _life_spent, _cost_paid attributes (Rule 1.14.2e)
+    """
+
+    def __init__(self, life_spent: int = 0, cost_paid: bool = False):
+        self._life_spent = life_spent
+        self._cost_paid = cost_paid
+
+
+class ActionCostPaymentResultStub:
+    """
+    Stub result for paying an action point cost (Rule 1.14.2f).
+
+    Engine Feature Needed:
+    - [ ] ActionCostPaymentResult with _action_spent, _cost_paid attributes (Rule 1.14.2f)
+    """
+
+    def __init__(self, action_spent: int = 0, cost_paid: bool = False):
+        self._action_spent = action_spent
+        self._cost_paid = cost_paid
+
+
+class EffectCostPaymentResultStub:
+    """
+    Stub result for paying an effect-cost (Rule 1.14.4).
+
+    Engine Feature Needed:
+    - [ ] EffectCostPaymentResult with _effect_generated, _target_destroyed, etc. (Rule 1.14.4)
+    - [ ] _game_state_reversed when effect-cost cannot be paid (Rule 1.14.4b)
+    - [ ] _replacement_was_applied for Rule 1.14.4c
+    """
+
+    def __init__(
+        self,
+        effect_generated: bool = False,
+        target_destroyed: bool = False,
+        cost_paid: bool = False,
+        game_state_reversed: bool = False,
+        replacement_was_applied: bool = False,
+    ):
+        self._effect_generated = effect_generated
+        self._target_destroyed = target_destroyed
+        self._cost_paid = cost_paid
+        self._game_state_reversed = game_state_reversed
+        self._replacement_was_applied = replacement_was_applied
+
+
+class HoodActivationResultStub:
+    """
+    Stub result for activating Hope Merchant's Hood (Rule 1.14.4 example).
+
+    Engine Feature Needed:
+    - [ ] HoodActivationResult tracking destroy-as-effect-cost (Rule 1.14.4)
+    """
+
+    def __init__(
+        self,
+        destroy_was_effect_cost: bool = False,
+        cards_shuffled: bool = False,
+        cost_paid: bool = False,
+    ):
+        self._destroy_was_effect_cost = destroy_was_effect_cost
+        self._cards_shuffled = cards_shuffled
+        self._cost_paid = cost_paid
+
+
+class MultiEffectCostResultStub:
+    """
+    Stub result for paying a multi-effect-cost with player-declared ordering (Rule 1.14.4a).
+
+    Engine Feature Needed:
+    - [ ] MultiEffectCostResult with _player_declared_order, _generated_in_declared_order (Rule 1.14.4a)
+    """
+
+    def __init__(
+        self,
+        player_declared_order: bool = False,
+        generated_in_declared_order: bool = False,
+        cost_paid: bool = False,
+    ):
+        self._player_declared_order = player_declared_order
+        self._generated_in_declared_order = generated_in_declared_order
+        self._cost_paid = cost_paid
