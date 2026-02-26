@@ -982,6 +982,161 @@ This section tests effect rules in Flesh and Blood:
 - `NextAttackEffect` tracking attacks coming under player control (Rule 1.8.10)
 - `NextAttackEffect.does_not_apply_retroactively=True` for property changes (Rule 1.8.10a)
 
+### Section 1.9: Events
+
+**File**: `features/section_1_9_events.feature`
+**Step Definitions**: `step_defs/test_section_1_9_events.py`
+
+This section tests event rules in Flesh and Blood:
+- **Rule 1.9.1**: An event is a change in game state (layer resolution, effect result, phase transition, or player action)
+- **Rule 1.9.1a**: Outside-game events cannot be modified by in-game replacement effects or trigger in-game triggered effects, unless they directly interact with the game
+- **Rule 1.9.1b**: Events comprising instructions to do nothing do not occur; cannot be modified or trigger effects
+- **Rule 1.9.1c**: Player may choose to fail unverifiable instructions
+- **Rule 1.9.2**: Compound events involve performing the same instruction multiple times, expanded into individual events
+- **Rule 1.9.2a**: Triggered effects trigger once on compound event, not again for individual events
+- **Rule 1.9.2b**: Replacement effects replacing compound events cannot also replace individual events
+- **Rule 1.9.2c**: Multi-player events are compound events in clockwise order from turn player (or effect controller)
+- **Rule 1.9.3**: Composite events are made up of one or more internal events
+- **Rule 1.9.3a**: Triggered effects on composite events trigger only once
+- **Rule 1.9.3b**: Prevented triggering applies to entire composite event and its internal events
+- **Rule 1.9.3c**: Partially replacing internal events does not prevent composite event from occurring
+- **Rule 1.9.3d**: Composite event does not occur if all internal events fail
+
+#### Test Scenarios:
+
+1. **test_layer_resolution_produces_an_event**
+   - Tests: Rule 1.9.1 - Layer resolution is a source of events
+   - Verifies: event_type = "layer_resolution" when a card on the stack resolves
+
+2. **test_player_action_produces_an_event**
+   - Tests: Rule 1.9.1 - Player actions produce events
+   - Verifies: event_type = "player_action" when player draws a card
+
+3. **test_turn_phase_transition_produces_an_event**
+   - Tests: Rule 1.9.1 - Phase transitions produce events
+   - Verifies: event_type = "phase_transition" when game moves to action phase
+
+4. **test_event_can_be_modified_by_replacement_effect**
+   - Tests: Rule 1.9.1 - Events can be modified by replacement effects
+   - Verifies: Replacement effect doubles draw event
+
+5. **test_event_can_trigger_a_triggered_effect**
+   - Tests: Rule 1.9.1 - Events can trigger triggered effects
+   - Verifies: Discard event fires triggered effect
+
+6. **test_outside_game_event_cannot_be_modified_by_replacement_effects**
+   - Tests: Rule 1.9.1a - Outside-game events not modifiable in-game
+   - Verifies: Booster reveal event not modified by in-game replacement
+
+7. **test_outside_game_event_that_interacts_with_game_can_be_modified**
+   - Tests: Rule 1.9.1a - Game-interacting events from outside effects can be modified
+   - Verifies: Put-into-hand event can be modified by zone-entry replacement
+
+8. **test_zero_damage_event_does_not_occur**
+   - Tests: Rule 1.9.1b - Blazing Aether example (0 damage = no event)
+   - Verifies: event.occurred = False when X = 0
+
+9. **test_non_occurring_event_cannot_be_modified_by_replacement_effects**
+   - Tests: Rule 1.9.1b - Null events block replacement effects
+   - Verifies: Replacement effect not applied to null event
+
+10. **test_non_occurring_event_does_not_trigger_effects**
+    - Tests: Rule 1.9.1b - Null events don't trigger triggered effects
+    - Verifies: trigger_count = 0 when null event fires
+
+11. **test_player_may_fail_unverifiable_instruction**
+    - Tests: Rule 1.9.1c - Moon Wish example (private deck search)
+    - Verifies: Player can choose to fail finding Sun Kiss
+
+12. **test_player_cannot_fail_verifiable_instruction**
+    - Tests: Rule 1.9.1c (converse) - Verifiable instructions must be completed
+    - Verifies: Player cannot fail a draw when deck contents are verifiable
+
+13. **test_draw_three_cards_is_a_compound_event**
+    - Tests: Rule 1.9.2 - Tome of Harvests example ("Draw 3 cards")
+    - Verifies: Compound event with 3 individual draw events in sequence
+
+14. **test_compound_event_is_expanded_into_individual_events**
+    - Tests: Rule 1.9.2 - Compact format expanded to individual events
+    - Verifies: "Create 2 Runechant tokens" expands to 2 individual creation events
+
+15. **test_triggered_effect_on_compound_event_fires_only_once**
+    - Tests: Rule 1.9.2a - Korshem example
+    - Verifies: Korshem triggers once on compound reveal, not 3 more times
+
+16. **test_triggered_effect_does_not_re_trigger_on_individual_events_of_compound**
+    - Tests: Rule 1.9.2a - Second compound trigger scenario
+    - Verifies: Draw trigger fires once for compound of 3 draws
+
+17. **test_replacement_effect_on_compound_event_cannot_replace_individual_events**
+    - Tests: Rule 1.9.2b - Mordred Tide example
+    - Verifies: 3+1=4 tokens created, not 8 (no cascade to individual events)
+
+18. **test_replacement_of_compound_event_does_not_cascade_to_individual_events**
+    - Tests: Rule 1.9.2b - Second compound replacement scenario
+    - Verifies: Replacement of compound draw doesn't cascade
+
+19. **test_multi_player_event_is_compound_event_in_clockwise_order_from_turn_player**
+    - Tests: Rule 1.9.2c - This Round's on Me example
+    - Verifies: "Each hero draws" starts with turn player (player 0)
+
+20. **test_multi_player_event_from_effect_starts_with_effect_controller**
+    - Tests: Rule 1.9.2c - Effect controller overrides turn player order
+    - Verifies: "Each hero draws" from player 0's effect starts with player 0
+
+21. **test_discard_is_a_composite_event_with_internal_events**
+    - Tests: Rule 1.9.3 - Discard as composite event
+    - Verifies: Composite discard has internal move event (hand → graveyard)
+
+22. **test_composite_event_is_made_up_of_one_or_more_internal_events**
+    - Tests: Rule 1.9.3 - Generic composite event structure
+    - Verifies: Composite event tracks its internal events
+
+23. **test_triggered_effect_only_triggers_once_on_composite_event**
+    - Tests: Rule 1.9.3a - Single trigger from composite + internal
+    - Verifies: Discard trigger fires once, not also from internal move event
+
+24. **test_triggered_effect_on_composite_event_does_not_double_trigger**
+    - Tests: Rule 1.9.3a - Double-matching trigger fires once
+    - Verifies: trigger_count = 1 even if both composite and internal match
+
+25. **test_preventing_trigger_on_composite_event_also_prevents_on_internal_events**
+    - Tests: Rule 1.9.3b - Prevention applies to entire composite event
+    - Verifies: Prevented trigger doesn't fire from internal events either
+
+26. **test_replacing_internal_event_destination_does_not_prevent_composite_event**
+    - Tests: Rule 1.9.3c - Discard to banished example
+    - Verifies: Composite discard still occurs even with modified destination
+
+27. **test_partial_modification_of_internal_event_leaves_composite_event_intact**
+    - Tests: Rule 1.9.3c - General partial replacement
+    - Verifies: Composite event persists when internal is partially replaced
+
+28. **test_composite_event_does_not_occur_if_all_internal_events_are_replaced**
+    - Tests: Rule 1.9.3d - Full replacement prevents composite
+    - Verifies: composite.occurred = False when internal event fully replaced
+
+29. **test_all_internal_events_fail_prevents_composite_event_triggering**
+    - Tests: Rule 1.9.3d - No triggers from non-occurring composite
+    - Verifies: Discard trigger doesn't fire when composite didn't occur
+
+#### Engine Features Needed:
+- `Event` class hierarchy: `Event`, `CompoundEvent`, `CompositeEvent` (Rule 1.9.1)
+- `Event.event_type` attribute identifying source type (Rule 1.9.1)
+- `Event.occurred` property (Rule 1.9.1b)
+- `Event.is_outside_game` and `Event.directly_interacts_with_game` (Rule 1.9.1a)
+- `ReplacementEffect.can_modify(event)` checking outside-game status (Rule 1.9.1a)
+- `NullEvent` - event with `occurred = False` (Rule 1.9.1b)
+- `UnverifiableInstruction` with `player_may_fail = True` (Rule 1.9.1c)
+- `CompoundEvent.individual_events` list (Rule 1.9.2)
+- `TriggeredEffect.fires_once_per_compound_event` (Rule 1.9.2a)
+- `ReplacementEffect.applied_to_compound` tracking (Rule 1.9.2b)
+- `MultiPlayerEvent` starting with turn player or effect controller (Rule 1.9.2c)
+- `CompositeEvent.internal_events` list (Rule 1.9.3)
+- `CompositeEvent.trigger_once_on_composite_event()` (Rule 1.9.3a)
+- `TriggerPrevention.applies_to_composite_and_internal = True` (Rule 1.9.3b)
+- `CompositeEvent.occurred = False` when all internal events fail (Rule 1.9.3d)
+
 ### Section 1.3.1a: Card Ownership
 
 **File**: `features/section_1_3_1a_card_ownership.feature`
@@ -1097,7 +1252,7 @@ The ultimate goal is to have **complete test coverage** of the Flesh and Blood C
 - [x] 1.6: Layers
 - [x] 1.7: Abilities
 - [x] 1.8: Effects
-- [ ] 1.9: Events
+- [x] 1.9: Events
 - [ ] 1.10: Game State
 - [ ] 1.11: Priority
 - [ ] 1.12: Numbers and Symbols
