@@ -1137,6 +1137,128 @@ This section tests event rules in Flesh and Blood:
 - `TriggerPrevention.applies_to_composite_and_internal = True` (Rule 1.9.3b)
 - `CompositeEvent.occurred = False` when all internal events fail (Rule 1.9.3d)
 
+### Section 1.10: Game State
+
+**File**: `features/section_1_10_game_state.feature`
+**Step Definitions**: `step_defs/test_section_1_10_game_state.py`
+
+This section tests game state concepts in Flesh and Blood:
+- **Rule 1.10.1**: A game state is a moment in the game; priority state is where player receives priority
+- **Rule 1.10.2**: When transitioning to a priority state, five game state actions execute in order:
+  - **(a)** Hero death check — players with dead heroes lose (or draw)
+  - **(b)** Clear living objects with 0 life simultaneously as one event
+  - **(c)** Start continuous look effects based on card location
+  - **(d)** Fire state-based triggered effects; add triggered layers to stack (clockwise from turn player)
+  - **(e)** If combat chain is open and closed by rule/effect, begin Close Step
+- **Rule 1.10.3**: Illegal actions reverse the game state to before the action started
+- **Rule 1.10.3a**: Triggered effects do not fire from game state reversals
+- **Rule 1.10.3b**: Replacement effects cannot modify reversal events
+- **Rule 1.10.3c**: If full reversal is impossible, reverse as much as possible and continue from last legal state
+
+#### Test Scenarios:
+
+1. **test_game_state_is_discrete_moment**
+   - Tests: Rule 1.10.1 - Game state is a moment in the game
+   - Verifies: Game state can be captured as a snapshot representing a single moment
+
+2. **test_priority_state_gives_priority_to_player**
+   - Tests: Rule 1.10.1 - Priority state gives priority to a player
+   - Verifies: When transitioning to priority state, active player has priority
+
+3. **test_no_priority_during_game_state_actions**
+   - Tests: Rule 1.10.1 - No player has priority during game state actions
+   - Verifies: No priority given while executing game state actions
+
+4. **test_hero_zero_life_triggers_loss**
+   - Tests: Rule 1.10.2a - Hero at 0 life causes player loss
+   - Verifies: First game state action checks for dead heroes
+
+5. **test_simultaneous_hero_death_is_draw**
+   - Tests: Rule 1.10.2a - All heroes dying simultaneously = draw
+   - Verifies: game_result = "draw" when all heroes die
+
+6. **test_living_object_zero_life_cleared**
+   - Tests: Rule 1.10.2b - Living object at 0 life is cleared as second action
+   - Verifies: Living permanent with 0 life removed from arena
+
+7. **test_multiple_living_objects_cleared_simultaneously**
+   - Tests: Rule 1.10.2b - Multiple 0-life living objects cleared as ONE event
+   - Verifies: clearing_event_count == 1 for multiple objects
+
+8. **test_hero_zero_life_is_action_1_not_action_2**
+   - Tests: Rule 1.10.2a vs 1.10.2b - Hero death is action 1 not action 2
+   - Verifies: hero_death_handled_in_action == 1
+
+9. **test_continuous_look_effect_activates_at_action_3**
+   - Tests: Rule 1.10.2c - Continuous look effects start at action 3
+   - Verifies: look_effects_started includes player 0's effect
+
+10. **test_state_based_triggered_effect_fires**
+    - Tests: Rule 1.10.2d - State-based triggered effects fire at action 4
+    - Verifies: state_based_triggers_fired > 0, triggered layers added to stack
+
+11. **test_triggered_layers_added_in_clockwise_order**
+    - Tests: Rule 1.10.2d - Multiple triggered layers added clockwise from turn player
+    - Verifies: triggered_layer_order tracking exists
+
+12. **test_combat_chain_closed_begins_close_step**
+    - Tests: Rule 1.10.2e - Closed combat chain starts Close Step
+    - Verifies: close_step_initiated = True when chain closed by effect
+
+13. **test_no_close_step_without_open_combat_chain**
+    - Tests: Rule 1.10.2e - No Close Step without open combat chain
+    - Verifies: close_step_initiated = False when chain not open
+
+14. **test_game_state_actions_performed_in_order**
+    - Tests: Rule 1.10.2 - Actions executed in order (a) through (e)
+    - Verifies: actions_performed in sequence 1-5; hero death before clearing
+
+15. **test_illegal_action_reverses_game_state**
+    - Tests: Rule 1.10.3 - Illegal action reverses game state
+    - Verifies: state_restored = True after reversal
+
+16. **test_mid_action_illegality_reverses_game_state**
+    - Tests: Rule 1.10.3 - Mid-completion illegality reverses entire action
+    - Verifies: state_restored = True even for partially-completed actions
+
+17. **test_triggered_effects_suppressed_during_reversal**
+    - Tests: Rule 1.10.3a - No triggered effects fire during reversal
+    - Verifies: triggered_effects_fired == 0
+
+18. **test_replacement_effects_suppressed_during_reversal**
+    - Tests: Rule 1.10.3b - Replacement effects cannot modify reversal events
+    - Verifies: replacement_effects_applied == 0
+
+19. **test_partial_reversal_when_full_reversal_impossible**
+    - Tests: Rule 1.10.3c - Partial reversal when full reversal impossible
+    - Verifies: reversal_was_partial = True, game continues from last legal state
+
+20. **test_unplayable_card_play_reversed**
+    - Tests: Rule 1.10.3 - Playing unplayable card reversed
+    - Verifies: play_was_illegal = True, card returns to starting zone
+
+21. **test_cost_payment_with_illegal_play_reversed**
+    - Tests: Rule 1.10.3 - Full action reversal including cost payment
+    - Verifies: cost_restored = True, player resources restored
+
+#### Engine Features Needed:
+- `GameState` class representing a discrete moment (Rule 1.10.1)
+- `GameState.is_priority_state` property (Rule 1.10.1)
+- `GameEngine.has_priority_player()` method (Rule 1.10.1)
+- `GameEngine.get_priority_player()` method (Rule 1.10.1)
+- `GameStateAction` system executing actions (a)-(e) in order (Rule 1.10.2)
+- `GameStateAction.check_hero_deaths()` → player loss / draw detection (Rule 1.10.2a)
+- `GameStateAction.clear_zero_life_permanents()` as simultaneous single event (Rule 1.10.2b)
+- `GameStateAction.start_look_effects()` for continuous look effects (Rule 1.10.2c)
+- `GameStateAction.fire_state_based_triggers()` with clockwise ordering (Rule 1.10.2d)
+- `GameStateAction.check_combat_chain_closing()` → initiate Close Step (Rule 1.10.2e)
+- `GameEngine.reverse_illegal_action()` method (Rule 1.10.3)
+- `ReversalResult` with `state_restored`, `reversal_was_partial` (Rule 1.10.3)
+- Triggered effect suppression during reversal (Rule 1.10.3a)
+- Replacement effect suppression during reversal (Rule 1.10.3b)
+- `ContinuousLookEffect` class with location-based activation (Rule 1.10.2c)
+- Clockwise ordering for multiple triggered layer placement (Rule 1.10.2d)
+
 ### Section 1.3.1a: Card Ownership
 
 **File**: `features/section_1_3_1a_card_ownership.feature`
@@ -1253,7 +1375,7 @@ The ultimate goal is to have **complete test coverage** of the Flesh and Blood C
 - [x] 1.7: Abilities
 - [x] 1.8: Effects
 - [x] 1.9: Events
-- [ ] 1.10: Game State
+- [x] 1.10: Game State
 - [ ] 1.11: Priority
 - [ ] 1.12: Numbers and Symbols
 - [ ] 1.13: Assets
