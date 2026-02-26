@@ -1259,6 +1259,117 @@ This section tests game state concepts in Flesh and Blood:
 - `ContinuousLookEffect` class with location-based activation (Rule 1.10.2c)
 - Clockwise ordering for multiple triggered layer placement (Rule 1.10.2d)
 
+### Section 1.11: Priority
+
+**File**: `features/section_1_11_priority.feature`
+**Step Definitions**: `step_defs/test_section_1_11_priority.py`
+
+This section tests the priority system in Flesh and Blood:
+- **Rule 1.11.1**: Priority describes which player may play a card, activate an ability, or pass priority
+- **Rule 1.11.2**: Only one player can have priority at a time; that player is the "active player"
+- **Rule 1.11.3**: Priority only exists during the Action Phase (not during the Close Step); turn player gains priority at phase start, during combat steps, and after layer resolution
+- **Rule 1.11.4**: Active player may pass priority to the next player ("pass")
+- **Rule 1.11.4a**: Priority passes clockwise; all-pass with non-empty stack resolves top layer; all-pass with empty stack ends the phase/step
+- **Rule 1.11.5**: Active player regains priority after playing a card or activating an ability; loses priority after passing; no priority during card play, ability activation, layer resolution, game processes, or game state actions
+
+#### Test Scenarios:
+
+1. **test_priority_is_game_state_concept**
+   - Tests: Rule 1.11.1 - Priority describes which player may act
+   - Verifies: Priority tracking records who may play cards, activate abilities, or pass
+
+2. **test_only_one_player_has_priority**
+   - Tests: Rule 1.11.2 - Only one player can have priority at a time
+   - Verifies: Exactly one player holds priority in the action phase
+
+3. **test_player_with_priority_is_active_player**
+   - Tests: Rule 1.11.2 - Player with priority is the "active player"
+   - Verifies: Priority holder is active player; others are inactive players
+
+4. **test_priority_only_in_action_phase**
+   - Tests: Rule 1.11.3 - Priority only exists during Action Phase
+   - Verifies: No player has priority during the start phase
+
+5. **test_turn_player_gains_priority_at_action_phase_start**
+   - Tests: Rule 1.11.3 - Turn player gains priority at start of action phase
+   - Verifies: priority_player_id == turn_player_id when action phase begins
+
+6. **test_no_priority_during_close_step**
+   - Tests: Rule 1.11.3 - No priority during the Close Step of combat
+   - Verifies: priority_player_id is None when Close Step begins
+
+7. **test_turn_player_gains_priority_during_combat_steps**
+   - Tests: Rule 1.11.3 - Turn player gains priority during combat steps (except Close Step)
+   - Verifies: priority_player_id == turn_player_id at attack step
+
+8. **test_turn_player_gains_priority_after_layer_resolution**
+   - Tests: Rule 1.11.3 - Turn player gains priority after layer resolves
+   - Verifies: priority_player_id == turn_player_id after top layer resolves
+
+9. **test_active_player_may_pass_priority**
+   - Tests: Rule 1.11.4 - Active player may pass priority
+   - Verifies: After passing, active player no longer holds priority; next clockwise player does
+
+10. **test_priority_passes_clockwise**
+    - Tests: Rule 1.11.4a - Priority passes to next player in clockwise order
+    - Verifies: In 3-player game, player 0 passing gives priority to player 1
+
+11. **test_priority_passes_clockwise_wrap**
+    - Tests: Rule 1.11.4a - Clockwise order wraps from last to first
+    - Verifies: Player 2 passing in 3-player game gives priority to player 0
+
+12. **test_all_pass_non_empty_stack_resolves**
+    - Tests: Rule 1.11.4a - All players passing with non-empty stack resolves top layer
+    - Verifies: all_players_passed = True and stack was non-empty triggers resolution
+
+13. **test_all_pass_empty_stack_ends_phase**
+    - Tests: Rule 1.11.4a - All players passing with empty stack ends phase or step
+    - Verifies: all_players_passed = True and stack empty triggers phase/step end
+
+14. **test_active_player_regains_priority_after_card_play**
+    - Tests: Rule 1.11.5 - Active player regains priority after playing a card
+    - Verifies: priority_player_id == turn_player_id after card is played
+
+15. **test_active_player_regains_priority_after_ability**
+    - Tests: Rule 1.11.5 - Active player regains priority after activating an ability
+    - Verifies: priority_player_id == turn_player_id after ability is activated
+
+16. **test_active_player_loses_priority_after_passing**
+    - Tests: Rule 1.11.5 - Active player loses priority after passing
+    - Verifies: priority_player_id != turn_player_id after passing
+
+17. **test_no_priority_during_card_play**
+    - Tests: Rule 1.11.5 - No player has priority while a card is being played
+    - Verifies: priority_player_id is None during card play process
+
+18. **test_no_priority_during_layer_resolution**
+    - Tests: Rule 1.11.5 - No player has priority while a layer is resolving
+    - Verifies: priority_player_id is None during layer resolution
+
+19. **test_no_priority_during_game_state_actions**
+    - Tests: Rule 1.11.5 - No player has priority during game state actions
+    - Verifies: priority_player_id is None during game state actions
+
+#### Engine Features Needed:
+- `PriorityState` class tracking which player has priority (Rule 1.11.1)
+- `PriorityState.active_player_id` (Rule 1.11.2)
+- `GamePhase` enum with `ACTION_PHASE`, `START_PHASE`, `END_PHASE` (Rule 1.11.3)
+- `GameEngine.get_priority_player_id()` (Rule 1.11.2)
+- `GameEngine.current_phase` property (Rule 1.11.3)
+- `GameEngine.grant_priority_to_turn_player()` (Rule 1.11.3)
+- `CombatStep` enum including `CLOSE_STEP` (Rule 1.11.3)
+- `GameEngine.current_combat_step` property (Rule 1.11.3)
+- `GameEngine.pass_priority(player_id)` -> `PriorityPassResult` (Rule 1.11.4)
+- `PriorityPassResult.next_priority_holder_id` (Rule 1.11.4a)
+- `GameEngine.all_players_passed()` -> bool (Rule 1.11.4a)
+- `GameEngine.resolve_top_of_stack()` called when all pass + non-empty stack (Rule 1.11.4a)
+- `GameEngine.end_phase_or_step()` called when all pass + empty stack (Rule 1.11.4a)
+- `GameEngine.play_card(card, player_id)` with priority regain (Rule 1.11.5)
+- `GameEngine.activate_ability(source, player_id)` with priority regain (Rule 1.11.5)
+- `GameEngine.is_in_process_of_playing_card` property (Rule 1.11.5)
+- `GameEngine.is_in_process_of_resolving_layer` property (Rule 1.11.5)
+- `GameEngine.is_performing_game_state_actions` property (Rule 1.11.5)
+
 ### Section 1.3.1a: Card Ownership
 
 **File**: `features/section_1_3_1a_card_ownership.feature`
@@ -1376,7 +1487,7 @@ The ultimate goal is to have **complete test coverage** of the Flesh and Blood C
 - [x] 1.8: Effects
 - [x] 1.9: Events
 - [x] 1.10: Game State
-- [ ] 1.11: Priority
+- [x] 1.11: Priority
 - [ ] 1.12: Numbers and Symbols
 - [ ] 1.13: Assets
 - [ ] 1.14: Costs
