@@ -1408,6 +1408,127 @@ This section tests card ownership rules:
    - Tests: Rule 1.3.1a - Ownership doesn't transfer
    - Verifies: Cards stolen or copied remain owned by original owner
 
+### Section 1.12: Numbers and Symbols
+
+**File**: `features/section_1_12_numbers_and_symbols.feature`
+**Step Definitions**: `step_defs/test_section_1_12_numbers_and_symbols.py`
+
+This section tests number handling and symbol definitions:
+- **Rule 1.12.1**: Numbers are always integers
+- **Rule 1.12.1a**: Fractional results rounded toward zero (3.5→3, -3.5→-3)
+- **Rule 1.12.1b**: Player-chosen numbers must be non-negative integers; "up to N" = 0..N inclusive
+- **Rule 1.12.2**: X represents an undefined value
+- **Rule 1.12.2a**: Undefined X evaluates to zero (object still has the property)
+- **Rule 1.12.2b**: Once X is defined, it stays defined until the object ceases to exist
+- **Rule 1.12.2c**: Multiple unknowns in the same context use Y and Z
+- **Rule 1.12.3**: Asterisk (*) defined by meta-static ability or continuous effect
+- **Rule 1.12.3a**: Undefined * evaluates to zero (Mutated Mass example)
+- **Rule 1.12.3b**: Meta-static ability takes priority over continuous effect (Arakni example)
+- **Rule 1.12.4**: Symbols represent property values: {d}=defense, {i}=intellect, {h}=life, {p}=power/damage, {r}=resource, {c}=chi, {t}=tap, {u}=untap
+
+#### Test Scenarios:
+
+1. **test_positive_fractional_rounded_toward_zero**
+   - Tests: Rule 1.12.1a - 3.5 rounds toward zero to 3
+   - Verifies: Fractional number calculation uses truncation toward zero
+
+2. **test_negative_fractional_rounded_toward_zero**
+   - Tests: Rule 1.12.1a - -3.5 rounds toward zero to -3
+   - Verifies: Negative fractions round toward zero (not floor/ceiling)
+
+3. **test_effect_with_round_up_specification**
+   - Tests: Rule 1.12.1a - When "round up" is specified, override default
+   - Verifies: 2.5 rounds up to 3 when explicitly specified
+
+4. **test_player_cannot_choose_negative_number**
+   - Tests: Rule 1.12.1b - Player-chosen numbers must be non-negative
+   - Verifies: Choosing -1 is rejected
+
+5. **test_player_can_choose_zero**
+   - Tests: Rule 1.12.1b - Zero is a valid choice
+   - Verifies: Choosing 0 is accepted
+
+6. **test_player_can_choose_positive_integer**
+   - Tests: Rule 1.12.1b - Positive integers are valid
+   - Verifies: Choosing 5 is accepted
+
+7. **test_up_to_n_allows_zero**
+   - Tests: Rule 1.12.1b - "Up to N" lower bound is zero
+   - Verifies: Choosing 0 from "up to 3" is valid
+
+8. **test_up_to_n_allows_maximum**
+   - Tests: Rule 1.12.1b - "Up to N" upper bound is N
+   - Verifies: Choosing 3 from "up to 3" is valid
+
+9. **test_up_to_n_rejects_exceeding_maximum**
+   - Tests: Rule 1.12.1b - Cannot exceed N in "up to N"
+   - Verifies: Choosing 4 from "up to 3" is rejected
+
+10. **test_object_with_undefined_x_still_has_property**
+    - Tests: Rule 1.12.2/1.12.2a - Card with power X still has power property
+    - Verifies: has_property("power") = True, evaluates to 0 when undefined
+
+11. **test_undefined_x_evaluates_to_zero**
+    - Tests: Rule 1.12.2a - Undefined X evaluates to zero
+    - Verifies: Card with cost X evaluates cost to 0 when undefined
+
+12. **test_defined_x_persists_until_object_ceases**
+    - Tests: Rule 1.12.2b - Defined X stays defined while object exists
+    - Verifies: Power evaluates to 4 after X is defined as 4
+
+13. **test_defined_x_does_not_reset**
+    - Tests: Rule 1.12.2b - Defined X cannot be reset to undefined
+    - Verifies: Power still evaluates to 3 after reset attempt
+
+14. **test_multiple_undefined_values_use_y_and_z**
+    - Tests: Rule 1.12.2c - Multiple unknowns use Y and Z
+    - Verifies: X and Y are distinct, both evaluate to 0 when undefined
+
+15. **test_object_with_asterisk_still_has_property**
+    - Tests: Rule 1.12.3 - Card with power * still has power property
+    - Verifies: has_property("power") = True
+
+16. **test_undefined_asterisk_evaluates_to_zero**
+    - Tests: Rule 1.12.3a - Undefined * evaluates to zero
+    - Verifies: * power evaluates to 0 with no defining ability or effect
+
+17. **test_mutated_mass_outside_game_is_zero**
+    - Tests: Rule 1.12.3a - Mutated Mass example
+    - Verifies: Power and defense both evaluate to 0 outside game context
+
+18. **test_meta_static_takes_priority_over_continuous_effect**
+    - Tests: Rule 1.12.3b - Meta-static beats continuous effect
+    - Verifies: With meta-static=5 and continuous=3, * evaluates to 5
+
+19. **test_continuous_effect_defines_asterisk_without_meta_static**
+    - Tests: Rule 1.12.3b - Continuous effect used when no meta-static
+    - Verifies: With only continuous=4, * evaluates to 4
+
+20. **test_become_copy_effect_defines_asterisk_life**
+    - Tests: Rule 1.12.3b - Arakni become/copy example
+    - Verifies: Agent of Chaos life = Arakni's printed life value
+
+21–28. **test_*_symbol_represents_***: Tests Rules 1.12.4a-h
+    - Verifies each symbol ({d}, {i}, {h}, {p}, {r}, {c}, {t}, {u}) maps to the correct property or effect
+    - {p} also refers to physical damage (Rule 1.12.4d)
+    - {t} and {u} represent effects (not property values) (Rules 1.12.4g/h)
+
+#### Implementation Notes:
+- All helpers are implemented as stubs in the fixture (no engine dependencies)
+- The SymbolRegistry stub documents what the engine must implement (Rule 1.12.4)
+- Rounding uses Python's `math.trunc()` to implement "round toward zero" (Rule 1.12.1a)
+- The _VarCard stub models variable (X) and asterisk (*) properties with correct priority rules
+
+#### Engine Features Needed:
+- [ ] `NumberCalculator.calculate(value, round_direction)` (Rule 1.12.1a)
+- [ ] `NumberSelector.validate_choice(value, constraint)` (Rule 1.12.1b)
+- [ ] `VariableValue` class tracking X, Y, Z with defined/undefined state (Rule 1.12.2)
+- [ ] `VariableValue.evaluate()` returning 0 when undefined (Rule 1.12.2a)
+- [ ] `VariableValue.define(value)` persisting until source ceases (Rule 1.12.2b)
+- [ ] `AsteriskValue` class for * properties (Rule 1.12.3)
+- [ ] `AsteriskValue.resolve_priority()` preferring meta-static over continuous (Rule 1.12.3b)
+- [ ] `SymbolRegistry` with complete symbol table (Rule 1.12.4)
+
 ## Running Tests
 
 ### Run all BDD tests:
@@ -1488,7 +1609,7 @@ The ultimate goal is to have **complete test coverage** of the Flesh and Blood C
 - [x] 1.9: Events
 - [x] 1.10: Game State
 - [x] 1.11: Priority
-- [ ] 1.12: Numbers and Symbols
+- [x] 1.12: Numbers and Symbols
 - [ ] 1.13: Assets
 - [ ] 1.14: Costs
 - [ ] 1.15: Counters
