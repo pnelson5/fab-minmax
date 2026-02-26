@@ -1326,6 +1326,453 @@ class BDDGameState:
         """
         return EffectResolutionResultStub(failed=not target_exists)
 
+    # ===== Section 1.13: Assets helpers =====
+
+    def get_asset_types(self) -> List[str]:
+        """
+        Return the four asset types in the game (Rule 1.13.1).
+
+        Engine Feature Needed:
+        - [ ] AssetType enum with ACTION_POINT, RESOURCE_POINT, LIFE_POINT, CHI_POINT
+        - [ ] GameEngine.get_asset_types() returning all valid asset types
+        """
+        return ["action_point", "resource_point", "life_point", "chi_point"]
+
+    def set_player_action_points(self, player: Any, amount: int) -> None:
+        """
+        Set a player's action point count (Rule 1.13.2).
+
+        Engine Feature Needed:
+        - [ ] PlayerAssets.action_points property (Rule 1.13.2)
+        - [ ] Player.set_action_points(amount) method
+        """
+        player._action_points = amount  # type: ignore[attr-defined]
+
+    def get_player_action_points(self, player: Any) -> int:
+        """
+        Get a player's current action point count (Rule 1.13.2).
+
+        Engine Feature Needed:
+        - [ ] PlayerAssets.action_points property (Rule 1.13.2)
+        - [ ] Player.get_action_points() method
+        """
+        return getattr(player, "_action_points", 0)
+
+    def spend_player_action_point(self, player: Any) -> Any:
+        """
+        Spend one action point from a player (Rule 1.13.2).
+
+        Engine Feature Needed:
+        - [ ] Player.spend_action_point() -> ActionSpendResult (Rule 1.13.2)
+        - [ ] ActionSpendResult.success property
+        """
+        current = self.get_player_action_points(player)
+        if current <= 0:
+            return AssetSpendResultStub(
+                success=False, reason="insufficient_action_points"
+            )
+        self.set_player_action_points(player, current - 1)
+        return AssetSpendResultStub(success=True)
+
+    def begin_action_phase_for_player(self, player: Any) -> None:
+        """
+        Begin the action phase for a player, granting 1 action point (Rule 1.13.2a).
+
+        Engine Feature Needed:
+        - [ ] GameEngine.begin_action_phase(player_id) granting 1 action point (Rule 1.13.2a)
+        - [ ] ActionPhaseStart granting exactly 1 action point to turn player
+        """
+        # Delegate to engine when implemented
+        # Engine Feature Needed: GameEngine.begin_action_phase()
+        current = self.get_player_action_points(player)
+        if getattr(player, "_in_action_phase", False):
+            self.set_player_action_points(player, current + 1)
+
+    def trigger_go_again_for_player(self, player: Any) -> None:
+        """
+        Trigger the go again ability, granting 1 action point (Rule 1.13.2a).
+
+        Engine Feature Needed:
+        - [ ] GoAgainEffect.trigger(player_id) granting 1 action point (Rule 1.13.2a)
+        - [ ] Action phase guard: does not fire outside action phase (Rule 1.13.2b)
+        """
+        # Only grant if in action phase (Rule 1.13.2b)
+        if getattr(player, "_in_action_phase", False):
+            current = self.get_player_action_points(player)
+            self.set_player_action_points(player, current + 1)
+
+    def grant_action_points_via_effect(self, player: Any, amount: int) -> None:
+        """
+        Grant action points via a card effect (Rule 1.13.2a).
+
+        Engine Feature Needed:
+        - [ ] GainActionPointEffect.apply(player_id, amount) (Rule 1.13.2a)
+        - [ ] Guard: blocked outside action phase (Rule 1.13.2b)
+        """
+        # Only grant if in action phase (Rule 1.13.2b)
+        if getattr(player, "_in_action_phase", False):
+            current = self.get_player_action_points(player)
+            self.set_player_action_points(player, current + amount)
+
+    def simulate_instant_play_with_go_again(self, player: Any) -> None:
+        """
+        Simulate a non-turn player playing an instant with go again (Rule 1.13.2b).
+
+        Engine Feature Needed:
+        - [ ] InstantPlay check: player not in action phase, go again blocked (Rule 1.13.2b)
+        """
+        # Rule 1.13.2b: Player not in action phase cannot gain action points
+        # The go_again trigger fires but is blocked
+        in_phase = getattr(player, "_in_action_phase", False)
+        if not in_phase:
+            # Action point gain blocked per Rule 1.13.2b
+            pass  # No action points gained
+
+    def attempt_grant_action_points_outside_phase(
+        self, player: Any, amount: int
+    ) -> None:
+        """
+        Attempt to grant action points via effect when player is not in action phase (Rule 1.13.2b).
+
+        Engine Feature Needed:
+        - [ ] ActionPointGain.is_blocked_outside_action_phase() = True (Rule 1.13.2b)
+        """
+        # Rule 1.13.2b: Would-be grant is replaced with doing nothing
+        in_phase = getattr(player, "_in_action_phase", False)
+        if not in_phase:
+            pass  # Action point gain is blocked; 0 points gained
+
+    def register_lead_the_charge_trigger_for(self, player: Any) -> None:
+        """
+        Register the Lead the Charge delayed trigger for a player (Rule 1.13.2b example).
+
+        Engine Feature Needed:
+        - [ ] DelayedTriggerEffect tracking the "next cost 0 action card" condition (Rule 1.13.2b)
+        - [ ] Trigger blocked when player not in action phase at resolution time
+        """
+        player._has_lead_the_charge_trigger = True  # type: ignore[attr-defined]
+
+    def simulate_cost_zero_action_play(self, player: Any) -> None:
+        """
+        Simulate playing a cost-0 action card that would trigger Lead the Charge (Rule 1.13.2b).
+
+        Engine Feature Needed:
+        - [ ] DelayedTriggerEffect.check(player_id) triggering action point gain (Rule 1.13.2b)
+        - [ ] Guard: blocked since player not in action phase (Rule 1.13.2b)
+        """
+        # Rule 1.13.2b: Even if Lead the Charge trigger fires, no action point gained
+        in_phase = getattr(player, "_in_action_phase", False)
+        has_trigger = getattr(player, "_has_lead_the_charge_trigger", False)
+        if has_trigger and not in_phase:
+            pass  # Trigger fires but action point is blocked by Rule 1.13.2b
+
+    def set_player_resource_points(self, player: Any, amount: int) -> None:
+        """
+        Set a player's resource point count (Rule 1.13.3).
+
+        Engine Feature Needed:
+        - [ ] PlayerAssets.resource_points property (Rule 1.13.3)
+        """
+        player._resource_points = amount  # type: ignore[attr-defined]
+
+    def get_player_resource_points(self, player: Any) -> int:
+        """
+        Get a player's current resource point count (Rule 1.13.3).
+
+        Engine Feature Needed:
+        - [ ] PlayerAssets.resource_points property (Rule 1.13.3)
+        """
+        return getattr(player, "_resource_points", 0)
+
+    def pay_resource_cost(self, player: Any, cost: int) -> Any:
+        """
+        Pay a resource cost from the player's resource points (Rule 1.13.3).
+
+        Engine Feature Needed:
+        - [ ] AssetPayment.pay_resource_cost(player_id, cost) -> PaymentResult (Rule 1.13.3)
+        - [ ] PaymentResult.success property
+        """
+        current = self.get_player_resource_points(player)
+        if current < cost:
+            return AssetSpendResultStub(
+                success=False, reason="insufficient_resource_points"
+            )
+        self.set_player_resource_points(player, current - cost)
+        return AssetSpendResultStub(success=True)
+
+    def grant_resource_points_via_effect(self, player: Any, amount: int) -> None:
+        """
+        Grant resource points via effect (Rule 1.13.3a).
+
+        Engine Feature Needed:
+        - [ ] GainResourcePointEffect.apply(player_id, amount) (Rule 1.13.3a)
+        """
+        current = self.get_player_resource_points(player)
+        self.set_player_resource_points(player, current + amount)
+
+    def create_card_with_pitch(
+        self,
+        name: str = "Pitch Card",
+        pitch_value: int = 1,
+        pitch_generates: str = "resource",
+        owner_id: int = 0,
+    ) -> CardInstance:
+        """
+        Create a card with a specific pitch type (Rule 1.13.3a, 1.13.5a).
+
+        Engine Feature Needed:
+        - [ ] CardTemplate.pitch_generates_type field ("resource" or "chi") (Rule 2.8)
+        - [ ] PitchEffect.generate_assets() using pitch_generates_type
+        """
+        template = CardTemplate(
+            unique_id=f"pitch_{name}_{id(self)}",
+            name=name,
+            types=frozenset([CardType.ACTION]),
+            supertypes=frozenset(),
+            subtypes=frozenset([Subtype.ATTACK]),
+            color=Color.COLORLESS,
+            pitch=pitch_value,
+            has_pitch=True,
+            cost=0,
+            has_cost=True,
+            power=0,
+            has_power=False,
+            defense=0,
+            has_defense=False,
+            arcane=0,
+            has_arcane=False,
+            life=0,
+            intellect=0,
+            keywords=frozenset(),
+            keyword_params=tuple(),
+            functional_text="",
+        )
+        card = CardInstance(template=template, owner_id=owner_id)
+        card._pitch_generates = pitch_generates  # type: ignore[attr-defined]
+        return card
+
+    def pitch_card_for_resources(self, player: Any, card: CardInstance) -> Any:
+        """
+        Pitch a card to generate resource points (Rule 1.13.3a).
+
+        Engine Feature Needed:
+        - [ ] PitchAction.execute(player_id, card) generating assets (Rule 1.14.3)
+        - [ ] PitchResult with asset_type and amount
+        """
+        pitch_generates = getattr(card, "_pitch_generates", "resource")
+        pitch_value = card.template.pitch
+
+        if pitch_generates != "resource":
+            return AssetSpendResultStub(success=False, reason="wrong_asset_type")
+
+        # Move card to pitch zone
+        if card in player.hand:
+            player.hand.remove_card(card)
+        player.pitch_zone.add_card(card)
+
+        # Grant resource points
+        current = self.get_player_resource_points(player)
+        self.set_player_resource_points(player, current + pitch_value)
+        return AssetSpendResultStub(success=True)
+
+    def set_player_chi_points(self, player: Any, amount: int) -> None:
+        """
+        Set a player's chi point count (Rule 1.13.5).
+
+        Engine Feature Needed:
+        - [ ] PlayerAssets.chi_points property (Rule 1.13.5)
+        """
+        player._chi_points = amount  # type: ignore[attr-defined]
+
+    def get_player_chi_points(self, player: Any) -> int:
+        """
+        Get a player's current chi point count (Rule 1.13.5).
+
+        Engine Feature Needed:
+        - [ ] PlayerAssets.chi_points property (Rule 1.13.5)
+        """
+        return getattr(player, "_chi_points", 0)
+
+    def pay_chi_cost(self, player: Any, cost: int) -> Any:
+        """
+        Pay a chi cost from the player's chi points (Rule 1.13.5).
+
+        Engine Feature Needed:
+        - [ ] AssetPayment.pay_chi_cost(player_id, cost) -> PaymentResult (Rule 1.14.2c)
+        """
+        current = self.get_player_chi_points(player)
+        if current < cost:
+            return AssetSpendResultStub(success=False, reason="insufficient_chi_points")
+        self.set_player_chi_points(player, current - cost)
+        return AssetSpendResultStub(success=True)
+
+    def pitch_card_for_chi(self, player: Any, card: CardInstance) -> Any:
+        """
+        Pitch a card to generate chi points (Rule 1.13.5a).
+
+        Engine Feature Needed:
+        - [ ] PitchAction.execute_for_chi(player_id, card) (Rule 1.13.5a)
+        """
+        pitch_generates = getattr(card, "_pitch_generates", "resource")
+        pitch_value = card.template.pitch
+
+        if pitch_generates != "chi":
+            return AssetSpendResultStub(success=False, reason="wrong_asset_type")
+
+        # Move card to pitch zone (note: TestZone may not have the card in a zone already)
+        try:
+            if card in player.hand:
+                player.hand.remove_card(card)
+        except Exception:
+            pass
+        player.pitch_zone.add_card(card)
+
+        # Grant chi points
+        current = self.get_player_chi_points(player)
+        self.set_player_chi_points(player, current + pitch_value)
+        return AssetSpendResultStub(success=True)
+
+    def pay_resource_cost_with_chi(self, player: Any, cost: int) -> Any:
+        """
+        Pay a resource cost using chi points (Rule 1.13.5b).
+
+        Engine Feature Needed:
+        - [ ] AssetPayment.pay_resource_with_chi(player_id, cost) -> ChiPaymentResult (Rule 1.13.5b)
+        - [ ] ChiPaymentResult.chi_used, resource_used, success properties
+        """
+        chi_available = self.get_player_chi_points(player)
+        resource_available = self.get_player_resource_points(player)
+
+        # Rule 1.13.5b: Use chi before resource (1.14.2a: chi before resource in payment order)
+        chi_to_use = min(chi_available, cost)
+        remaining_cost = cost - chi_to_use
+        resource_to_use = min(resource_available, remaining_cost)
+
+        if chi_to_use + resource_to_use < cost:
+            return ChiPaymentResultStub(
+                success=False, chi_used=0, resource_used=0, reason="insufficient_assets"
+            )
+
+        self.set_player_chi_points(player, chi_available - chi_to_use)
+        self.set_player_resource_points(player, resource_available - resource_to_use)
+        return ChiPaymentResultStub(
+            success=True, chi_used=chi_to_use, resource_used=resource_to_use
+        )
+
+    def pay_resource_cost_with_available_assets(self, player: Any, cost: int) -> Any:
+        """
+        Pay a resource cost using chi first then resource (Rule 1.13.5b + 1.14.2a).
+
+        Engine Feature Needed:
+        - [ ] AssetPayment.pay_with_priority_order(player_id, cost) (Rule 1.14.2a)
+        - [ ] Payment order: chi first, then resource (Rule 1.13.5b)
+        """
+        return self.pay_resource_cost_with_chi(player, cost)
+
+    def attempt_chi_for_life_payment(self, player: Any, cost: int) -> Any:
+        """
+        Attempt to use chi points to pay a life point cost (Rule 1.13.5b limitation).
+
+        Engine Feature Needed:
+        - [ ] AssetPayment.validate_asset_type_for_cost() (Rule 1.13.5b)
+        - [ ] Reject chi substitution for non-resource costs
+        """
+        # Rule 1.13.5b: Chi can ONLY substitute for resource points, not life points
+        return AssetSpendResultStub(
+            success=False, reason="chi_cannot_substitute_for_life"
+        )
+
+    def attempt_pitch_for_wrong_type(
+        self, player: Any, card: CardInstance, needed_asset: str
+    ) -> Any:
+        """
+        Attempt to pitch a card that generates the wrong asset type (Rule 1.14.3b).
+
+        Engine Feature Needed:
+        - [ ] PitchAction.validate(player_id, card, needed_asset) (Rule 1.14.3b)
+        - [ ] PitchValidationResult.reason = "wrong_asset_type" when blocked
+        """
+        pitch_generates = getattr(card, "_pitch_generates", "resource")
+        if pitch_generates != needed_asset:
+            return AssetSpendResultStub(success=False, reason="wrong_asset_type")
+        return AssetSpendResultStub(success=True)
+
+    def set_hero_life_total(self, player: Any, life: int) -> None:
+        """
+        Set a player's hero life total (Rule 1.13.4).
+
+        Engine Feature Needed:
+        - [ ] Hero.life_total property (Rule 1.13.4)
+        """
+        player._hero_life_total = life  # type: ignore[attr-defined]
+
+    def get_hero_life_total(self, player: Any) -> int:
+        """
+        Get a player's hero life total (Rule 1.13.4).
+
+        Engine Feature Needed:
+        - [ ] Hero.life_total property (Rule 1.13.4)
+        """
+        return getattr(player, "_hero_life_total", 0)
+
+    def get_player_life_points(self, player: Any) -> int:
+        """
+        Get a player's current life point count (Rule 1.13.4).
+
+        Life points come from the hero's life total.
+
+        Engine Feature Needed:
+        - [ ] Player.life_points property delegating to hero.life_total (Rule 1.13.4)
+        """
+        return self.get_hero_life_total(player)
+
+    def player_hero_has_life_tracking(self, player: Any) -> bool:
+        """
+        Check if the player's hero tracks life total (Rule 1.13.4).
+
+        Engine Feature Needed:
+        - [ ] Hero.has_life_total property (Rule 1.13.4)
+        """
+        return hasattr(player, "_hero_life_total")
+
+    def create_ability_with_life_cost(self, cost: int, ability_text: str) -> Any:
+        """
+        Create an ability with a life point cost (Rule 1.13.4).
+
+        Engine Feature Needed:
+        - [ ] ActivatedAbility.life_cost property (Rule 1.13.4)
+        - [ ] Ability class hierarchy supporting life costs (Rule 1.14.2e)
+        """
+        return LifeCostAbilityStub(life_cost=cost, ability_text=ability_text)
+
+    def activate_ability_with_life_cost(
+        self, player: Any, ability: Any, life_cost: int
+    ) -> Any:
+        """
+        Activate an ability that costs life points (Rule 1.13.4).
+
+        Engine Feature Needed:
+        - [ ] GameEngine.activate_ability(ability, player_id) checking life costs (Rule 1.13.4)
+        - [ ] AssetPayment.pay_life_cost(player_id, amount) (Rule 1.14.2e)
+        """
+        current_life = self.get_hero_life_total(player)
+        if current_life < life_cost:
+            return AssetSpendResultStub(success=False, reason="insufficient_life")
+        self.set_hero_life_total(player, current_life - life_cost)
+        return AssetSpendResultStub(success=True)
+
+    def grant_life_points_via_effect(self, player: Any, amount: int) -> Any:
+        """
+        Grant life points via an effect that increases the hero's life total (Rule 1.13.4a).
+
+        Engine Feature Needed:
+        - [ ] GainLifeEffect.apply(player_id, amount) (Rule 1.13.4a)
+        - [ ] LifeGainResult.amount_gained property
+        """
+        current = self.get_hero_life_total(player)
+        self.set_hero_life_total(player, current + amount)
+        return LifeGainResultStub(amount_gained=amount)
+
     def are_cards_distinct(self, card_a: CardInstance, card_b: CardInstance) -> bool:
         """
         Check if two cards are distinct from each other (Rule 1.3.4).
@@ -1682,3 +2129,73 @@ class EffectResolutionResultStub:
         self.failed = failed
         self.partial_success = partial_success
         self.succeeded = not failed
+
+
+# ===== Stub classes for Section 1.13 engine features not yet implemented =====
+
+
+class AssetSpendResultStub:
+    """
+    Stub result for spending or paying with assets (Rule 1.13).
+
+    Engine Feature Needed:
+    - [ ] AssetPaymentResult with success and reason attributes (Rule 1.13)
+    - [ ] Player.spend_asset(asset_type, amount) -> AssetPaymentResult
+    """
+
+    def __init__(self, success: bool, reason: str = ""):
+        self.success = success
+        self.reason = reason
+
+
+class ChiPaymentResultStub:
+    """
+    Stub result for paying a resource cost using chi points (Rule 1.13.5b).
+
+    Engine Feature Needed:
+    - [ ] ChiPaymentResult.chi_used attribute (Rule 1.13.5b)
+    - [ ] ChiPaymentResult.resource_used attribute (Rule 1.13.5b)
+    - [ ] ChiPaymentResult.success attribute
+    - [ ] AssetPayment.pay_resource_with_chi(player_id, cost) (Rule 1.13.5b)
+    """
+
+    def __init__(
+        self,
+        success: bool,
+        chi_used: int = 0,
+        resource_used: int = 0,
+        reason: str = "",
+    ):
+        self.success = success
+        self.chi_used = chi_used
+        self.resource_used = resource_used
+        self.reason = reason
+
+
+class LifeGainResultStub:
+    """
+    Stub result for gaining life points from an effect (Rule 1.13.4a).
+
+    Engine Feature Needed:
+    - [ ] LifeGainResult.amount_gained attribute (Rule 1.13.4a)
+    - [ ] GainLifeEffect.apply(player_id, amount) -> LifeGainResult
+    """
+
+    def __init__(self, amount_gained: int = 0):
+        self.amount_gained = amount_gained
+        self.success = True
+
+
+class LifeCostAbilityStub:
+    """
+    Stub for an ability with a life point cost (Rule 1.13.4).
+
+    Engine Feature Needed:
+    - [ ] ActivatedAbility with life_cost property (Rule 1.13.4)
+    - [ ] AssetPayment.pay_life_cost(player_id, amount) (Rule 1.14.2e)
+    """
+
+    def __init__(self, life_cost: int = 0, ability_text: str = ""):
+        self.life_cost = life_cost
+        self.ability_text = ability_text
+        self.cost_type = "life_point"

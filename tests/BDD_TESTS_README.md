@@ -1408,6 +1408,137 @@ This section tests card ownership rules:
    - Tests: Rule 1.3.1a - Ownership doesn't transfer
    - Verifies: Cards stolen or copied remain owned by original owner
 
+### Section 1.13: Assets
+
+**File**: `features/section_1_13_assets.feature`
+**Step Definitions**: `step_defs/test_section_1_13_assets.py`
+
+This section tests the four types of assets in Flesh and Blood:
+- **Rule 1.13.1**: Assets are points of a given type owned by a player; four types exist
+- **Rule 1.13.2**: Action points are used to play action cards and activate action abilities
+- **Rule 1.13.2a**: Action points can be gained from action phase start, go again ability, and effects
+- **Rule 1.13.2b**: A player cannot gain action points if it is not their action phase
+- **Rule 1.13.3**: Resource points are used to play cards and activate abilities
+- **Rule 1.13.3a**: Resource points are gained from pitching cards and effects
+- **Rule 1.13.4**: Life points come from the hero's life total and activate abilities
+- **Rule 1.13.4a**: Life points are gained from effects that increase hero's life total
+- **Rule 1.13.5**: Chi points are used to play cards and activate abilities
+- **Rule 1.13.5a**: Chi points are gained from pitching chi cards during cost payment
+- **Rule 1.13.5b**: Chi points can be used in place of resource points; chi spent before resource
+
+#### Test Scenarios:
+
+1. **test_there_are_exactly_four_asset_types**
+   - Tests: Rule 1.13.1 - Exactly four asset types
+   - Verifies: action_point, resource_point, life_point, chi_point are all valid
+
+2. **test_asset_owned_by_player**
+   - Tests: Rule 1.13.1 - Assets are owned by a specific player
+   - Verifies: Player's action points belong only to that player
+
+3. **test_action_points_used_to_play_action_cards**
+   - Tests: Rule 1.13.2 - Action points spent when playing action cards
+   - Verifies: Spending 1 action point reduces count from 1 to 0
+
+4. **test_player_gains_action_point_at_action_phase_start**
+   - Tests: Rule 1.13.2a - 1 action point granted at start of action phase
+   - Verifies: Player starts action phase with 1 action point
+
+5. **test_go_again_grants_action_point**
+   - Tests: Rule 1.13.2a - Go again grants 1 additional action point
+   - Verifies: Player has 2 action points after go again triggers during action phase
+
+6. **test_effect_grants_action_points**
+   - Tests: Rule 1.13.2a - Effects can grant action points
+   - Verifies: Action point effect increases count by 1 during action phase
+
+7. **test_non_turn_player_no_action_points_from_go_again**
+   - Tests: Rule 1.13.2b - Go again blocked outside action phase
+   - Verifies: Non-turn player gets 0 action points from go again (Lead the Charge example)
+
+8. **test_non_turn_player_no_action_points_from_effects**
+   - Tests: Rule 1.13.2b - Effect-based action point gain blocked outside action phase
+   - Verifies: Effect grants 0 action points when player is not in action phase
+
+9. **test_lead_the_charge_no_action_points_outside_phase**
+   - Tests: Rule 1.13.2b - Lead the Charge example from the rules
+   - Verifies: Delayed trigger from Lead the Charge doesn't grant action points to non-turn player
+
+10. **test_resource_points_used_to_pay_card_costs**
+    - Tests: Rule 1.13.3 - Resource points spent to pay card costs
+    - Verifies: Spending 3 resource points reduces count from 3 to 0
+
+11. **test_player_gains_resource_points_from_pitch**
+    - Tests: Rule 1.13.3a - Pitching generates resource points
+    - Verifies: Pitching a 2-pitch card grants 2 resource points
+
+12. **test_effect_grants_resource_points**
+    - Tests: Rule 1.13.3a - Effects directly grant resource points
+    - Verifies: Effect grants 2 resource points to player
+
+13. **test_life_points_come_from_hero_life_total**
+    - Tests: Rule 1.13.4 - Life points are tied to hero's life total
+    - Verifies: Player's life points equal hero's life total
+
+14. **test_life_points_activate_abilities**
+    - Tests: Rule 1.13.4 - Life points spent to activate abilities
+    - Verifies: Paying 2 life reduces hero's life from 20 to 18
+
+15. **test_player_gains_life_points_from_effect**
+    - Tests: Rule 1.13.4a - Effects can increase hero life total (gain life points)
+    - Verifies: Effect grants 3 life points, increasing hero from 15 to 18
+
+16. **test_chi_points_used_to_play_cards**
+    - Tests: Rule 1.13.5 - Chi points spent to pay costs
+    - Verifies: Spending 2 chi points reduces count from 2 to 0
+
+17. **test_player_gains_chi_points_from_chi_pitch**
+    - Tests: Rule 1.13.5a - Pitching chi cards generates chi points
+    - Verifies: Pitching a 1-chi card grants 1 chi point
+
+18. **test_chi_point_substitutes_for_resource_point**
+    - Tests: Rule 1.13.5b - Chi substitutes for resource in payment
+    - Verifies: 2 chi points successfully pay a resource cost of 2
+
+19. **test_chi_points_used_before_resource_points**
+    - Tests: Rule 1.13.5b + 1.14.2a - Chi spent before resource in payment order
+    - Verifies: With 1 resource + 2 chi, paying cost 2 uses 2 chi first; 1 resource remains
+
+20. **test_chi_points_cannot_substitute_for_life_costs**
+    - Tests: Rule 1.13.5b (limitation) - Chi cannot substitute for life point costs
+    - Verifies: Attempt to use chi for life cost fails with "chi_cannot_substitute_for_life"
+
+21. **test_pitching_resource_card_gains_resource_points**
+    - Tests: Rule 1.13.3a - Resource-type pitch cards generate resource points
+    - Verifies: Pitching a 3-pitch resource card grants 3 resource points
+
+22. **test_pitching_chi_card_gains_chi_points**
+    - Tests: Rule 1.13.5a - Chi-type pitch cards generate chi points
+    - Verifies: Pitching a 2-pitch chi card grants 2 chi points
+
+23. **test_cannot_pitch_wrong_asset_type_card**
+    - Tests: Rule 1.14.3b - Pitch restricted to cards that gain needed asset type
+    - Verifies: Cannot pitch resource card when chi points are needed
+
+#### Implementation Notes:
+- All asset tracking uses stub metadata (`_action_points`, `_resource_points`, etc.) on TestPlayer objects
+- New stub classes added: `AssetSpendResultStub`, `ChiPaymentResultStub`, `LifeGainResultStub`, `LifeCostAbilityStub`
+- New helper methods in `BDDGameState`: `get_asset_types`, `set_player_action_points`, `get_player_action_points`, `spend_player_action_point`, `begin_action_phase_for_player`, `trigger_go_again_for_player`, `grant_action_points_via_effect`, `simulate_instant_play_with_go_again`, `attempt_grant_action_points_outside_phase`, `register_lead_the_charge_trigger_for`, `simulate_cost_zero_action_play`, `set_player_resource_points`, `get_player_resource_points`, `pay_resource_cost`, `grant_resource_points_via_effect`, `create_card_with_pitch`, `pitch_card_for_resources`, `set_player_chi_points`, `get_player_chi_points`, `pay_chi_cost`, `pitch_card_for_chi`, `pay_resource_cost_with_chi`, `pay_resource_cost_with_available_assets`, `attempt_chi_for_life_payment`, `attempt_pitch_for_wrong_type`, `set_hero_life_total`, `get_hero_life_total`, `get_player_life_points`, `player_hero_has_life_tracking`, `create_ability_with_life_cost`, `activate_ability_with_life_cost`, `grant_life_points_via_effect`
+
+#### Engine Features Needed:
+- `PlayerAssets` class tracking `action_points`, `resource_points`, `life_points`, `chi_points` (Rule 1.13.1)
+- `AssetType` enum with `ACTION_POINT`, `RESOURCE_POINT`, `LIFE_POINT`, `CHI_POINT` (Rule 1.13.1)
+- `Player.assets` property returning `PlayerAssets` (Rule 1.13.1)
+- `Player.gain_asset(asset_type, amount)` method (Rules 1.13.2a, 1.13.3a, 1.13.4a, 1.13.5a)
+- `Player.spend_asset(asset_type, amount)` method (Rule 1.13.2)
+- `GameEngine.begin_action_phase(player_id)` granting 1 action point (Rule 1.13.2a)
+- `GoAgainEffect` granting 1 action point when trigger fires (Rule 1.13.2a)
+- Action phase guard: `Player.can_gain_action_points() = False` outside action phase (Rule 1.13.2b)
+- Chi points counted as resource points for resource payment (Rule 1.13.5b)
+- Payment order: chi first, then resource, then life, then action (Rule 1.14.2a)
+- `PitchEffect` generating assets based on card pitch type and value (Rules 1.13.3a, 1.13.5a)
+- Pitch restriction: only pitch if card generates needed asset type (Rule 1.14.3b)
+
 ### Section 1.12: Numbers and Symbols
 
 **File**: `features/section_1_12_numbers_and_symbols.feature`
@@ -1610,7 +1741,7 @@ The ultimate goal is to have **complete test coverage** of the Flesh and Blood C
 - [x] 1.10: Game State
 - [x] 1.11: Priority
 - [x] 1.12: Numbers and Symbols
-- [ ] 1.13: Assets
+- [x] 1.13: Assets
 - [ ] 1.14: Costs
 - [ ] 1.15: Counters
 
