@@ -345,6 +345,86 @@ This section tests object concepts in Flesh and Blood:
 - `AttackProxy` class with source card reference (Rule 1.2.4)
 - `CardInstance.is_permanent` property (for zone-aware identity, Rule 1.2.2f)
 
+### Section 2.3: Defense
+
+**File**: `features/section_2_3_defense.feature`
+**Step Definitions**: `step_defs/test_section_2_3_defense.py`
+
+This section tests the defense property of cards in Flesh and Blood:
+- **Rule 2.3.1**: Defense is a numeric property representing the value contributed to the total sum of defense in the damage step of combat
+- **Rule 2.3.2**: Printed defense defines the base defense; no printed defense = no defense property; 0 is valid
+- **Rule 2.3.2a**: (c) defense is defined by an ability; evaluates to 0 when undetermined
+- **Rule 2.3.3**: Defense can be modified; "defense" or {d} symbol refers to the modified defense
+
+#### Test Scenarios:
+
+1. **test_defense_is_numeric_property**
+   - Tests: Rule 2.3.1/2.3.2 - Defense is a numeric property
+   - Verifies: Card has defense property with numeric value
+
+2. **test_defense_value_used_in_damage_step**
+   - Tests: Rule 2.3.1 - Defense contributes to combat damage step
+   - Verifies: `defense_contribution` equals the printed defense value
+
+3. **test_printed_defense_defines_base_defense**
+   - Tests: Rule 2.3.2 - Printed defense defines base defense
+   - Verifies: `base_defense` equals printed defense value
+
+4. **test_zero_is_valid_printed_defense**
+   - Tests: Rule 2.3.2 - Zero is a valid printed defense
+   - Verifies: Card with defense 0 still has the defense property
+
+5. **test_card_without_printed_defense_lacks_property**
+   - Tests: Rule 2.3.2 - No printed defense means no defense property
+   - Verifies: `has_defense_property = False` for cards without printed defense
+
+6. **test_ability_defined_defense**
+   - Tests: Rule 2.3.2a - (c) defense defined by ability
+   - Verifies: Ability-defined defense value is correctly returned
+
+7. **test_ability_defined_defense_zero_when_undetermined**
+   - Tests: Rule 2.3.2a - Undetermined (c) defense evaluates to 0
+   - Verifies: Defense evaluates to 0 when ability value cannot be determined
+
+8. **test_defense_can_be_modified**
+   - Tests: Rule 2.3.3 - Defense can be modified by effects
+   - Verifies: Effect boosting defense increases effective_defense
+
+9. **test_defense_term_refers_to_modified_defense**
+   - Tests: Rule 2.3.3 - "defense" refers to modified defense
+   - Verifies: Modified defense differs from base after boost effect
+
+10. **test_d_symbol_refers_to_modified_defense**
+    - Tests: Rule 2.3.3 - {d} symbol refers to modified defense
+    - Verifies: {d} symbol resolves to modified (effective) defense
+
+11. **test_defense_can_be_decreased**
+    - Tests: Rule 2.3.3 - Defense can be decreased by effects
+    - Verifies: Reduction effect decreases effective_defense
+
+12. **test_defense_cannot_be_negative**
+    - Tests: Rule 2.0.3c cross-ref - Defense capped at zero
+    - Verifies: Defense reduced below zero becomes 0
+
+13. **test_multiple_cards_independent_defense**
+    - Tests: Rule 2.3.2 - Each card has its own defense
+    - Verifies: Two cards maintain their own independent defense values
+
+#### Implementation Notes:
+- All 13 tests pass with stub-based implementation (`DefenseCardStub`, `AbilityDefinedDefenseCardStub`, `DefenseCheckResultStub`)
+- `DefenseCardStub.effective_defense` caps at zero (cross-ref Rule 2.0.3c)
+- `AbilityDefinedDefenseCardStub.base_defense` returns 0 when `ability_defined_value is None` (Rule 2.3.2a)
+
+#### Engine Features Needed:
+- `CardInstance.has_defense_property` property: False when no printed defense (Rule 2.3.2)
+- `CardInstance.base_defense` property returning the unmodified printed defense (Rule 2.3.2)
+- `CardInstance.effective_defense` returning modified defense (Rule 2.3.3)
+- `CardInstance.defense_contribution` used in damage step calculations (Rule 2.3.1)
+- Defense modification effects (Rule 2.3.3)
+- Numeric defense capped at zero (cross-ref Rule 2.0.3c)
+- Ability-defined defense for (c) notation cards (Rule 2.3.2a)
+- Undefined (c) defense evaluates to 0 (Rule 2.3.2a)
+
 ### Section 1.3: Cards
 
 **File**: `features/section_1_3_cards.feature`
@@ -2352,7 +2432,7 @@ The ultimate goal is to have **complete test coverage** of the Flesh and Blood C
 - [x] 2.0: General
 - [x] 2.1: Color
 - [x] 2.2: Cost
-- [ ] 2.3: Defense
+- [x] 2.3: Defense
 - [ ] 2.4: Intellect
 - [ ] 2.5: Life
 - [ ] 2.6: Metatype
