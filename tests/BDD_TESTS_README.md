@@ -1552,6 +1552,110 @@ This section tests the color property of cards in Flesh and Blood:
 - `Color.COLORLESS` treated as "no color" not a valid color value (Rule 2.1.2)
 - Color and pitch recognized as independent card properties (Rule 2.1.2a)
 
+### Section 2.2: Cost
+
+**File**: `features/section_2_2_cost.feature`
+**Step Definitions**: `step_defs/test_section_2_2_cost.py`
+
+This section tests the cost property of cards and abilities:
+- **Rule 2.2.1**: Cost is a numeric property determining the starting resource asset-cost
+- **Rule 2.2.2**: Printed cost defines base cost; no printed cost = no cost property; 0 is valid
+- **Rule 2.2.2a**: Multiple undefined symbols/values (XX, X+1, etc.) are additive
+- **Rule 2.2.3**: Activated ability cost = count of {r} symbols; no symbols = 0
+- **Rule 2.2.4**: Cost property of an object cannot be modified
+- **Rule 2.2.4a**: Effects modify play cost, NOT the cost property; only applied during playing
+- **Rule 2.2.4b**: "Cost" effects use unmodified property; "payment" effects use modified cost
+- **Rule 2.2.5**: {r} symbols and numeric cost expressions are functionally identical
+
+#### Test Scenarios:
+
+1. **test_cost_is_numeric_property_of_card**
+   - Tests: Rule 2.2.1 - Cost is a numeric property
+   - Verifies: Card with printed cost 3 has the cost property with value 3
+
+2. **test_cost_determines_starting_resource_asset_cost**
+   - Tests: Rule 2.2.1 - Cost determines starting resource asset-cost
+   - Verifies: Starting resource asset-cost equals the cost property value
+
+3. **test_printed_cost_defines_base_cost**
+   - Tests: Rule 2.2.2 - Printed cost defines base cost
+   - Verifies: Base cost equals printed cost value
+
+4. **test_zero_is_valid_printed_cost**
+   - Tests: Rule 2.2.2 - Zero is a valid printed cost
+   - Verifies: Card with cost 0 still has the cost property
+
+5. **test_card_without_printed_cost_lacks_cost_property**
+   - Tests: Rule 2.2.2 - No printed cost = no cost property
+   - Verifies: Card without printed cost has has_cost_property = False
+
+6. **test_card_with_xx_has_additive_base_cost**
+   - Tests: Rule 2.2.2a - Spark of Genius XX cost is additive
+   - Verifies: XX with X=3 evaluates to 6 (additive)
+
+7. **test_card_with_x_plus_1_has_additive_cost**
+   - Tests: Rule 2.2.2a - Mixed X+1 cost is additive
+   - Verifies: X+1 with X=2 evaluates to 3
+
+8. **test_activated_ability_two_resource_symbols_base_cost_2**
+   - Tests: Rule 2.2.3 - Two {r} symbols = base cost 2
+   - Verifies: Activated ability base cost equals symbol count
+
+9. **test_activated_ability_no_resource_symbols_base_cost_0**
+   - Tests: Rule 2.2.3 - No resource symbols = base cost 0
+   - Verifies: Activated ability with no {r} symbols has base cost 0
+
+10. **test_resource_symbol_count_is_printed_cost**
+    - Tests: Rule 2.2.3 - Symbol count dictates printed cost
+    - Verifies: 3 resource symbols = printed cost 3
+
+11. **test_cost_property_cannot_be_modified**
+    - Tests: Rule 2.2.4 - Cost property is immutable
+    - Verifies: Attempt to modify cost property fails; value stays unchanged
+
+12. **test_cost_reduction_does_not_change_cost_property**
+    - Tests: Rule 2.2.4a - Cost reduction only affects play cost
+    - Verifies: Cost property stays 3 while effective play cost is 2
+
+13. **test_cost_reduction_only_applies_during_playing**
+    - Tests: Rule 2.2.4a - Modification only during playing process
+    - Verifies: Effective play cost differs from cost property when reduction active
+
+14. **test_effect_referring_to_cost_uses_unmodified_cost**
+    - Tests: Rule 2.2.4b - "Cost" effects use unmodified property
+    - Verifies: Effect sees cost value 3 (not 2 after reduction)
+
+15. **test_effect_referring_to_payment_uses_modified_cost**
+    - Tests: Rule 2.2.4b - "Payment" effects use modified cost at play time
+    - Verifies: Payment record shows 2 (modified), base cost still 3
+
+16. **test_resource_symbol_identical_to_numeric_cost**
+    - Tests: Rule 2.2.5 - {r} and numeric are equivalent
+    - Verifies: One {r} symbol equals numeric cost 1
+
+17. **test_search_by_cost_finds_both_numeric_and_symbol_cards**
+    - Tests: Rule 2.2.5 - Search by cost value finds both formats
+    - Verifies: Cards with numeric cost 1 and {r}-symbol cost 1 both found
+
+#### Implementation Notes:
+- All 17 tests pass with stub-based implementation (`CostCardStub`, `AbilityCostStub`, etc.)
+- `CostCardStub.cost` returns the unmodified printed cost (Rule 2.2.4b)
+- `CostCardStub.effective_play_cost` applies reductions (Rule 2.2.4a)
+- `CostCardStub.attempt_modify_cost_property()` always returns False (Rule 2.2.4)
+- `VariableCostFormulaStub.evaluate_base_cost(x)` handles additive formulas (Rule 2.2.2a)
+
+#### Engine Features Needed:
+- `CardInstance.has_cost_property` property: False for no printed cost (Rule 2.2.2)
+- `CardInstance.base_cost` property returning the unmodified printed cost (Rule 2.2.2)
+- `CardInstance.cost` property returning the unmodified cost property (Rule 2.2.4b)
+- `CardInstance.effective_play_cost` with modifications applied during play (Rule 2.2.4a)
+- Variable cost formula support (XX, X+1, etc.) with additive evaluation (Rule 2.2.2a)
+- `ActivatedAbility.base_cost` counting {r} symbols in description (Rule 2.2.3)
+- `CostProperty.is_immutable = True` - cost property cannot be modified (Rule 2.2.4)
+- Cost-reference effects use unmodified cost property (Rule 2.2.4b)
+- Payment-reference effects use modified play cost at stack time (Rule 2.2.4b)
+- {r} symbol count and numeric cost treated as functionally identical (Rule 2.2.5)
+
 ### Section 1.3.1a: Card Ownership
 
 **File**: `features/section_1_3_1a_card_ownership.feature`
@@ -2247,7 +2351,7 @@ The ultimate goal is to have **complete test coverage** of the Flesh and Blood C
 ### Section 2: Object Properties
 - [x] 2.0: General
 - [x] 2.1: Color
-- [ ] 2.2: Cost
+- [x] 2.2: Cost
 - [ ] 2.3: Defense
 - [ ] 2.4: Intellect
 - [ ] 2.5: Life
