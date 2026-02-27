@@ -1736,6 +1736,126 @@ This section tests the cost system for playing cards and activating abilities:
 - `EffectCost.replaced_event_still_counts_as_paid = True` (Rule 1.14.4c)
 - Zero cost acknowledgment system (Rule 1.14.5)
 
+### Section 1.15: Counters
+
+**File**: `features/section_1_15_counters.feature`
+**Step Definitions**: `step_defs/test_section_1_15_counters.py`
+
+This section tests the counter system in Flesh and Blood:
+- **Rule 1.15.1**: A counter is a physical marker on a public object; not an object; identity by name or value+symbol
+- **Rule 1.15.2**: Counters modify properties and/or interact with effects
+- **Rule 1.15.2a**: Numeric+symbol counters modify object properties as a rule (not an effect), at the same timing layer as continuous effects
+- **Rule 1.15.3**: Counters cease when the object ceases or when removed
+- **Rule 1.15.4**: Diametrically opposing counters both remain on the object (no cancellation)
+
+#### Test Scenarios:
+
+1. **test_counter_is_physical_marker_on_object**
+   - Tests: Rule 1.15.1 - Counter is a physical marker
+   - Verifies: Counter recognized as physical marker on card
+
+2. **test_counter_is_not_object_and_has_no_properties**
+   - Tests: Rule 1.15.1 - Counter is not a game object
+   - Verifies: `is_game_object = False`, `has_object_properties = False`
+
+3. **test_counter_identity_defined_by_name**
+   - Tests: Rule 1.15.1 - Named counter identity
+   - Verifies: Two "steam" counters are functionally identical
+
+4. **test_counter_identity_defined_by_value_and_symbol**
+   - Tests: Rule 1.15.1 - Value+symbol counter identity
+   - Verifies: Two "+1{d}" counters are functionally identical and interchangeable
+
+5. **test_counters_with_same_name_are_interchangeable**
+   - Tests: Rule 1.15.1 - Same-name counters are interchangeable
+   - Verifies: `counters_are_interchangeable()` returns True for same-name counters
+
+6. **test_counters_with_different_names_are_not_same**
+   - Tests: Rule 1.15.1 - Different-named counters have different identities
+   - Verifies: "steam" and "rust" counters have different identities
+
+7. **test_counter_on_object_modifies_properties**
+   - Tests: Rule 1.15.2 - Counter modifies object properties
+   - Verifies: "+1{d}" counter increases effective defense from 3 to 4
+
+8. **test_counter_on_object_can_interact_with_effects**
+   - Tests: Rule 1.15.2 - Counter interacts with effects
+   - Verifies: Counter watcher effect detects "steam" counter on card
+
+9. **test_plus_power_counter_increases_attack_power**
+   - Tests: Rule 1.15.2a - +{p} counter increases power
+   - Verifies: "+1{p}" counter increases effective power from 4 to 5
+
+10. **test_minus_power_counter_decreases_attack_power**
+    - Tests: Rule 1.15.2a - -{p} counter decreases power
+    - Verifies: "-1{p}" counter decreases effective power from 4 to 3
+
+11. **test_plus_defense_counter_increases_defense_value**
+    - Tests: Rule 1.15.2a - +{d} counter increases defense
+    - Verifies: "+2{d}" counter increases effective defense from 3 to 5
+
+12. **test_counter_modification_is_rule_not_effect**
+    - Tests: Rule 1.15.2a - Counter modification classified as rule
+    - Verifies: Modification type is "rule", not "effect"
+
+13. **test_counter_modification_applies_at_same_time_as_continuous_effects**
+    - Tests: Rule 1.15.2a - Counter and continuous effect timing
+    - Verifies: Both apply at same timing layer; total power = base + counter + effect
+
+14. **test_multiple_counters_stack_modifications**
+    - Tests: Rule 1.15.2a - Multiple counters stack
+    - Verifies: Three "+1{d}" counters bring defense from 3 to 6
+
+15. **test_counters_cease_when_object_ceases**
+    - Tests: Rule 1.15.3 - Counters cease with object
+    - Verifies: Counters cease when card is destroyed/leaves arena
+
+16. **test_multiple_counters_cease_when_object_ceases**
+    - Tests: Rule 1.15.3 - All counters cease with object
+    - Verifies: All three counters cease when card ceases to exist
+
+17. **test_removed_counter_ceases_to_exist**
+    - Tests: Rule 1.15.3 - Removed counter ceases
+    - Verifies: Removed counter's `counter_ceased = True`
+
+18. **test_removing_one_counter_leaves_others_intact**
+    - Tests: Rule 1.15.3 - Partial removal leaves others
+    - Verifies: Card still has 2 steam counters after removing one of three
+
+19. **test_opposing_counters_both_remain**
+    - Tests: Rule 1.15.4 - Opposing counters both remain
+    - Verifies: Adding "-1{p}" to card with "+1{p}" keeps both
+
+20. **test_opposing_counters_do_not_cancel**
+    - Tests: Rule 1.15.4 - No cancellation between opposing counters
+    - Verifies: Net power still 4 (4 base + 1 - 1), both counters remain
+
+21. **test_multiple_opposing_counter_pairs_all_remain**
+    - Tests: Rule 1.15.4 - Multiple opposing pairs all remain
+    - Verifies: 2 "+1{p}" and 2 "-1{p}" counters all stay on object
+
+22. **test_adding_counter_when_opposing_already_present**
+    - Tests: Rule 1.15.4 - Adding more counters with existing opposing pair
+    - Verifies: Adding another "+1{p}" results in 2 "+1{p}" and 1 "-1{p}"
+
+#### Implementation Notes:
+- All counter tracking uses `CounterStub` with `name` or `(value, symbol)` identity
+- `CounterOppositionResultStub` confirms no cancellation when opposing counter added
+- Counter modification timing (`"continuous_effect_layer"`) matches continuous effects per Rule 1.15.2a
+- All 22 tests pass with stub-based implementation (engine Counter class pending)
+
+#### Engine Features Needed:
+- `Counter` class with `name` or `(value, symbol)` identity (Rule 1.15.1)
+- `Counter.is_game_object = False` (Rule 1.15.1)
+- `CardInstance.counters` list tracking placed counters (Rule 1.15.2)
+- `CardInstance.add_counter(counter)` method (Rule 1.15.2)
+- `CardInstance.remove_counter(counter)` method (Rule 1.15.3)
+- `CardInstance.effective_power` with counter modification (Rule 1.15.2a)
+- `CardInstance.effective_defense` with counter modification (Rule 1.15.2a)
+- Counter modification same timing layer as continuous effects (Rule 1.15.2a)
+- Counters cease when object ceases (Rule 1.15.3)
+- No counter cancellation for diametrically opposing counters (Rule 1.15.4)
+
 ### Section 1.12: Numbers and Symbols
 
 **File**: `features/section_1_12_numbers_and_symbols.feature`
@@ -1940,7 +2060,7 @@ The ultimate goal is to have **complete test coverage** of the Flesh and Blood C
 - [x] 1.12: Numbers and Symbols
 - [x] 1.13: Assets
 - [x] 1.14: Costs
-- [ ] 1.15: Counters
+- [x] 1.15: Counters
 
 ### Section 2: Object Properties
 - [ ] 2.0: General
