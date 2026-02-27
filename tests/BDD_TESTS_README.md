@@ -2773,6 +2773,109 @@ This section tests the name property of objects in Flesh and Blood:
 - `CardTemplate.is_distinct_from(other)` based on name+pitch (Rule 2.7.1 / cross-ref 1.3.4)
 - Engine name handling: English-language canonical name always used (Rule 2.7.4)
 
+### Section 2.8: Pitch
+
+**File**: `features/section_2_8_pitch.feature`
+**Step Definitions**: `step_defs/test_section_2_8_pitch.py`
+
+This section tests the pitch property of cards in Flesh and Blood:
+- **Rule 2.8.1**: Pitch represents assets gained when pitched; value = number of assets; determines uniqueness with name
+- **Rule 2.8.2**: Printed pitch expressed as 1-3 {r} or {c} symbols; symbol type = asset type; count = pitch value; no pitch = no property
+- **Rule 2.8.3**: Pitch can be modified; "pitch" refers to modified pitch value
+- **Rule 2.8.4**: {r}/{c} symbol expression and numerical expression are functionally identical
+
+#### Test Scenarios:
+
+1. **test_pitch_is_property_of_card**
+   - Tests: Rule 2.8.1/2.8.2 - Pitch is a property of a card
+   - Verifies: Card has pitch property with numeric value
+
+2. **test_pitch_value_represents_assets_gained**
+   - Tests: Rule 2.8.1 - Pitch value is the number of assets gained when pitched
+   - Verifies: `pitch_to_gain_assets()` returns the pitch value
+
+3. **test_pitch_contributes_to_card_uniqueness**
+   - Tests: Rule 2.8.1 - Pitch determines uniqueness along with name
+   - Verifies: Sink Below red (pitch 1) and Sink Below blue (pitch 3) are distinct
+
+4. **test_same_name_same_pitch_not_distinct**
+   - Tests: Rule 2.8.1 - Cards with same name and pitch are not distinct
+   - Verifies: Two identical Pummel cards are NOT distinct
+
+5. **test_one_resource_symbol_is_pitch_1**
+   - Tests: Rule 2.8.2 - One resource symbol = pitch value 1
+   - Verifies: `printed_pitch == 1` for card with one {r} symbol
+
+6. **test_two_resource_symbols_is_pitch_2**
+   - Tests: Rule 2.8.2 - Two resource symbols = pitch value 2
+   - Verifies: `printed_pitch == 2` for card with two {r} symbols
+
+7. **test_three_resource_symbols_is_pitch_3**
+   - Tests: Rule 2.8.2 - Three resource symbols = pitch value 3
+   - Verifies: `printed_pitch == 3` for card with three {r} symbols
+
+8. **test_resource_symbols_generate_resource_points**
+   - Tests: Rule 2.8.2 - {r} symbols generate resource points when pitched
+   - Verifies: `pitch_asset_type == "resource"` for resource-symbol cards
+
+9. **test_chi_symbols_generate_chi_points**
+   - Tests: Rule 2.8.2 - {c} symbols generate chi points when pitched
+   - Verifies: `pitch_asset_type == "chi"` for chi-symbol cards
+
+10. **test_printed_pitch_defines_base_pitch**
+    - Tests: Rule 2.8.2 - Printed pitch defines base pitch
+    - Verifies: `base_pitch` equals printed pitch value
+
+11. **test_card_without_printed_pitch_lacks_property**
+    - Tests: Rule 2.8.2 - No printed pitch means no pitch property
+    - Verifies: `has_pitch_property == False` for cards without printed pitch
+
+12. **test_pitch_can_be_modified**
+    - Tests: Rule 2.8.3 - Pitch can be modified by effects
+    - Verifies: Effect boosting pitch increases `effective_pitch`
+
+13. **test_pitch_term_refers_to_modified_pitch**
+    - Tests: Rule 2.8.3 - "pitch" refers to modified pitch value
+    - Verifies: Modified pitch differs from base after boost effect
+
+14. **test_pitch_can_be_decreased**
+    - Tests: Rule 2.8.3 - Pitch can be decreased by effects
+    - Verifies: Reduction effect decreases `effective_pitch`
+
+15. **test_pitch_cannot_be_negative**
+    - Tests: Rule 2.0.3c cross-ref - Pitch capped at zero
+    - Verifies: Pitch reduced below zero becomes 0
+
+16. **test_resource_symbol_identical_to_numeric_pitch_1**
+    - Tests: Rule 2.8.4 - {r} and numeric are equivalent
+    - Verifies: One {r} symbol equals numeric pitch 1
+
+17. **test_search_by_numeric_pitch_finds_symbol_cards**
+    - Tests: Rule 2.8.4 - Search by pitch value finds both numeric and symbol cards
+    - Verifies: Cards with numeric pitch 1 and {r}-symbol pitch 1 both found
+
+18. **test_multiple_cards_independent_pitch**
+    - Tests: Rule 2.8.2 - Each card has its own pitch
+    - Verifies: Two cards maintain their own independent pitch values
+
+#### Implementation Notes:
+- All 18 tests pass with stub-based implementation (`PitchCardStub`, `PitchCheckResultStub`, `PitchSearchResultStub`)
+- `PitchCardStub.effective_pitch` caps at zero (cross-ref Rule 2.0.3c)
+- `PitchCardStub.has_pitch_property` returns False when `printed_pitch is None` (Rule 2.8.2)
+- `PitchCardStub.pitch_asset_type` tracks "resource" vs "chi" asset types (Rule 2.8.2)
+- `PitchCardStub.is_distinct_from()` checks name + pitch for uniqueness (Rules 2.8.1, 1.3.4)
+
+#### Engine Features Needed:
+- `CardInstance.has_pitch_property` property: False when no printed pitch (Rule 2.8.2)
+- `CardInstance.base_pitch` property returning the unmodified printed pitch (Rule 2.8.2)
+- `CardInstance.effective_pitch` (or `pitch`) returning modified pitch (Rule 2.8.3)
+- `CardInstance.pitch_asset_type` returning "resource" or "chi" based on symbol type (Rule 2.8.2)
+- `CardInstance.pitch_assets_generated` method returning assets gained when pitched (Rule 2.8.1)
+- Pitch modification effects (Rule 2.8.3)
+- Numeric pitch capped at zero (cross-ref Rule 2.0.3c)
+- `CardTemplate.is_distinct_from(other)` based on name + pitch (Rules 2.8.1, 1.3.4)
+- Symbol count ({r} or {c}) and numeric pitch treated as functionally identical (Rule 2.8.4)
+
 ## Running Tests
 
 ### Run all BDD tests:
@@ -2867,7 +2970,7 @@ The ultimate goal is to have **complete test coverage** of the Flesh and Blood C
 - [x] 2.5: Life
 - [x] 2.6: Metatype
 - [x] 2.7: Name
-- [ ] 2.8: Pitch
+- [x] 2.8: Pitch
 - [ ] 2.9: Power
 - [ ] 2.10: Subtypes
 - [ ] 2.11: Supertypes
