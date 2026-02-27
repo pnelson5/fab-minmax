@@ -2421,6 +2421,146 @@ This section tests number handling and symbol definitions:
 - [ ] `AsteriskValue.resolve_priority()` preferring meta-static over continuous (Rule 1.12.3b)
 - [ ] `SymbolRegistry` with complete symbol table (Rule 1.12.4)
 
+### Section 2.5: Life
+
+**File**: `features/section_2_5_life.feature`
+**Step Definitions**: `step_defs/test_section_2_5_life.py`
+
+This section tests the life property of objects in Flesh and Blood:
+- **Rule 2.5.1**: Life is a numeric property representing the starting life total
+- **Rule 2.5.1a**: A permanent with the life property is a living object
+- **Rule 2.5.2**: Printed life defines the base life; no printed life = no life property; 0 is valid
+- **Rule 2.5.3**: Life of a permanent can be modified; "life total" or {h} = modified life
+- **Rule 2.5.3a**: Life total = base life + life gained - life lost (tracked by players)
+- **Rule 2.5.3b**: Life gained and life lost are discrete effects (permanently modify total, NOT continuous)
+- **Rule 2.5.3c**: If base life changes, life total is recalculated (Shiyana example)
+- **Rule 2.5.3d**: Life total can exceed base life
+- **Rule 2.5.3e**: Life total cannot be negative; capped at zero
+- **Rule 2.5.3f**: Hero at zero life → player loses or draw; non-hero permanent at zero → cleared
+- **Rule 2.5.3g**: Living object ceasing to exist is considered to have died
+
+#### Test Scenarios:
+
+1. **test_life_is_numeric_property**
+   - Tests: Rule 2.5.1/2.5.2 - Life is a numeric property
+   - Verifies: Card has life property with numeric value
+
+2. **test_life_represents_starting_life_total**
+   - Tests: Rule 2.5.1 - Life represents the starting life total
+   - Verifies: `base_life` equals printed life value (starting total)
+
+3. **test_permanent_with_life_is_living_object**
+   - Tests: Rule 2.5.1a - Permanent with life property is a living object
+   - Verifies: `is_living_object = True` for permanent in arena with life property
+
+4. **test_permanent_without_life_not_living**
+   - Tests: Rule 2.5.1a - Permanent without life property is NOT a living object
+   - Verifies: `is_living_object = False` for permanent without life property
+
+5. **test_non_permanent_not_living_even_with_life**
+   - Tests: Rule 2.5.1a - Only permanents in arena can be living objects
+   - Verifies: Non-permanent with life property is not a living object
+
+6. **test_printed_life_defines_base_life**
+   - Tests: Rule 2.5.2 - Printed life defines base life
+   - Verifies: `base_life` equals printed life value
+
+7. **test_zero_is_valid_printed_life**
+   - Tests: Rule 2.5.2 - Zero is a valid printed life
+   - Verifies: Card with life 0 still has the life property
+
+8. **test_card_without_printed_life_lacks_property**
+   - Tests: Rule 2.5.2 - No printed life means no life property
+   - Verifies: `has_life_property = False` for cards without printed life
+
+9. **test_life_can_be_modified**
+   - Tests: Rule 2.5.3 - Life of a permanent can be modified
+   - Verifies: Life loss effect reduces effective life total
+
+10. **test_life_total_refers_to_modified_life**
+    - Tests: Rule 2.5.3 - "life total" refers to modified life
+    - Verifies: Modified life total differs from base after gain effect
+
+11. **test_h_symbol_refers_to_modified_life**
+    - Tests: Rule 2.5.3 - {h} symbol refers to modified life
+    - Verifies: {h} resolves to modified (effective) life total
+
+12. **test_life_total_formula**
+    - Tests: Rule 2.5.3a - Life total formula: base + gained - lost
+    - Verifies: 20 + 5 - 3 = 22
+
+13. **test_multiple_life_events_accumulate**
+    - Tests: Rule 2.5.3a - Multiple life events accumulate
+    - Verifies: Multiple gains and losses accumulate correctly
+
+14. **test_life_gain_loss_are_discrete**
+    - Tests: Rule 2.5.3b - Life gain/loss are discrete effects
+    - Verifies: Removing "source" of discrete gain doesn't undo the life gained
+
+15. **test_discrete_life_permanently_modifies**
+    - Tests: Rule 2.5.3b - Discrete life effects permanently modify life total
+    - Verifies: Life total remains modified after effect applied
+
+16. **test_base_life_change_recalculates_preserving_lost**
+    - Tests: Rule 2.5.3c - Shiyana example: base life change recalculates total
+    - Verifies: Shiyana copies Kano (15 base), had lost 5 → new total = 10
+
+17. **test_base_life_change_preserves_life_gained**
+    - Tests: Rule 2.5.3c - Base life change preserves life gained
+    - Verifies: Gained life preserved when base changes: 10 + 3 = 13
+
+18. **test_life_total_can_exceed_base**
+    - Tests: Rule 2.5.3d - Life total can exceed base life
+    - Verifies: Life total 25 > base life 20 after gaining 5
+
+19. **test_life_total_capped_at_zero**
+    - Tests: Rule 2.5.3e - Life total cannot be negative
+    - Verifies: 5 base - 10 lost = capped at 0 (not -5)
+
+20. **test_life_total_exactly_zero**
+    - Tests: Rule 2.5.3e - Exactly zero is zero not negative
+    - Verifies: 5 - 5 = 0
+
+21. **test_hero_zero_life_triggers_game_state_action**
+    - Tests: Rule 2.5.3f - Hero at 0 life triggers game state action
+    - Verifies: `game_state_action_fired = True` and `hero_death_handled = True`
+
+22. **test_non_hero_permanent_zero_life_cleared**
+    - Tests: Rule 2.5.3f - Non-hero permanent at 0 life cleared
+    - Verifies: `permanent_cleared = True` game state action fires
+
+23. **test_living_object_ceasing_is_dead**
+    - Tests: Rule 2.5.3g - Living object ceasing = considered dead
+    - Verifies: `is_dead = True` when living object ceases to exist
+
+24. **test_death_distinct_from_life_loss**
+    - Tests: Rule 2.5.3g - Death vs life loss distinction
+    - Verifies: Object that merely lost life is NOT considered dead
+
+25. **test_multiple_independent_life_totals**
+    - Tests: Rule 2.5.2 - Multiple cards have independent life totals
+    - Verifies: Life loss to hero A doesn't affect hero B
+
+#### Implementation Notes:
+- All 25 tests pass with stub-based implementation (`LifeCardStub`, `LifeCheckResultStub`, `GameStateActionResultStub`, `DeathTrackingResultStub`)
+- `LifeCardStub.life_total` caps at zero (cross-ref Rule 2.0.3c / Rule 2.5.3e)
+- `LifeCardStub.has_life_property` returns False when `printed_life is None` (Rule 2.5.2)
+- `LifeCardStub.is_living_object` requires `is_permanent_card and is_in_arena and has_life_property` (Rule 2.5.1a)
+- `LifeCardStub.change_base_life(new_value)` preserves life_gained/life_lost for recalculation (Rule 2.5.3c)
+
+#### Engine Features Needed:
+- `CardInstance.has_life_property` property: False when no printed life (Rule 2.5.2)
+- `CardInstance.base_life` property returning the unmodified printed life (Rule 2.5.2)
+- `CardInstance.life_total` property returning modified life total (Rule 2.5.3)
+- `Permanent.is_living_object` property: True only when permanent in arena with life property (Rule 2.5.1a)
+- Life tracking: `life_gained` + `life_lost` accumulation (Rule 2.5.3a)
+- Life gain/loss as discrete effects that permanently modify life total (Rule 2.5.3b)
+- Base life change triggers life_total recalculation preserving gain/loss (Rule 2.5.3c)
+- `life_total` capped at 0, cannot be negative (Rule 2.5.3e)
+- `GameStateAction.check_hero_deaths()` for hero at 0 life (Rule 2.5.3f / 1.10.2a)
+- `GameStateAction.clear_zero_life_permanents()` for non-hero at 0 life (Rule 2.5.3f / 1.10.2b)
+- `is_dead` tracking for ceased living objects (Rule 2.5.3g)
+
 ## Running Tests
 
 ### Run all BDD tests:
@@ -2512,7 +2652,7 @@ The ultimate goal is to have **complete test coverage** of the Flesh and Blood C
 - [x] 2.2: Cost
 - [x] 2.3: Defense
 - [x] 2.4: Intellect
-- [ ] 2.5: Life
+- [x] 2.5: Life
 - [ ] 2.6: Metatype
 - [ ] 2.7: Name
 - [ ] 2.8: Pitch
