@@ -1370,6 +1370,118 @@ This section tests the priority system in Flesh and Blood:
 - `GameEngine.is_in_process_of_resolving_layer` property (Rule 1.11.5)
 - `GameEngine.is_performing_game_state_actions` property (Rule 1.11.5)
 
+### Section 2.0: General (Object Properties)
+
+**File**: `features/section_2_0_general.feature`
+**Step Definitions**: `step_defs/test_section_2_0_general.py`
+
+This section tests fundamental rules about object properties:
+- **Rule 2.0.1**: A property is an attribute of an object; 13 properties defined: abilities, color, cost, defense, intellect, life, name, pitch, power, subtypes, supertypes, text_box, type
+- **Rule 2.0.1a**: Abilities are properties (not objects); activated abilities have cost and type properties
+- **Rule 2.0.2**: Card/macro properties determined by true text on cards.fabtcg.com
+- **Rule 2.0.3**: Numeric properties have numeric values modifiable by effects/counters
+- **Rule 2.0.3a**: Effects modify value not base value ("gain"/"get"/"have"/"lose" = non-base modification)
+- **Rule 2.0.3b**: Base value modification is NOT gaining/losing; non-base modification IS gaining/losing (Korshem / Big Bully examples)
+- **Rule 2.0.3c**: Numeric properties cannot be negative; capped at zero
+- **Rule 2.0.3d**: +/-1 counters modify value not base value
+- **Rule 2.0.4**: "Gaining" = didn't have property, now does; "Losing" = had property, no longer does; NOT same as increasing/decreasing value
+- **Rule 2.0.5**: Source of a property is the object that has it
+
+#### Test Scenarios:
+
+1. **test_card_has_recognized_game_properties**
+   - Tests: Rule 2.0.1 - Properties are attributes of objects
+   - Verifies: Card has name, power, defense, cost, and type properties
+
+2. **test_there_are_13_possible_object_properties**
+   - Tests: Rule 2.0.1 - Exactly 13 properties defined
+   - Verifies: Property system contains exactly the 13 defined property names
+
+3. **test_ability_is_property_not_object**
+   - Tests: Rule 2.0.1a - Abilities are properties, not objects
+   - Verifies: "go again" is a property of the card, not a game object
+
+4. **test_activated_ability_has_cost_and_type_properties**
+   - Tests: Rule 2.0.1a - Activated abilities have cost and type properties
+   - Verifies: ActivatedAbility has cost=2 and type property
+
+5. **test_card_properties_come_from_card_definition**
+   - Tests: Rule 2.0.2 - Properties from card definition
+   - Verifies: Card power, cost, defense match defined values
+
+6. **test_numeric_properties_have_numeric_values**
+   - Tests: Rule 2.0.3 - Numeric properties return integers
+   - Verifies: Power property value is 3 and classified as numeric
+
+7. **test_effect_modifies_power_not_base**
+   - Tests: Rule 2.0.3a - "+2 power" effect increases effective power, not base
+   - Verifies: effective_power=6, base_power=4
+
+8. **test_gain_effect_modifies_non_base_power**
+   - Tests: Rule 2.0.3a - "gain 2 power" effect increases effective power, not base
+   - Verifies: effective_power=5, base_power=3
+
+9. **test_doubling_base_power_not_gaining**
+   - Tests: Rule 2.0.3b - Doubling base power NOT classified as "gaining power" (Big Bully)
+   - Verifies: base_power=8, modification.is_classified_as_gaining()=False
+
+10. **test_non_base_increase_is_gaining**
+    - Tests: Rule 2.0.3b - Non-base power increase IS classified as "gaining power" (Korshem)
+    - Verifies: modification.is_classified_as_gaining()=True
+
+11. **test_numeric_property_cannot_be_negative**
+    - Tests: Rule 2.0.3c - Power capped at zero when reduced below zero
+    - Verifies: effective_power=0 when base=2 and reduced by 5
+
+12. **test_defense_cannot_be_negative**
+    - Tests: Rule 2.0.3c - Defense capped at zero
+    - Verifies: effective_defense=0 when base=1 and reduced by 3
+
+13. **test_power_counter_modifies_not_base**
+    - Tests: Rule 2.0.3d - +1 power counter increases effective power not base
+    - Verifies: effective_power=5, base_power=4
+
+14. **test_minus_power_counter_modifies_not_base**
+    - Tests: Rule 2.0.3d - -1 power counter decreases effective power not base
+    - Verifies: effective_power=3, base_power=4
+
+15. **test_card_gains_new_property**
+    - Tests: Rule 2.0.4 - Gaining a property = didn't have, now does
+    - Verifies: was_gained=True after granting "go again"
+
+16. **test_card_loses_existing_property**
+    - Tests: Rule 2.0.4 - Losing a property = had it, no longer does
+    - Verifies: was_lost=True after removing "go again"
+
+17. **test_gaining_property_not_same_as_increasing_value**
+    - Tests: Rule 2.0.4 - Gaining property NOT classified as increasing value
+    - Verifies: gain_loss_result.is_value_increase=False
+
+18. **test_source_of_property_is_card**
+    - Tests: Rule 2.0.5 - Source of a property is the object that has it
+    - Verifies: property_source.source_object_name == "Pummel"
+
+#### Implementation Notes:
+- All 18 tests pass with stub-based implementation (`CardPropertyStub`, `ActivatedAbilityStub`, etc.)
+- `CardPropertyStub.ALL_PROPERTIES` enumerates the 13 defined property names
+- `NumericPropertyModificationStub.is_classified_as_gaining()` implements Rule 2.0.3b logic
+- `PropertyGainLossResultStub` tracks gain/loss vs value increase distinction (Rule 2.0.4)
+- `PropertySourceStub` models Rule 2.0.5 property source tracking
+
+#### Engine Features Needed:
+- `ObjectProperty` system with enumeration of all 13 property types (Rule 2.0.1)
+- `CardInstance.get_properties()` -> Set[str] (Rule 2.0.1)
+- `CardInstance.has_property(name)` method (Rule 2.0.1)
+- `ActivatedAbility.cost` and `ActivatedAbility.type` properties (Rule 2.0.1a)
+- `CardInstance.base_power` distinct from `effective_power` (Rule 2.0.3a)
+- `CardInstance.base_defense` distinct from `effective_defense` (Rule 2.0.3a)
+- Effect tracking whether modification is "base" or "non-base" (Rules 2.0.3a, 2.0.3b)
+- `PropertyModification.is_base_modification` flag (Rule 2.0.3b)
+- Numeric properties capped at zero (Rule 2.0.3c)
+- `CardInstance.gained_properties` tracking set (Rule 2.0.4)
+- `CardInstance.lost_properties` tracking set (Rule 2.0.4)
+- `PropertySource` system tracking which object a property belongs to (Rule 2.0.5)
+
 ### Section 1.3.1a: Card Ownership
 
 **File**: `features/section_1_3_1a_card_ownership.feature`
@@ -2063,7 +2175,7 @@ The ultimate goal is to have **complete test coverage** of the Flesh and Blood C
 - [x] 1.15: Counters
 
 ### Section 2: Object Properties
-- [ ] 2.0: General
+- [x] 2.0: General
 - [ ] 2.1: Color
 - [ ] 2.2: Cost
 - [ ] 2.3: Defense
