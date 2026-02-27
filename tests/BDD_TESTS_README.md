@@ -1774,6 +1774,84 @@ This section tests card ownership rules:
    - Tests: Rule 1.3.1a - Ownership doesn't transfer
    - Verifies: Cards stolen or copied remain owned by original owner
 
+### Section 2.4: Intellect
+
+**File**: `features/section_2_4_intellect.feature`
+**Step Definitions**: `step_defs/test_section_2_4_intellect.py`
+
+This section tests the intellect property of hero cards in Flesh and Blood:
+- **Rule 2.4.1**: Intellect is a numeric property of a hero card; represents the number of cards drawn up to at end of turn
+- **Rule 2.4.2**: Printed intellect defines the base intellect; no printed intellect = no property (0 is valid)
+- **Rule 2.4.3**: Intellect can be modified; "intellect" or {i} refers to the modified intellect
+
+#### Test Scenarios:
+
+1. **test_intellect_is_numeric_property**
+   - Tests: Rule 2.4.1/2.4.2 - Intellect is a numeric property
+   - Verifies: Hero card has intellect property with numeric value
+
+2. **test_intellect_represents_cards_drawn_at_end_of_turn**
+   - Tests: Rule 2.4.1 - Intellect is used for end-of-turn draw
+   - Verifies: Player draws up to intellect-value cards at end of turn
+
+3. **test_intellect_is_hero_card_property_only**
+   - Tests: Rule 2.4.1 - Intellect is exclusively a hero card property
+   - Verifies: Hero card has intellect property; non-hero action card does not
+
+4. **test_printed_intellect_defines_base_intellect**
+   - Tests: Rule 2.4.2 - Printed intellect defines base intellect
+   - Verifies: `base_intellect` equals printed intellect value
+
+5. **test_zero_is_valid_printed_intellect**
+   - Tests: Rule 2.4.2 - Zero is a valid printed intellect
+   - Verifies: Hero with 0 printed intellect still has the intellect property
+
+6. **test_card_without_printed_intellect_lacks_property**
+   - Tests: Rule 2.4.2 - No printed intellect means no intellect property
+   - Verifies: `has_intellect_property = False` for cards without printed intellect
+
+7. **test_intellect_can_be_modified**
+   - Tests: Rule 2.4.3 - Intellect can be modified by effects
+   - Verifies: Effect boosting intellect increases `effective_intellect`
+
+8. **test_intellect_term_refers_to_modified_intellect**
+   - Tests: Rule 2.4.3 - "intellect" refers to modified intellect
+   - Verifies: Modified intellect differs from base after boost effect
+
+9. **test_i_symbol_refers_to_modified_intellect**
+   - Tests: Rule 2.4.3 - {i} symbol refers to modified intellect
+   - Verifies: {i} symbol resolves to modified (effective) intellect
+
+10. **test_intellect_can_be_decreased**
+    - Tests: Rule 2.4.3 - Intellect can be decreased by effects
+    - Verifies: Reduction effect decreases `effective_intellect`
+
+11. **test_intellect_cannot_be_negative**
+    - Tests: Rule 2.0.3c cross-ref - Intellect capped at zero
+    - Verifies: Intellect reduced below zero becomes 0
+
+12. **test_modified_intellect_affects_end_of_turn_draw**
+    - Tests: Rule 2.4.1 + 2.4.3 - Modified intellect affects end-of-turn draw
+    - Verifies: Boosted intellect results in drawing more cards at end of turn
+
+13. **test_multiple_hero_cards_independent_intellect**
+    - Tests: Rule 2.4.2 - Each hero card has its own intellect
+    - Verifies: Two heroes maintain their own independent intellect values
+
+#### Implementation Notes:
+- All 13 tests pass with stub-based implementation (`IntellectCardStub`, `IntellectCheckResultStub`, `EndOfTurnDrawResultStub`)
+- `IntellectCardStub.effective_intellect` caps at zero (cross-ref Rule 2.0.3c)
+- `IntellectCardStub.has_intellect_property` returns False when `printed_intellect is None` (Rule 2.4.2)
+
+#### Engine Features Needed:
+- `CardInstance.has_intellect_property` property: False when no printed intellect (Rule 2.4.2)
+- `CardInstance.base_intellect` property returning the unmodified printed intellect (Rule 2.4.2)
+- `CardInstance.effective_intellect` (or `intellect`) returning modified intellect (Rule 2.4.3)
+- Intellect restricted to hero card types (Rule 2.4.1)
+- End-of-turn draw-up-to logic using effective intellect (Rule 2.4.1)
+- Intellect modification effects (Rule 2.4.3)
+- Numeric intellect capped at zero (cross-ref Rule 2.0.3c)
+
 ### Section 1.13: Assets
 
 **File**: `features/section_1_13_assets.feature`
@@ -2433,7 +2511,7 @@ The ultimate goal is to have **complete test coverage** of the Flesh and Blood C
 - [x] 2.1: Color
 - [x] 2.2: Cost
 - [x] 2.3: Defense
-- [ ] 2.4: Intellect
+- [x] 2.4: Intellect
 - [ ] 2.5: Life
 - [ ] 2.6: Metatype
 - [ ] 2.7: Name
