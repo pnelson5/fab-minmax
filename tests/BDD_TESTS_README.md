@@ -2661,6 +2661,118 @@ This section tests the life property of objects in Flesh and Blood:
 - `GameStateAction.clear_zero_life_permanents()` for non-hero at 0 life (Rule 2.5.3f / 1.10.2b)
 - `is_dead` tracking for ceased living objects (Rule 2.5.3g)
 
+### Section 2.7: Name
+
+**File**: `features/section_2_7_name.feature`
+**Step Definitions**: `step_defs/test_section_2_7_name.py`
+
+This section tests the name property of objects in Flesh and Blood:
+- **Rule 2.7.1**: Name is a property of an object representing object identity and uniqueness (with pitch)
+- **Rule 2.7.2**: Printed name defines the name of a card
+- **Rule 2.7.3**: Personal names determine a moniker (most significant identifier)
+- **Rule 2.7.3a**: Non-personal names have no moniker
+- **Rule 2.7.3b**: Different names may share the same moniker; moniker-based effects match all
+- **Rule 2.7.3c**: A moniker is NOT a name; name-based effects don't match via moniker
+- **Rule 2.7.4**: Printed name always considered the English version regardless of card language
+- **Rule 2.7.5**: Name matching is exact case-insensitive whole-word match (not substring)
+
+#### Test Scenarios:
+
+1. **test_name_is_property_of_card**
+   - Tests: Rule 2.7.1 - Name is a property and object identity
+   - Verifies: Card has `has_name_property`, correct name value, name in object identities
+
+2. **test_name_determines_uniqueness_with_pitch**
+   - Tests: Rule 2.7.1 - Name + pitch determine uniqueness
+   - Verifies: Two Sink Below cards with different pitch values are distinct
+
+3. **test_same_name_and_pitch_not_distinct**
+   - Tests: Rule 2.7.1 - Same name and pitch = not distinct
+   - Verifies: Two identical Pummel cards are NOT distinct
+
+4. **test_printed_name_defines_card_name**
+   - Tests: Rule 2.7.2 - Printed name defines the card name
+   - Verifies: Card name equals its printed name
+
+5. **test_personal_name_determines_moniker**
+   - Tests: Rule 2.7.3 - Personal name determines moniker
+   - Verifies: "Bravo" personal name yields moniker "Bravo"
+
+6. **test_dorinthea_ironsong_moniker**
+   - Tests: Rule 2.7.3 - Last name doesn't become moniker
+   - Verifies: "Dorinthea Ironsong" yields moniker "Dorinthea"
+
+7. **test_honorific_and_suffix_moniker**
+   - Tests: Rule 2.7.3 - Honorifics and suffixes stripped from moniker
+   - Verifies: "Ser Boltyn, Breaker of Dawn" yields moniker "Boltyn"
+
+8. **test_the_librarian_moniker**
+   - Tests: Rule 2.7.3 - Multi-word moniker (The Librarian)
+   - Verifies: "The Librarian" yields moniker "The Librarian"
+
+9. **test_non_personal_name_has_no_moniker**
+   - Tests: Rule 2.7.3a - Non-personal names have no moniker
+   - Verifies: "Pummel" non-personal name has `moniker = None`
+
+10. **test_action_card_has_no_moniker**
+    - Tests: Rule 2.7.3a - Action cards have no moniker
+    - Verifies: "Lunging Press" action card has no moniker
+
+11. **test_bravo_showstopper_same_moniker**
+    - Tests: Rule 2.7.3b - Different names may share moniker
+    - Verifies: "Bravo" and "Bravo, Showstopper" both have moniker "Bravo"
+
+12. **test_effect_moniker_matches_multiple_cards**
+    - Tests: Rule 2.7.3b - Moniker-based effect matches all cards with that moniker
+    - Verifies: All three Bravo cards (Bravo, Bravo Showstopper, Bravo SOTS) matched
+
+13. **test_dawnblade_name_vs_moniker**
+    - Tests: Rule 2.7.3c - Name-based effect does NOT match by moniker
+    - Verifies: Effect naming "Dawnblade" matches only "Dawnblade", not "Dawnblade, Resplendent"
+
+14. **test_moniker_not_considered_name**
+    - Tests: Rule 2.7.3c - Moniker is not a name
+    - Verifies: Name match "Bravo" finds only the card named "Bravo", not "Bravo, Showstopper"
+
+15. **test_printed_name_always_english**
+    - Tests: Rule 2.7.4 - English name used regardless of physical card language
+    - Verifies: Japanese-printed card still has English name "Pummel"
+
+16. **test_name_matching_whole_word_case_insensitive**
+    - Tests: Rule 2.7.5 - Whole-word match (Censor/Blazing Aether example)
+    - Verifies: "Blazing Aether" search finds "Blazing Aether" but NOT "Trailblazing Aether"
+
+17. **test_name_matching_case_insensitive**
+    - Tests: Rule 2.7.5 - Case-insensitive match
+    - Verifies: Lowercase "blazing aether" finds "Blazing Aether"
+
+18. **test_proto_does_not_match_protos**
+    - Tests: Rule 2.7.5 - Whole word match (Fabricate/Proto example)
+    - Verifies: "Proto" does NOT match "Breaker Helm Protos" ("Protos" ≠ "Proto")
+
+19. **test_full_word_match_finds_correct_cards**
+    - Tests: Rule 2.7.5 - Exact word match works
+    - Verifies: "Proto" matches "Proto Helm" (Proto is an exact whole word)
+
+#### Implementation Notes:
+- All 19 tests pass with stub-based implementation (`NameCardStub`, `PersonalNameParserStub`)
+- `NameCardStub.matches_name()` implements whole-word, case-insensitive matching (Rule 2.7.5)
+- `PersonalNameParserStub` uses a lookup table for the rulebook examples (Rule 2.7.3)
+- `NameCardStub.is_distinct_from()` checks name + pitch for uniqueness (Rule 2.7.1)
+- Engine needs `PersonalNameParser` to properly parse the name grammar for all heroes
+
+#### Engine Features Needed:
+- `CardTemplate.name` property: the printed name (Rule 2.7.2)
+- `CardInstance.name` property accessible from instances (Rule 2.7.1)
+- `CardInstance.get_object_identities()`: includes name as identity (Rule 2.7.1)
+- `CardTemplate.moniker` property: derived from personal name, or None (Rule 2.7.3)
+- `PersonalNameParser.extract_moniker(name)` -> str | None (Rule 2.7.3)
+- `CardTemplate.has_moniker` bool property (Rule 2.7.3/2.7.3a)
+- `NameMatcher.matches(candidate, query)` with whole-word, case-insensitive matching (Rule 2.7.5)
+- `NameMatcher.matches_by_moniker(objects, moniker)` -> List (Rule 2.7.3b)
+- `CardTemplate.is_distinct_from(other)` based on name+pitch (Rule 2.7.1 / cross-ref 1.3.4)
+- Engine name handling: English-language canonical name always used (Rule 2.7.4)
+
 ## Running Tests
 
 ### Run all BDD tests:
@@ -2754,7 +2866,7 @@ The ultimate goal is to have **complete test coverage** of the Flesh and Blood C
 - [x] 2.4: Intellect
 - [x] 2.5: Life
 - [x] 2.6: Metatype
-- [ ] 2.7: Name
+- [x] 2.7: Name
 - [ ] 2.8: Pitch
 - [ ] 2.9: Power
 - [ ] 2.10: Subtypes
