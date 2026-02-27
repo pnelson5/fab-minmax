@@ -1774,6 +1774,106 @@ This section tests card ownership rules:
    - Tests: Rule 1.3.1a - Ownership doesn't transfer
    - Verifies: Cards stolen or copied remain owned by original owner
 
+### Section 2.6: Metatype
+
+**File**: `features/section_2_6_metatype.feature`
+**Step Definitions**: `step_defs/test_section_2_6_metatype.py`
+
+This section tests the metatype property of objects in Flesh and Blood:
+- **Rule 2.6.1**: Metatypes are metatype keywords that determine whether an object may be added to a game
+- **Rule 2.6.2**: An object can have zero or more metatypes
+- **Rule 2.6.3**: Metatype determined by type box; printed before supertypes
+- **Rule 2.6.4**: Activated/triggered-layers inherit the metatypes of their source
+- **Rule 2.6.5**: Objects cannot gain or lose metatypes (immutable)
+- **Rule 2.6.6**: Two categories: hero-metatypes (match hero moniker) and set-metatypes (defined by tournament rules)
+
+#### Test Scenarios:
+
+1. **test_metatypes_determine_game_entry_eligibility**
+   - Tests: Rule 2.6.1 - Metatypes determine game-entry eligibility
+   - Verifies: Card with matching hero-metatype is eligible for that hero's deck
+
+2. **test_non_matching_hero_metatype_cannot_be_added**
+   - Tests: Rule 2.6.1/2.6.6 - Non-matching hero-metatype rejected
+   - Verifies: Card with Dorinthea metatype rejected for Katsu hero
+
+3. **test_card_with_no_metatypes_has_zero_metatypes**
+   - Tests: Rule 2.6.2 - Objects can have zero metatypes
+   - Verifies: Generic action card has empty metatypes list
+
+4. **test_card_can_have_exactly_one_metatype**
+   - Tests: Rule 2.6.2 - Objects can have one metatype
+   - Verifies: Dorinthea Specialization Spell has exactly one metatype
+
+5. **test_card_can_have_multiple_metatypes**
+   - Tests: Rule 2.6.2 - Objects can have multiple metatypes
+   - Verifies: Card with Dorinthea and Bravo metatypes has two metatypes
+
+6. **test_metatype_determined_by_type_box**
+   - Tests: Rule 2.6.3 - Metatype determined by type box
+   - Verifies: Metatype value matches what's in the type box
+
+7. **test_metatype_printed_before_supertypes**
+   - Tests: Rule 2.6.3 - Metatype printed before supertypes
+   - Verifies: Metatype precedes supertypes in type box ordering
+
+8. **test_activated_layer_inherits_source_metatypes**
+   - Tests: Rule 2.6.4 - Activated-layer inherits source metatypes
+   - Verifies: Layer has same metatypes as creating card
+
+9. **test_triggered_layer_inherits_source_metatypes**
+   - Tests: Rule 2.6.4 - Triggered-layer inherits source metatypes
+   - Verifies: Triggered-layer has same metatypes as source
+
+10. **test_layer_from_no_metatype_source_has_no_metatypes**
+    - Tests: Rule 2.6.4 - Layer from no-metatype source has no metatypes
+    - Verifies: Zero metatypes inherited when source has none
+
+11. **test_object_cannot_gain_metatypes**
+    - Tests: Rule 2.6.5 - Objects cannot gain metatypes
+    - Verifies: Effect attempting to add metatype fails; count unchanged
+
+12. **test_object_cannot_lose_metatypes**
+    - Tests: Rule 2.6.5 - Objects cannot lose metatypes
+    - Verifies: Effect attempting to remove metatype fails; original metatype retained
+
+13. **test_hero_metatype_legal_for_matching_moniker**
+    - Tests: Rule 2.6.6 - Hero-metatype legal for matching moniker
+    - Verifies: Bravo Signature Weapon legal for Bravo, Showstopper hero
+
+14. **test_hero_metatype_illegal_for_non_matching_moniker**
+    - Tests: Rule 2.6.6 - Hero-metatype illegal for non-matching moniker
+    - Verifies: Bravo Signature Weapon rejected for Dorinthea Ironsong hero
+
+15. **test_set_metatype_requires_matching_tournament_rule**
+    - Tests: Rule 2.6.6 - Set-metatype card requires matching tournament rule
+    - Verifies: Classic Constructed card allowed when tournament rule permits it
+
+16. **test_set_metatype_rejected_without_matching_tournament_rule**
+    - Tests: Rule 2.6.6 - Set-metatype card rejected without matching tournament rule
+    - Verifies: Classic Constructed card rejected when no matching tournament rule
+
+17. **test_card_with_no_metatypes_always_eligible**
+    - Tests: Rule 2.6.1/2.6.2 - No-metatype card always eligible
+    - Verifies: Card with no metatypes is not excluded by metatype restrictions for any hero
+
+#### Implementation Notes:
+- All 17 tests pass with stub-based implementation (`MetatypeStub`, `MetatypeCardStub`, `HeroCardStub`, `LayerWithMetatypeStub`, etc.)
+- `MetatypeCardStub.gain_metatype()` always returns False (Rule 2.6.5 immutability)
+- `MetatypeCardStub.lose_metatype()` always returns False (Rule 2.6.5 immutability)
+- `LayerWithMetatypeStub.metatypes` delegates to `source.metatypes` (Rule 2.6.4)
+- `check_card_pool_legality()` validates hero-metatypes by moniker and set-metatypes by tournament rule
+
+#### Engine Features Needed:
+- `CardTemplate.metatypes` property: frozenset of metatype keywords (Rule 2.6.1)
+- `MetatypeKeyword` class variants: `HeroMetatype` and `SetMetatype` (Rule 2.6.6)
+- `CardTemplate.has_metatype(keyword)` method (Rules 2.6.2, 2.6.3)
+- `Layer.metatypes` property inheriting from source (Rule 2.6.4)
+- `CardTemplate.metatypes` is immutable - no gain/lose operations (Rule 2.6.5)
+- `HeroCard.moniker` property extracted from name (Rule 2.6.6, cross-ref 2.7.3)
+- `card_pool_legality_check(card, hero)` validating metatype matching (Rule 2.6.6)
+- `TournamentRule.allowed_sets` for set-metatype validation (Rule 2.6.6)
+
 ### Section 2.4: Intellect
 
 **File**: `features/section_2_4_intellect.feature`
@@ -2653,7 +2753,7 @@ The ultimate goal is to have **complete test coverage** of the Flesh and Blood C
 - [x] 2.3: Defense
 - [x] 2.4: Intellect
 - [x] 2.5: Life
-- [ ] 2.6: Metatype
+- [x] 2.6: Metatype
 - [ ] 2.7: Name
 - [ ] 2.8: Pitch
 - [ ] 2.9: Power
