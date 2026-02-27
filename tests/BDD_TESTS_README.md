@@ -1482,6 +1482,76 @@ This section tests fundamental rules about object properties:
 - `CardInstance.lost_properties` tracking set (Rule 2.0.4)
 - `PropertySource` system tracking which object a property belongs to (Rule 2.0.5)
 
+### Section 2.1: Color
+
+**File**: `features/section_2_1_color.feature`
+**Step Definitions**: `step_defs/test_section_2_1_color.py`
+
+This section tests the color property of cards in Flesh and Blood:
+- **Rule 2.1.1**: Color is a visual representation of the color of a card
+- **Rule 2.1.2**: The printed color is expressed as a color strip; red/yellow/blue strips give those colors; no strip = no color
+- **Rule 2.1.2a**: Pitch and color are typically associated (pitch 1=red, 2=yellow, 3=blue) but are independent properties
+
+#### Test Scenarios:
+
+1. **test_color_is_visual_property**
+   - Tests: Rule 2.1.1 - Color is a visual representation
+   - Verifies: Card with color strip has `has_color = True` and `is_visual_property = True`
+
+2. **test_card_with_red_color_strip_is_red**
+   - Tests: Rule 2.1.2 - Red color strip makes card red
+   - Verifies: Card's `color_name` is "red"
+
+3. **test_card_with_yellow_color_strip_is_yellow**
+   - Tests: Rule 2.1.2 - Yellow color strip makes card yellow
+   - Verifies: Card's `color_name` is "yellow"
+
+4. **test_card_with_blue_color_strip_is_blue**
+   - Tests: Rule 2.1.2 - Blue color strip makes card blue
+   - Verifies: Card's `color_name` is "blue"
+
+5. **test_card_with_no_color_strip_has_no_color**
+   - Tests: Rule 2.1.2 - No color strip = no color
+   - Verifies: `has_color = False` and `color_name = None`
+
+6. **test_card_pitch_1_typically_red**
+   - Tests: Rule 2.1.2a - Pitch 1 typically associated with red
+   - Verifies: Pitch 1 red card has both `color_name = "red"` and `pitch_value = 1`
+
+7. **test_card_pitch_2_typically_yellow**
+   - Tests: Rule 2.1.2a - Pitch 2 typically associated with yellow
+   - Verifies: Pitch 2 yellow card has both `color_name = "yellow"` and `pitch_value = 2`
+
+8. **test_card_pitch_3_typically_blue**
+   - Tests: Rule 2.1.2a - Pitch 3 typically associated with blue
+   - Verifies: Pitch 3 blue card has both `color_name = "blue"` and `pitch_value = 3`
+
+9. **test_color_and_pitch_are_independent**
+   - Tests: Rule 2.1.2a - Color and pitch are independent properties
+   - Verifies: Red card with pitch 3 is valid; `are_independent = True`
+
+10. **test_card_no_pitch_typically_no_color**
+    - Tests: Rule 2.1.2a - Cards with no pitch typically have no color
+    - Verifies: `has_color = False` and `has_pitch = False` for no-pitch no-color card
+
+11. **test_card_no_pitch_can_have_color**
+    - Tests: Rule 2.1.2a - Color and pitch are independent; a card can have a color without pitch
+    - Verifies: Blue card with no pitch has `color_name = "blue"` and `has_pitch = False`
+
+#### Implementation Notes:
+- All 11 tests pass with stub-based implementation (`ColorCardStub`, `ColorCheckResultStub`, `ColorAndPitchCheckResultStub`)
+- Tests document that the engine's `CardInstance` must expose color and pitch as independent, named properties
+- `ColorCardStub.has_color` returns False when `color_name is None` (Rule 2.1.2)
+- `ColorCardStub.has_pitch` returns False when `pitch_value is None` (Rule 2.1.2a)
+
+#### Engine Features Needed:
+- `CardInstance.color` property returning `Color` enum (Rule 2.1.1/2.1.2)
+- `CardInstance.has_color` property: `False` when `Color.COLORLESS` (Rule 2.1.2)
+- `CardInstance.color_name` property returning "red"/"yellow"/"blue"/None (Rule 2.1.2)
+- `CardInstance.has_pitch` property (Rule 2.1.2a)
+- `Color.COLORLESS` treated as "no color" not a valid color value (Rule 2.1.2)
+- Color and pitch recognized as independent card properties (Rule 2.1.2a)
+
 ### Section 1.3.1a: Card Ownership
 
 **File**: `features/section_1_3_1a_card_ownership.feature`
@@ -2176,7 +2246,7 @@ The ultimate goal is to have **complete test coverage** of the Flesh and Blood C
 
 ### Section 2: Object Properties
 - [x] 2.0: General
-- [ ] 2.1: Color
+- [x] 2.1: Color
 - [ ] 2.2: Cost
 - [ ] 2.3: Defense
 - [ ] 2.4: Intellect
