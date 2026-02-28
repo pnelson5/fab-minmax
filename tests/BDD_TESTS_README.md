@@ -3299,6 +3299,93 @@ This section tests the text box property of cards in Flesh and Blood:
 - `HypotheticalObject` class for "create X" contexts (Rule 2.12.3b)
 - `RulesTextReferenceResolver.is_creation_context(clause)` detecting "Create a X" phrasing (Rule 2.12.3b)
 
+### Section 2.13: Traits
+
+**File**: `features/section_2_13_traits.feature`
+**Step Definitions**: `step_defs/test_section_2_13_traits.py`
+
+This section tests the traits property of objects in Flesh and Blood:
+- **Rule 2.13.1**: Trait is a property of an object, which represents one of its object identities [1.2.2]
+- **Rule 2.13.2**: Printed traits are located at the top of the card, under the card name; they define the traits of a card
+- **Rule 2.13.3**: Traits are non-functional keywords or phrases and do not add additional rules to an object
+- **Rule 2.13.3a**: The trait keywords and phrases are Agents of Chaos
+- **Rule 2.13.4**: If an effect refers to a group of cards by a trait, it refers to all cards with that trait
+
+#### Test Scenarios:
+
+1. **test_trait_is_property_representing_object_identity**
+   - Tests: Rule 2.13.1 - Trait is a property representing an object identity
+   - Verifies: Card with "Agents of Chaos" trait has it, and it appears in object identities
+
+2. **test_trait_is_recognized_as_object_property**
+   - Tests: Rule 2.13.1 - Trait is a recognized object property
+   - Verifies: Card has a traits property, and the traits property contains "Agents of Chaos"
+
+3. **test_card_without_trait_has_no_trait_identity**
+   - Tests: Rule 2.13.1 - No traits = no trait object identities
+   - Verifies: Card with no printed traits has zero traits; no trait keywords in identities
+
+4. **test_printed_traits_define_card_traits**
+   - Tests: Rule 2.13.2 - Printed traits define the traits of a card
+   - Verifies: Base traits include "Agents of Chaos" for card with printed trait
+
+5. **test_card_can_have_exactly_one_trait**
+   - Tests: Rule 2.13.2 - Card can have exactly one printed trait
+   - Verifies: Trait count is exactly 1
+
+6. **test_card_can_have_zero_traits**
+   - Tests: Rule 2.13.2 - Card can have zero printed traits
+   - Verifies: Trait count is exactly 0
+
+7. **test_traits_are_non_functional**
+   - Tests: Rule 2.13.3 - Traits are non-functional and add no additional rules
+   - Verifies: "Agents of Chaos" is non-functional; adds no additional rules
+
+8. **test_non_functional_trait_no_gameplay_effect**
+   - Tests: Rule 2.13.3 - Non-functional trait has no gameplay effect on its own
+   - Verifies: Neither card with nor without traits gains additional rules from traits
+
+9. **test_agents_of_chaos_is_recognized_trait_keyword**
+   - Tests: Rule 2.13.3a - Agents of Chaos is the only defined trait keyword
+   - Verifies: "Agents of Chaos" recognized as valid; total defined keywords = 1
+
+10. **test_effect_refers_to_all_cards_with_trait**
+    - Tests: Rule 2.13.4 - Effect targeting by trait collects all matching cards
+    - Verifies: Only the card with "Agents of Chaos" trait is in the target group
+
+11. **test_effect_selects_random_card_from_agents_group**
+    - Tests: Rule 2.13.4 - Arakni, Web of Deceit example: random selection from trait group
+    - Verifies: Selected card has the trait and is from the correct group
+
+12. **test_effect_targets_empty_group_when_no_cards_have_trait**
+    - Tests: Rule 2.13.4 - Empty group when no cards have the trait
+    - Verifies: Target group is empty when no arena cards have the trait
+
+13. **test_trait_contributes_to_object_identity_alongside_name**
+    - Tests: Rule 2.13.1 + Rule 1.2.2b - Trait identity alongside name
+    - Verifies: Object identities include both "Agents of Chaos" and "Test Agent"
+
+14. **test_multiple_card_instances_with_same_trait_in_group**
+    - Tests: Rule 2.13.4 - All matching cards included in trait group
+    - Verifies: All three Agents of Chaos cards appear in the target group
+
+#### Implementation Notes:
+- All 14 tests pass with stub-based implementation (`TraitCardStub`, `TraitCheckResultStub`, `TraitGroupEffectStub`)
+- `TraitCardStub.get_object_identities()` includes trait strings alongside "object", "card", and name (Rule 2.13.1)
+- `DEFINED_TRAIT_KEYWORDS` frozenset contains only "Agents of Chaos" (Rule 2.13.3a)
+- `TraitGroupEffectStub.get_group()` filters candidates by `has_trait()` (Rule 2.13.4)
+- `TraitGroupEffectStub.select_random()` uses `random.choice()` on the group (Rule 2.13.4 Arakni example)
+
+#### Engine Features Needed:
+- `CardTemplate.traits` property returning frozenset of trait strings (Rule 2.13.2)
+- `CardInstance.traits` property returning resolved frozenset of trait strings (Rule 2.13.2)
+- `CardInstance.has_trait(name)` method (Rule 2.13.1)
+- `CardInstance.get_object_identities()` includes trait strings (Rule 2.13.1, cross-ref 1.2.2)
+- `TraitRegistry.TRAIT_KEYWORDS` frozenset containing only "Agents of Chaos" (Rule 2.13.3a)
+- `TraitRegistry.is_non_functional(name)` = True always (Rule 2.13.3)
+- `TraitRegistry.adds_additional_rules(name)` = False always (Rule 2.13.3)
+- `TraitGroupEffect.get_group(trait_name, arena_objects)` collecting all objects with the trait (Rule 2.13.4)
+
 ## Running Tests
 
 ### Run all BDD tests:
@@ -3398,7 +3485,7 @@ The ultimate goal is to have **complete test coverage** of the Flesh and Blood C
 - [x] 2.10: Subtypes
 - [x] 2.11: Supertypes
 - [x] 2.12: Text Box
-- [ ] 2.13: Traits
+- [x] 2.13: Traits
 - [ ] 2.14: Type Box
 - [ ] 2.15: Types
 
