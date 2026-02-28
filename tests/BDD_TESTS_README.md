@@ -3197,6 +3197,108 @@ This section tests the subtypes property of objects in Flesh and Blood:
 - `CardInstance.gain_subtype(name)` method (Rule 2.10.5)
 - `CardInstance.lose_subtype(name)` method (Rule 2.10.5)
 
+### Section 2.12: Text Box
+
+**File**: `features/section_2_12_text_box.feature`
+**Step Definitions**: `step_defs/test_section_2_12_text_box.py`
+
+This section tests the text box property of cards in Flesh and Blood:
+- **Rule 2.12.1**: Text box contains card text, typically on the lower half of a card beneath the illustration
+- **Rule 2.12.2**: Card text consists of rules text, reminder text, and flavor text; rules text is roman/boldface; reminder text is parenthesized italics; flavor text is in italics below a horizontal bar
+- **Rule 2.12.3**: Rules text defines base abilities; each paragraph = one ability; reminder and flavor text do NOT affect the game
+- **Rule 2.12.3a**: Card name/moniker in rules text referring to itself is a self-reference ("this") pointing to the source object, not other same-named cards
+- **Rule 2.12.3b**: Name in creation context = hypothetical object with defined properties; name in non-creation context = existing objects
+
+#### Test Scenarios:
+
+1. **test_card_has_text_box**
+   - Tests: Rule 2.12.1 - Text box contains card text
+   - Verifies: Card has `has_text_box = True` and non-empty `text_box`
+
+2. **test_card_without_rules_text_empty_text_box**
+   - Tests: Rule 2.12.1 - Card with no rules text has empty card text
+   - Verifies: `text_box` is None or empty
+
+3. **test_card_text_includes_rules_text**
+   - Tests: Rule 2.12.2 - Card text contains rules text component
+   - Verifies: `rules_text` property returns "Go again."
+
+4. **test_card_text_includes_reminder_text**
+   - Tests: Rule 2.12.2 - Card text can include reminder text
+   - Verifies: `reminder_text` returns the parenthesized reminder text
+
+5. **test_card_text_includes_flavor_text**
+   - Tests: Rule 2.12.2 - Card text can include flavor text
+   - Verifies: `flavor_text` returns the flavor text string
+
+6. **test_card_text_may_have_no_reminder_text**
+   - Tests: Rule 2.12.2 - Reminder text is optional
+   - Verifies: `reminder_text` is None when absent
+
+7. **test_card_text_may_have_no_flavor_text**
+   - Tests: Rule 2.12.2 - Flavor text is optional
+   - Verifies: `flavor_text` is None when absent
+
+8. **test_rules_text_defines_base_abilities**
+   - Tests: Rule 2.12.3 - Rules text defines base abilities
+   - Verifies: `get_base_abilities()` returns ["Go again."] from rules text
+
+9. **test_each_paragraph_is_one_ability**
+   - Tests: Rule 2.12.3 - Each paragraph = one ability
+   - Verifies: Two paragraphs yield 2 base abilities
+
+10. **test_reminder_text_does_not_add_abilities**
+    - Tests: Rule 2.12.3 - Reminder text does not affect the game
+    - Verifies: Reminder text doesn't add extra abilities (still 1 ability)
+
+11. **test_flavor_text_does_not_add_abilities**
+    - Tests: Rule 2.12.3 - Flavor text does not affect the game
+    - Verifies: Flavor text doesn't add extra abilities (still 1 ability)
+
+12. **test_card_name_in_rules_text_is_self_reference**
+    - Tests: Rule 2.12.3a - Name of source in rules text is self-reference
+    - Verifies: "Pummel" in Pummel's rules text resolves to the card itself
+
+13. **test_card_moniker_in_rules_text_is_self_reference**
+    - Tests: Rule 2.12.3a - Moniker in rules text is self-reference
+    - Verifies: "Bravo" in "Bravo, Showstopper"'s rules text resolves to the hero
+
+14. **test_self_reference_not_other_instances**
+    - Tests: Rule 2.12.3a - Self-reference doesn't match other same-named cards
+    - Verifies: "Pummel" resolves to card instance 1, not instance 2
+
+15. **test_creating_named_token_is_hypothetical**
+    - Tests: Rule 2.12.3b - Creation context = hypothetical object
+    - Verifies: "Create a Runechant token." is a creation context; hypothetical has name "Runechant"
+
+16. **test_destroy_target_refers_to_existing_objects**
+    - Tests: Rule 2.12.3b - Non-creation context = existing objects
+    - Verifies: "Destroy target Runechant." is NOT a creation context; refers to existing token
+
+17. **test_hypothetical_object_has_defined_properties**
+    - Tests: Rule 2.12.3b - Hypothetical object has properties from creation instruction
+    - Verifies: Hypothetical Runechant has "go again" property and name "Runechant"
+
+#### Implementation Notes:
+- All 17 tests pass with stub-based implementation (`TextBoxCardStub`, `RulesTextReferenceStub`, `HypotheticalObjectStub`)
+- `TextBoxCardStub.get_base_abilities()` splits rules text on `\n` to get one ability per paragraph (Rule 2.12.3)
+- `RulesTextReferenceStub.is_self_reference()` checks both full name and moniker (Rule 2.12.3a)
+- `RulesTextReferenceStub.is_creation_context()` checks for creation keywords like "create" (Rule 2.12.3b)
+- `HypotheticalObjectStub.has_property()` implements case-insensitive property checking (Rule 2.12.3b)
+
+#### Engine Features Needed:
+- `CardInstance.text_box` property returning the full card text (Rule 2.12.1)
+- `CardInstance.has_text_box` property (Rule 2.12.1)
+- `CardInstance.rules_text` property returning only rules text (Rule 2.12.2)
+- `CardInstance.reminder_text` property returning reminder text or None (Rule 2.12.2)
+- `CardInstance.flavor_text` property returning flavor text or None (Rule 2.12.2)
+- `CardInstance.get_base_abilities()` derived from rules text paragraphs (Rule 2.12.3)
+- Rules text paragraph parser: one paragraph = one ability (Rule 2.12.3)
+- `CardInstance.is_self_reference(name_or_moniker)` detection (Rule 2.12.3a)
+- `RulesTextReferenceResolver.resolve_self(card, name)` returning the card itself for self-refs (Rule 2.12.3a)
+- `HypotheticalObject` class for "create X" contexts (Rule 2.12.3b)
+- `RulesTextReferenceResolver.is_creation_context(clause)` detecting "Create a X" phrasing (Rule 2.12.3b)
+
 ## Running Tests
 
 ### Run all BDD tests:
@@ -3295,7 +3397,7 @@ The ultimate goal is to have **complete test coverage** of the Flesh and Blood C
 - [x] 2.9: Power
 - [x] 2.10: Subtypes
 - [x] 2.11: Supertypes
-- [ ] 2.12: Text Box
+- [x] 2.12: Text Box
 - [ ] 2.13: Traits
 - [ ] 2.14: Type Box
 - [ ] 2.15: Types
