@@ -2773,6 +2773,86 @@ This section tests the name property of objects in Flesh and Blood:
 - `CardTemplate.is_distinct_from(other)` based on name+pitch (Rule 2.7.1 / cross-ref 1.3.4)
 - Engine name handling: English-language canonical name always used (Rule 2.7.4)
 
+### Section 2.9: Power
+
+**File**: `features/section_2_9_power.feature`
+**Step Definitions**: `step_defs/test_section_2_9_power.py`
+
+This section tests the power property of cards in Flesh and Blood:
+- **Rule 2.9.1**: Power is a numeric property of an object, representing the power value used in the damage step of combat
+- **Rule 2.9.2**: Printed power defines the base power; no printed power = no property; 0 is valid
+- **Rule 2.9.2a**: (c) power is defined by an ability; evaluates to 0 when undetermined
+- **Rule 2.9.3**: Power can be modified; "power" or {p} symbol refers to the modified power
+
+#### Test Scenarios:
+
+1. **test_power_is_numeric_property**
+   - Tests: Rule 2.9.1/2.9.2 - Power is a numeric property
+   - Verifies: Card has power property with numeric value
+
+2. **test_power_value_used_in_damage_step**
+   - Tests: Rule 2.9.1 - Power is used in the damage step of combat
+   - Verifies: `combat_power` equals the printed power value
+
+3. **test_printed_power_defines_base_power**
+   - Tests: Rule 2.9.2 - Printed power defines base power
+   - Verifies: `base_power` equals printed power value
+
+4. **test_zero_is_valid_printed_power**
+   - Tests: Rule 2.9.2 - Zero is a valid printed power
+   - Verifies: Card with power 0 still has the power property
+
+5. **test_card_without_printed_power_lacks_property**
+   - Tests: Rule 2.9.2 - No printed power means no power property
+   - Verifies: `has_power_property = False` for cards without printed power
+
+6. **test_ability_defined_power**
+   - Tests: Rule 2.9.2a - (c) power defined by ability
+   - Verifies: Ability-defined power value is correctly returned (Mutated Mass example)
+
+7. **test_ability_defined_power_zero_when_undetermined**
+   - Tests: Rule 2.9.2a - Undetermined (c) power evaluates to 0
+   - Verifies: Power evaluates to 0 when ability value cannot be determined
+
+8. **test_power_can_be_modified**
+   - Tests: Rule 2.9.3 - Power can be modified by effects
+   - Verifies: Effect boosting power increases effective_power
+
+9. **test_power_term_refers_to_modified_power**
+   - Tests: Rule 2.9.3 - "power" refers to modified power
+   - Verifies: Modified power differs from base after boost effect
+
+10. **test_p_symbol_refers_to_modified_power**
+    - Tests: Rule 2.9.3 - {p} symbol refers to modified power
+    - Verifies: {p} symbol resolves to modified (effective) power
+
+11. **test_power_can_be_decreased**
+    - Tests: Rule 2.9.3 - Power can be decreased by effects
+    - Verifies: Reduction effect decreases effective_power
+
+12. **test_power_cannot_be_negative**
+    - Tests: Rule 2.0.3c cross-ref - Power capped at zero
+    - Verifies: Power reduced below zero becomes 0
+
+13. **test_multiple_cards_independent_power**
+    - Tests: Rule 2.9.2 - Each card has its own power
+    - Verifies: Two cards maintain their own independent power values
+
+#### Implementation Notes:
+- All 13 tests pass with stub-based implementation (`PowerCardStub`, `AbilityDefinedPowerCardStub`, `PowerCheckResultStub`)
+- `PowerCardStub.effective_power` caps at zero (cross-ref Rule 2.0.3c)
+- `AbilityDefinedPowerCardStub.base_power` returns 0 when `ability_defined_value is None` (Rule 2.9.2a)
+
+#### Engine Features Needed:
+- `CardInstance.has_power_property` property: False when no printed power (Rule 2.9.2)
+- `CardInstance.base_power` property returning the unmodified printed power (Rule 2.9.2)
+- `CardInstance.effective_power` returning modified power (Rule 2.9.3)
+- `CardInstance.combat_power` used in the damage step of combat (Rule 2.9.1)
+- Power modification effects (Rule 2.9.3)
+- Numeric power capped at zero (cross-ref Rule 2.0.3c)
+- Ability-defined power for (c) notation cards (Rule 2.9.2a)
+- Undefined (c) power evaluates to 0 (Rule 2.9.2a)
+
 ### Section 2.8: Pitch
 
 **File**: `features/section_2_8_pitch.feature`
@@ -2971,7 +3051,7 @@ The ultimate goal is to have **complete test coverage** of the Flesh and Blood C
 - [x] 2.6: Metatype
 - [x] 2.7: Name
 - [x] 2.8: Pitch
-- [ ] 2.9: Power
+- [x] 2.9: Power
 - [ ] 2.10: Subtypes
 - [ ] 2.11: Supertypes
 - [ ] 2.12: Text Box
