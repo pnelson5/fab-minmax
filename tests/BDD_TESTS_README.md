@@ -2956,6 +2956,121 @@ This section tests the pitch property of cards in Flesh and Blood:
 - `CardTemplate.is_distinct_from(other)` based on name + pitch (Rules 2.8.1, 1.3.4)
 - Symbol count ({r} or {c}) and numeric pitch treated as functionally identical (Rule 2.8.4)
 
+### Section 2.10: Subtypes
+
+**File**: `features/section_2_10_subtypes.feature`
+**Step Definitions**: `step_defs/test_section_2_10_subtypes.py`
+
+This section tests the subtypes property of objects in Flesh and Blood:
+- **Rule 2.10.1**: Subtypes are subtype keywords; functional subtypes determine what additional rules apply
+- **Rule 2.10.2**: An object can have zero or more subtypes
+- **Rule 2.10.3**: Subtypes determined by type box; printed after long dash after card type
+- **Rule 2.10.4**: Activated/triggered-layers inherit source subtypes
+- **Rule 2.10.5**: Objects can gain or lose subtypes from rules/effects
+- **Rule 2.10.6**: Subtypes are functional or non-functional; functional adds additional rules
+- **Rule 2.10.6a**: Functional subtype keywords: (1H), (2H), Affliction, Ally, Arrow, Ash, Attack, Aura, Construct, Figment, Invocation, Item, Landmark, Off-Hand, Quiver (15 total)
+- **Rule 2.10.6b**: Non-functional subtypes: Angel, Arms, Axe, Base, Book, Bow, Sword, Staff, etc.
+
+#### Test Scenarios:
+
+1. **test_subtypes_are_subtype_keywords**
+   - Tests: Rule 2.10.1/2.10.6a - Subtypes are subtype keywords; Attack is functional
+   - Verifies: Card with Attack subtype has it; Attack recognized as functional
+
+2. **test_non_functional_subtypes_add_no_rules**
+   - Tests: Rule 2.10.6b - Non-functional subtypes don't add additional rules
+   - Verifies: Sword is not a functional subtype
+
+3. **test_object_with_zero_subtypes**
+   - Tests: Rule 2.10.2 - Object can have zero subtypes
+   - Verifies: No-subtype card has empty subtypes and is still a valid object
+
+4. **test_object_can_have_one_subtype**
+   - Tests: Rule 2.10.2 - Object can have exactly one subtype
+   - Verifies: Ally-subtype card has exactly 1 subtype
+
+5. **test_object_can_have_multiple_subtypes**
+   - Tests: Rule 2.10.2 - Object can have multiple subtypes
+   - Verifies: Card with Attack and Arrow has exactly 2 subtypes
+
+6. **test_subtypes_determined_by_type_box**
+   - Tests: Rule 2.10.3 - Subtypes from type box after long dash
+   - Verifies: "Action - Attack" parses to type "Action" and subtype "Attack"
+
+7. **test_card_with_no_dash_has_no_subtype**
+   - Tests: Rule 2.10.3 - No long dash = no subtype
+   - Verifies: "Instant" type box yields no subtypes
+
+8. **test_activated_layer_inherits_subtypes**
+   - Tests: Rule 2.10.4 - Activated-layer inherits source subtypes
+   - Verifies: Activated-layer from Ally-source has Ally subtype
+
+9. **test_triggered_layer_inherits_subtypes**
+   - Tests: Rule 2.10.4 - Triggered-layer inherits source subtypes
+   - Verifies: Triggered-layer from Aura-source has Aura subtype
+
+10. **test_layer_from_no_subtype_source**
+    - Tests: Rule 2.10.4 - Layer with no-subtype source has zero subtypes
+    - Verifies: Activated-layer from no-subtype source has empty subtypes
+
+11. **test_object_can_gain_subtype**
+    - Tests: Rule 2.10.5 - Object can gain a subtype from an effect
+    - Verifies: Card gains Aura subtype via effect; goes from 0 to 1 subtype
+
+12. **test_object_can_lose_subtype**
+    - Tests: Rule 2.10.5 - Object can lose a subtype from an effect
+    - Verifies: Card loses Arrow; retains Attack
+
+13. **test_functional_subtypes_include_attack**
+    - Tests: Rule 2.10.6 - Functional subtypes add rules; Attack is functional
+    - Verifies: Attack is in the functional subtype keyword list
+
+14. **test_all_functional_subtypes_recognized**
+    - Tests: Rule 2.10.6a - All 15 functional subtype keywords recognized
+    - Verifies: (1H), (2H), Affliction, Ally, Arrow, Ash, Aura, Construct, Figment, Invocation, Item, Landmark, Off-Hand, Quiver all functional
+
+15. **test_non_functional_subtypes_recognized**
+    - Tests: Rule 2.10.6b - Non-functional subtypes recognized
+    - Verifies: Sword, Bow, Staff, Dagger, Axe all non-functional
+
+16. **test_exactly_15_functional_subtypes**
+    - Tests: Rule 2.10.6a - Exactly 15 functional subtype keywords
+    - Verifies: functional keyword count == 15
+
+17. **test_attack_subtype_is_functional**
+    - Tests: Rule 2.10.6/2.10.6a - Attack subtype adds additional rules
+    - Verifies: `adds_additional_rules == True` for Attack subtype
+
+18. **test_sword_subtype_is_non_functional**
+    - Tests: Rule 2.10.6b - Sword subtype doesn't add additional rules
+    - Verifies: `adds_additional_rules == False` for Sword subtype
+
+19. **test_card_can_have_both_functional_and_non_functional_subtypes**
+    - Tests: Rule 2.10.6 - Cards can have both functional and non-functional subtypes
+    - Verifies: Attack+Sword card; functional_subtypes contains only Attack
+
+20. **test_layer_inherits_multiple_subtypes**
+    - Tests: Rule 2.10.4 - Layer inherits all subtypes from multi-subtype source
+    - Verifies: Layer from Attack+Arrow source has both subtypes
+
+#### Implementation Notes:
+- All 20 tests pass with stub-based implementation (`SubtypeCardStub`, `LayerWithSubtypesStub`, `TypeBoxParseResultStub`, `SubtypeCheckResultStub`)
+- `SubtypeCardStub.functional_subtypes` filters by `FUNCTIONAL_SUBTYPES` frozenset (Rule 2.10.6)
+- `LayerWithSubtypesStub.subtypes` delegates to `source.subtypes` (Rule 2.10.4)
+- `TypeBoxParseResultStub.parse_type_box()` splits on " - " to extract type and subtypes (Rule 2.10.3)
+- `SubtypeCheckResultStub.for_subtype(name)` checks against `FUNCTIONAL_SUBTYPES` frozenset (Rule 2.10.6)
+- parsers.parse() used for parametrized `"{keyword}" should be a functional/non-functional subtype` steps
+
+#### Engine Features Needed:
+- `CardTemplate.subtypes` or `CardInstance.subtypes` returning a collection of subtype strings (Rule 2.10.2)
+- `CardInstance.functional_subtypes` returning only functional subtypes (Rule 2.10.6)
+- `SubtypeRegistry.is_functional(name)` classifying subtypes as functional or not (Rule 2.10.6)
+- `SubtypeRegistry.FUNCTIONAL_SUBTYPES` frozenset containing exactly 15 functional subtypes (Rule 2.10.6a)
+- Type box parser: extracts type and subtypes from "Type - Subtype" format (Rule 2.10.3)
+- `Layer.subtypes` property inheriting from source (Rule 2.10.4)
+- `CardInstance.gain_subtype(name)` method (Rule 2.10.5)
+- `CardInstance.lose_subtype(name)` method (Rule 2.10.5)
+
 ## Running Tests
 
 ### Run all BDD tests:
@@ -3052,7 +3167,7 @@ The ultimate goal is to have **complete test coverage** of the Flesh and Blood C
 - [x] 2.7: Name
 - [x] 2.8: Pitch
 - [x] 2.9: Power
-- [ ] 2.10: Subtypes
+- [x] 2.10: Subtypes
 - [ ] 2.11: Supertypes
 - [ ] 2.12: Text Box
 - [ ] 2.13: Traits
