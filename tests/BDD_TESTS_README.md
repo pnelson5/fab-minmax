@@ -1774,6 +1774,132 @@ This section tests card ownership rules:
    - Tests: Rule 1.3.1a - Ownership doesn't transfer
    - Verifies: Cards stolen or copied remain owned by original owner
 
+### Section 2.11: Supertypes
+
+**File**: `features/section_2_11_supertypes.feature`
+**Step Definitions**: `step_defs/test_section_2_11_supertypes.py`
+
+This section tests the supertype property of objects in Flesh and Blood:
+- **Rule 2.11.1**: Supertypes determine whether a card can be included in a player's card-pool
+- **Rule 2.11.2**: An object can have zero or more supertypes
+- **Rule 2.11.3**: Supertypes determined by type box; printed before card type
+- **Rule 2.11.4**: Activated/triggered-layers inherit source supertypes
+- **Rule 2.11.5**: Objects can gain or lose supertypes from rules/effects
+- **Rule 2.11.6**: Supertypes are non-functional keywords; either a class or talent
+- **Rule 2.11.6a**: Class supertypes: Adjudicator, Assassin, Bard, Brute, Guardian, Illusionist, Mechanologist, Merchant, Necromancer, Ninja, Pirate, Ranger, Runeblade, Shapeshifter, Thief, Warrior, Wizard (17 total)
+- **Rule 2.11.6b**: Talent supertypes: Chaos, Draconic, Earth, Elemental, Ice, Light, Lightning, Mystic, Revered, Reviled, Royal, Shadow (12 total)
+
+#### Test Scenarios:
+
+1. **test_supertypes_determine_card_pool_inclusion**
+   - Tests: Rule 2.11.1 - Supertypes determine card-pool inclusion
+   - Verifies: Card with Warrior supertype is eligible for Warrior hero's card-pool
+
+2. **test_non_matching_supertypes_prevent_card_pool_inclusion**
+   - Tests: Rule 2.11.1 - Non-matching supertypes prevent inclusion
+   - Verifies: Wizard card is NOT eligible for Warrior hero's card-pool
+
+3. **test_card_with_zero_supertypes**
+   - Tests: Rule 2.11.2 - Object can have zero supertypes
+   - Verifies: Card with no supertypes has zero supertypes and is still a valid game object
+
+4. **test_card_can_have_exactly_one_supertype**
+   - Tests: Rule 2.11.2 - Object can have exactly one supertype
+   - Verifies: Card has exactly 1 supertype and the correct supertype name
+
+5. **test_card_can_have_multiple_supertypes**
+   - Tests: Rule 2.11.2 - Object can have multiple supertypes
+   - Verifies: Card with Warrior and Draconic has exactly 2 supertypes
+
+6. **test_supertypes_determined_from_type_box**
+   - Tests: Rule 2.11.3 - Supertypes come from type box
+   - Verifies: "Warrior Action - Attack" yields Warrior supertype, Action type, Attack subtype
+
+7. **test_supertypes_printed_before_card_type**
+   - Tests: Rule 2.11.3 - Supertypes printed before card type
+   - Verifies: Type box ordering shows supertypes before the card type
+
+8. **test_activated_layer_inherits_supertypes**
+   - Tests: Rule 2.11.4 - Activated-layer inherits source supertypes
+   - Verifies: Activated-layer from Warrior source has Warrior supertype
+
+9. **test_triggered_layer_inherits_supertypes**
+   - Tests: Rule 2.11.4 - Triggered-layer inherits source supertypes
+   - Verifies: Triggered-layer from Wizard/Shadow source has both supertypes
+
+10. **test_layer_from_no_supertype_source**
+    - Tests: Rule 2.11.4 - Layer from no-supertype source has no supertypes
+    - Verifies: Zero supertypes inherited when source has none
+
+11. **test_object_can_gain_supertype**
+    - Tests: Rule 2.11.5 - Object can gain a supertype from an effect
+    - Verifies: Card gains Warrior supertype via effect
+
+12. **test_object_can_lose_supertype**
+    - Tests: Rule 2.11.5 - Object can lose a supertype from an effect
+    - Verifies: Draconic removed, Warrior retained
+
+13. **test_supertypes_are_non_functional**
+    - Tests: Rule 2.11.6 - Supertypes are non-functional keywords
+    - Verifies: No additional rules added by supertypes; classified as non-functional
+
+14. **test_warrior_is_class_supertype**
+    - Tests: Rule 2.11.6/2.11.6a - Warrior is a class supertype keyword
+    - Verifies: Supertype category is "class"
+
+15. **test_draconic_is_talent_supertype**
+    - Tests: Rule 2.11.6/2.11.6b - Draconic is a talent supertype keyword
+    - Verifies: Supertype category is "talent"
+
+16. **test_all_class_supertypes_recognized**
+    - Tests: Rule 2.11.6a - All 17 class supertype keywords recognized
+    - Verifies: All class keywords present; exactly 17 total
+
+17. **test_all_talent_supertypes_recognized**
+    - Tests: Rule 2.11.6b - All 12 talent supertype keywords recognized
+    - Verifies: All talent keywords present; exactly 12 total
+
+18. **test_generic_type_box_means_no_supertypes**
+    - Tests: Rule 2.14.1a cross-ref - "Generic" means no supertypes
+    - Verifies: "Generic Action" type box yields zero supertypes
+
+19. **test_card_with_no_supertypes_in_any_card_pool**
+    - Tests: Rule 2.11.1 - No-supertype card valid for any hero
+    - Verifies: Empty supertype set is a subset of any hero's supertypes
+
+20. **test_warrior_draconic_card_valid_for_warrior_draconic_hero**
+    - Tests: Rule 2.11.1/2.11.2 - Multi-supertype subset validation
+    - Verifies: Warrior/Draconic card is valid for Warrior/Draconic hero
+
+21. **test_wizard_card_invalid_for_warrior_hero**
+    - Tests: Rule 2.11.1 - Non-subset supertype card rejected
+    - Verifies: Wizard card not eligible for Warrior-only hero
+
+22. **test_multi_supertype_card_needs_all_match**
+    - Tests: Rule 2.11.1 - All card supertypes must be subset of hero's
+    - Verifies: Warrior/Draconic card NOT valid for Warrior-only hero
+
+#### Implementation Notes:
+- All 22 tests pass with stub-based test infrastructure (`TypeBoxParseResultStub211`, `SupertypeCheckResultStub211`, `LayerWithSupertypesStub211`)
+- `TypeBoxParseResultStub211.parse()` implements type box parsing for rules tests (Rule 2.11.3)
+- `check_card_pool_eligibility_by_supertypes()` implements subset validation (Rule 2.11.1)
+- `get_supertype_category()` classifies supertypes as class or talent (Rule 2.11.6)
+- `get_all_class_supertypes()` and `get_all_talent_supertypes()` return the definitive lists
+- Regex-based step matchers (`parsers.re`) used for steps with multiple quoted parameters
+
+#### Engine Features Needed:
+- `CardTemplate.supertypes` returning frozenset of supertype keywords (Rule 2.11.2)
+- `SupertypeRegistry.CLASS_SUPERTYPES` frozenset with all 17 class supertypes (Rule 2.11.6a)
+- `SupertypeRegistry.TALENT_SUPERTYPES` frozenset with all 12 talent supertypes (Rule 2.11.6b)
+- `SupertypeRegistry.get_category(name)` -> "class" | "talent" (Rule 2.11.6)
+- `SupertypeRegistry.is_non_functional()` = True always (Rule 2.11.6)
+- Type box parser extracting supertypes before card type (Rule 2.11.3)
+- `Layer.supertypes` inheriting from source (Rule 2.11.4)
+- `CardInstance.gain_supertype(name)` method (Rule 2.11.5)
+- `CardInstance.lose_supertype(name)` method (Rule 2.11.5)
+- Card-pool supertype subset validation (Rule 2.11.1)
+- "Generic" type box means no supertypes (Rule 2.14.1a cross-ref)
+
 ### Section 2.6: Metatype
 
 **File**: `features/section_2_6_metatype.feature`
@@ -3168,7 +3294,7 @@ The ultimate goal is to have **complete test coverage** of the Flesh and Blood C
 - [x] 2.8: Pitch
 - [x] 2.9: Power
 - [x] 2.10: Subtypes
-- [ ] 2.11: Supertypes
+- [x] 2.11: Supertypes
 - [ ] 2.12: Text Box
 - [ ] 2.13: Traits
 - [ ] 2.14: Type Box

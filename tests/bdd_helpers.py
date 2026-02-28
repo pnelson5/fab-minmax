@@ -2534,6 +2534,230 @@ class BDDGameState:
         # Once cost is fully paid, no more pitching is allowed.
         return PitchAttemptResultStub(pitch_succeeded=False, pitch_rejected=True)
 
+    # ===== Section 2.11: Supertypes helpers =====
+
+    def get_card_supertypes(self, card: CardInstance) -> set:
+        """
+        Get the supertypes of a card (Rule 2.11.2).
+
+        Engine Feature Needed:
+        - [ ] CardTemplate.supertypes returning frozenset of supertype keywords
+        - [ ] CardInstance supertypes accessible via card.template.supertypes
+        - [ ] Dynamic supertypes tracking (gain/lose via Rule 2.11.5)
+        """
+        # First check for test metadata (dynamic supertypes)
+        if hasattr(card, "_supertypes"):
+            return card._supertypes
+        # Fall back to template supertypes
+        if hasattr(card, "template") and hasattr(card.template, "supertypes"):
+            return {s.name.title() for s in card.template.supertypes}
+        return set()
+
+    def get_layer_supertypes(self, layer: Any) -> set:
+        """
+        Get the supertypes of a layer (Rule 2.11.4).
+
+        Engine Feature Needed:
+        - [ ] ActivatedLayer.supertypes == source.supertypes (Rule 2.11.4)
+        - [ ] TriggeredLayer.supertypes == source.supertypes (Rule 2.11.4)
+        """
+        if hasattr(layer, "supertypes"):
+            return layer.supertypes
+        return set()
+
+    def create_activated_layer(self, source: Any) -> Any:
+        """
+        Create an activated-layer from a source card (Rule 2.11.4).
+
+        Engine Feature Needed:
+        - [ ] ActivatedLayer class with source reference (Rule 1.6.2b)
+        - [ ] ActivatedLayer.supertypes inherits from source (Rule 2.11.4)
+        """
+        return LayerWithSupertypesStub211(source=source, layer_type="activated")
+
+    def create_triggered_layer(self, source: Any) -> Any:
+        """
+        Create a triggered-layer from a source card (Rule 2.11.4).
+
+        Engine Feature Needed:
+        - [ ] TriggeredLayer class with source reference (Rule 1.6.2c)
+        - [ ] TriggeredLayer.supertypes inherits from source (Rule 2.11.4)
+        """
+        return LayerWithSupertypesStub211(source=source, layer_type="triggered")
+
+    def parse_type_box(self, type_box_str: str) -> Any:
+        """
+        Parse a type box string to extract supertypes, type, and subtypes (Rule 2.11.3).
+
+        Engine Feature Needed:
+        - [ ] TypeBoxParser.parse(type_box_str) returning parsed result (Rule 2.11.3)
+        - [ ] TypeBoxParseResult.supertypes: list of supertype strings
+        - [ ] TypeBoxParseResult.card_type: the primary card type string
+        - [ ] TypeBoxParseResult.subtypes: list of subtype strings
+        - [ ] "Generic" means no supertypes (Rule 2.14.1a)
+        """
+        return TypeBoxParseResultStub211.parse(type_box_str)
+
+    def check_card_pool_eligibility_by_supertypes(
+        self, card_supertypes: set, hero_supertypes: set
+    ) -> bool:
+        """
+        Check if a card is eligible for a hero's card-pool based on supertype subset validation
+        (Rule 2.11.1, Rule 1.1.3).
+
+        Rule 2.11.1: A card can only be included in a player's card-pool if the card's supertypes
+        are a subset of their hero's supertypes.
+
+        Engine Feature Needed:
+        - [ ] CardPoolValidator.validate_supertypes(card_supertypes, hero_supertypes) (Rule 2.11.1)
+        - [ ] Empty card supertypes is valid for any hero (subset of any set)
+        """
+        # Rule 2.11.1 / Rule 1.1.3: card supertypes must be a subset of hero supertypes
+        # Empty set is a subset of any set (generic cards are always valid)
+        card_upper = {
+            s.upper() if isinstance(s, str) else s.name.upper() for s in card_supertypes
+        }
+        hero_upper = {
+            s.upper() if isinstance(s, str) else s.name.upper() for s in hero_supertypes
+        }
+        return card_upper.issubset(hero_upper)
+
+    def grant_supertype_to_card(self, card: CardInstance, supertype: str) -> bool:
+        """
+        Grant a supertype to a card via an effect (Rule 2.11.5).
+
+        Engine Feature Needed:
+        - [ ] CardInstance.gain_supertype(name) method (Rule 2.11.5)
+        """
+        if not hasattr(card, "_supertypes"):
+            card._supertypes = set()
+        card._supertypes.add(supertype)
+        return True
+
+    def remove_supertype_from_card(self, card: CardInstance, supertype: str) -> bool:
+        """
+        Remove a supertype from a card via an effect (Rule 2.11.5).
+
+        Engine Feature Needed:
+        - [ ] CardInstance.lose_supertype(name) method (Rule 2.11.5)
+        """
+        if not hasattr(card, "_supertypes"):
+            card._supertypes = set()
+            return False
+        card._supertypes.discard(supertype)
+        return True
+
+    def check_supertypes_add_additional_rules(self, card: CardInstance) -> Any:
+        """
+        Check whether the card's supertypes add additional rules (Rule 2.11.6).
+
+        Rule 2.11.6: Supertypes are non-functional keywords and do not add additional rules.
+
+        Engine Feature Needed:
+        - [ ] SupertypeRegistry.is_non_functional() always True (Rule 2.11.6)
+        - [ ] SupertypeCheckResult.adds_additional_rules = False
+        """
+        return SupertypeCheckResultStub211(
+            adds_additional_rules=False, is_non_functional=True
+        )
+
+    def get_supertype_category(self, supertype_name: str) -> str:
+        """
+        Get the category of a supertype ('class' or 'talent') (Rule 2.11.6).
+
+        Engine Feature Needed:
+        - [ ] SupertypeRegistry.get_category(name) -> "class" | "talent" (Rule 2.11.6)
+        - [ ] Enum or lookup table classifying all supertype keywords
+        """
+        CLASS_SUPERTYPES = {
+            "ADJUDICATOR",
+            "ASSASSIN",
+            "BARD",
+            "BRUTE",
+            "GUARDIAN",
+            "ILLUSIONIST",
+            "MECHANOLOGIST",
+            "MERCHANT",
+            "NECROMANCER",
+            "NINJA",
+            "PIRATE",
+            "RANGER",
+            "RUNEBLADE",
+            "SHAPESHIFTER",
+            "THIEF",
+            "WARRIOR",
+            "WIZARD",
+        }
+        TALENT_SUPERTYPES = {
+            "CHAOS",
+            "DRACONIC",
+            "EARTH",
+            "ELEMENTAL",
+            "ICE",
+            "LIGHT",
+            "LIGHTNING",
+            "MYSTIC",
+            "REVERED",
+            "REVILED",
+            "ROYAL",
+            "SHADOW",
+        }
+        upper = supertype_name.upper()
+        if upper in CLASS_SUPERTYPES:
+            return "class"
+        elif upper in TALENT_SUPERTYPES:
+            return "talent"
+        return None
+
+    def get_all_class_supertypes(self) -> set:
+        """
+        Return all class supertype keywords (Rule 2.11.6a).
+
+        Engine Feature Needed:
+        - [ ] SupertypeRegistry.CLASS_SUPERTYPES frozenset with all 17 class supertypes (Rule 2.11.6a)
+        """
+        return {
+            "Adjudicator",
+            "Assassin",
+            "Bard",
+            "Brute",
+            "Guardian",
+            "Illusionist",
+            "Mechanologist",
+            "Merchant",
+            "Necromancer",
+            "Ninja",
+            "Pirate",
+            "Ranger",
+            "Runeblade",
+            "Shapeshifter",
+            "Thief",
+            "Warrior",
+            "Wizard",
+        }
+
+    def get_all_talent_supertypes(self) -> set:
+        """
+        Return all talent supertype keywords (Rule 2.11.6b).
+
+        Engine Feature Needed:
+        - [ ] SupertypeRegistry.TALENT_SUPERTYPES frozenset with all 12 talent supertypes (Rule 2.11.6b)
+        """
+        return {
+            "Chaos",
+            "Draconic",
+            "Earth",
+            "Elemental",
+            "Ice",
+            "Light",
+            "Lightning",
+            "Mystic",
+            "Revered",
+            "Reviled",
+            "Royal",
+            "Shadow",
+        }
+
     def are_cards_distinct(self, card_a: CardInstance, card_b: CardInstance) -> bool:
         """
         Check if two cards are distinct from each other (Rule 1.3.4).
@@ -3363,3 +3587,163 @@ class MultiEffectCostResultStub:
         self._player_declared_order = player_declared_order
         self._generated_in_declared_order = generated_in_declared_order
         self._cost_paid = cost_paid
+
+
+# ===========================================================================
+# Section 2.11 Supertypes stubs
+# ===========================================================================
+
+
+class TypeBoxParseResultStub211:
+    """
+    Stub result for parsing a type box string (Rule 2.11.3).
+
+    Engine Feature Needed:
+    - [ ] TypeBoxParser.parse(type_box_str) returning parsed result (Rule 2.11.3)
+    - [ ] TypeBoxParseResult.supertypes: list of supertype strings
+    - [ ] TypeBoxParseResult.card_type: the primary card type string
+    - [ ] TypeBoxParseResult.subtypes: list of subtype strings
+    - [ ] TypeBoxParseResult.supertypes_before_type: True (Rule 2.11.3)
+    """
+
+    def __init__(
+        self,
+        supertypes: list = None,
+        card_type: str = "",
+        subtypes: list = None,
+    ):
+        self.supertypes = supertypes or []
+        self.card_type = card_type
+        self.subtypes = subtypes or []
+        self.supertypes_before_type = (
+            True  # Supertypes always before type per Rule 2.11.3
+        )
+
+    @classmethod
+    def parse(cls, type_box_str: str) -> "TypeBoxParseResultStub211":
+        """
+        Parse a type box string in the format "[SUPERTYPES] [TYPE] [--- SUBTYPES]".
+
+        Rule 2.11.3: Supertypes are printed before the card's type.
+        Rule 2.14.1a: "Generic" as supertype means no supertypes.
+        """
+        KNOWN_CLASS_SUPERTYPES = {
+            "Adjudicator",
+            "Assassin",
+            "Bard",
+            "Brute",
+            "Guardian",
+            "Illusionist",
+            "Mechanologist",
+            "Merchant",
+            "Necromancer",
+            "Ninja",
+            "Pirate",
+            "Ranger",
+            "Runeblade",
+            "Shapeshifter",
+            "Thief",
+            "Warrior",
+            "Wizard",
+        }
+        KNOWN_TALENT_SUPERTYPES = {
+            "Chaos",
+            "Draconic",
+            "Earth",
+            "Elemental",
+            "Ice",
+            "Light",
+            "Lightning",
+            "Mystic",
+            "Revered",
+            "Reviled",
+            "Royal",
+            "Shadow",
+        }
+        ALL_SUPERTYPES = KNOWN_CLASS_SUPERTYPES | KNOWN_TALENT_SUPERTYPES
+        CARD_TYPES = {
+            "Action",
+            "Attack Reaction",
+            "Defense Reaction",
+            "Instant",
+            "Resource",
+            "Equipment",
+            "Weapon",
+            "Hero",
+            "Token",
+            "Mentor",
+        }
+
+        # Split on " - " to separate subtypes
+        if " - " in type_box_str:
+            main_part, subtype_part = type_box_str.split(" - ", 1)
+            subtypes = [s.strip() for s in subtype_part.split(",")]
+        else:
+            main_part = type_box_str
+            subtypes = []
+
+        # "Generic" means no supertypes (Rule 2.14.1a)
+        if main_part.startswith("Generic "):
+            return cls(
+                supertypes=[],
+                card_type=main_part[len("Generic ") :].strip(),
+                subtypes=subtypes,
+            )
+        if main_part == "Generic":
+            return cls(supertypes=[], card_type="", subtypes=subtypes)
+
+        # Parse the main part by splitting on spaces and identifying supertypes vs type
+        tokens = main_part.strip().split()
+        supertypes = []
+        card_type_tokens = []
+        type_found = False
+
+        for token in tokens:
+            if not type_found and token in ALL_SUPERTYPES:
+                supertypes.append(token)
+            else:
+                type_found = True
+                card_type_tokens.append(token)
+
+        return cls(
+            supertypes=supertypes,
+            card_type=" ".join(card_type_tokens),
+            subtypes=subtypes,
+        )
+
+
+class SupertypeCheckResultStub211:
+    """
+    Stub result for checking whether supertypes add additional rules (Rule 2.11.6).
+
+    Engine Feature Needed:
+    - [ ] SupertypeRegistry.is_non_functional(name) = True always (Rule 2.11.6)
+    - [ ] SupertypeCheckResult.adds_additional_rules = False (Rule 2.11.6)
+    """
+
+    def __init__(
+        self, adds_additional_rules: bool = False, is_non_functional: bool = True
+    ):
+        self.adds_additional_rules = adds_additional_rules
+        self.is_non_functional = is_non_functional
+
+
+class LayerWithSupertypesStub211:
+    """
+    Stub for a layer that inherits supertypes from its source (Rule 2.11.4).
+
+    Engine Feature Needed:
+    - [ ] ActivatedLayer.supertypes == source.supertypes (Rule 2.11.4)
+    - [ ] TriggeredLayer.supertypes == source.supertypes (Rule 2.11.4)
+    """
+
+    def __init__(self, source=None, layer_type: str = "activated"):
+        self._source = source
+        self.layer_type = layer_type
+
+    @property
+    def supertypes(self):
+        """Inherit supertypes from source (Rule 2.11.4)."""
+        if self._source is None:
+            return set()
+        return getattr(self._source, "_supertypes", set())
