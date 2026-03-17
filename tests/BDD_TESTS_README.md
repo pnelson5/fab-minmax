@@ -2062,6 +2062,93 @@ This section tests the general zone system rules:
 - Token clearing causes cessation not graveyard move (Rule 3.0.12a)
 - `EffectZoneResolver.resolve_zone(effect_controller_id)` (Rule 3.0.13)
 
+### Section 3.2: Arms Zone
+
+**File**: `features/section_3_2_arms.feature`
+**Step Definitions**: `step_defs/test_section_3_2_arms.py`
+
+This section tests the arms zone rules:
+- **Rule 3.2.1**: Arms zone is a public equipment zone in the arena, owned by a player
+- **Rule 3.2.2**: Arms zone can only contain up to one object which is equipped to that zone
+- **Rule 3.2.2a**: An object can only be equipped to an arms zone if it has subtype arms
+- **Rule 3.2.3**: A player may equip an arms card to their arms zone at the start of the game
+
+#### Test Scenarios:
+
+1. **test_arms_zone_is_public_zone**
+   - Tests: Rule 3.2.1 - Arms zone is public
+   - Verifies: `is_public_zone = True` and `is_private_zone = False`
+
+2. **test_arms_zone_is_equipment_zone**
+   - Tests: Rule 3.2.1 - Arms zone is an equipment zone
+   - Verifies: `is_equipment_zone = True`
+
+3. **test_arms_zone_is_in_arena**
+   - Tests: Rule 3.2.1 - Arms zone is in the arena
+   - Verifies: `is_arena_zone = True` (cross-ref Rule 3.1.1)
+
+4. **test_arms_zone_owned_by_player**
+   - Tests: Rule 3.2.1 - Arms zone has a specific owner
+   - Verifies: `owner_id == 0` for player 0's arms zone
+
+5. **test_arms_zone_starts_empty**
+   - Tests: Rule 3.2.2 - Empty arms zone behavior
+   - Verifies: `is_empty = True` and `is_exposed = True` (cross-ref 3.0.1a)
+
+6. **test_arms_zone_can_contain_one_equipped_object**
+   - Tests: Rule 3.2.2 - Arms zone capacity of one
+   - Verifies: `zone_object_count == 1` after equipping arms card
+
+7. **test_arms_zone_cannot_contain_more_than_one_object**
+   - Tests: Rule 3.2.2 - One-object limit
+   - Verifies: Second equip fails with `success = False`
+
+8. **test_card_with_arms_subtype_can_be_equipped**
+   - Tests: Rule 3.2.2a - Arms subtype allows equipping
+   - Verifies: Card with arms subtype successfully equipped
+
+9. **test_card_without_arms_subtype_cannot_be_equipped**
+   - Tests: Rule 3.2.2a - Non-arms card rejected
+   - Verifies: Card without arms subtype rejected, zone remains empty
+
+10. **test_chest_subtype_card_rejected_from_arms_zone**
+    - Tests: Rule 3.2.2a - Chest subtype rejected from arms zone
+    - Verifies: Chest-subtype card rejected, arms zone stays empty
+
+11. **test_arms_card_equipped_to_arms_zone_is_permanent**
+    - Tests: Rule 3.2.2a / 8.5.41 - Equipped card becomes permanent
+    - Verifies: `is_permanent = True` for equipped card
+
+12. **test_player_may_equip_arms_card_at_game_start**
+    - Tests: Rule 3.2.3 - Start-of-game equipping allowed
+    - Verifies: `player_may_equip = True` and card in arms zone as permanent
+
+13. **test_arms_zone_empty_if_no_equip_at_game_start**
+    - Tests: Rule 3.2.3 - Optional equipping (player chooses not to)
+    - Verifies: Zone is empty and exposed when player skips equipping
+
+14. **test_arms_zone_not_empty_with_equipped_permanent**
+    - Tests: Rule 3.0.1a cross-ref - Empty definition for equipment zones
+    - Verifies: Zone with equipped permanent is NOT empty
+
+15. **test_arms_card_equip_requires_empty_zone**
+    - Tests: Rule 8.5.41c cross-ref - Zone must be empty to equip
+    - Verifies: Equip fails with `failure_reason = "zone_not_empty"`
+
+#### Engine Features Needed:
+- `Zone.is_public_zone` property: True for arms zone (Rule 3.2.1, 3.0.4a)
+- `Zone.is_private_zone` property: False for arms zone (Rule 3.2.1)
+- `Zone.is_equipment_zone` property: True for arms zone (Rule 3.2.1)
+- `Zone.is_arena_zone` property: True for arms zone (Rule 3.2.1, 3.1.1)
+- Arms zone capacity limit of 1 equipped object (Rule 3.2.2)
+- Equip effect validation: only subtype ARMS allowed for arms zone (Rule 3.2.2a)
+- Equip effect (8.5.41): puts object into zone as a permanent
+- 8.5.41c: Zone must be empty before equipping
+- `Zone.is_empty` includes checking for equipped permanents, not just objects (Rule 3.0.1a)
+- `Zone.is_exposed`: True when equipment zone is empty (Rule 3.0.1a)
+- Start-of-game equip procedure (Rule 3.2.3, cross-ref 4.1, 4.1.4a)
+- `Subtype.ARMS` enum value (already exists in engine)
+
 ### Section 3.1: Arena
 
 **File**: `features/section_3_1_arena.feature`
@@ -3960,7 +4047,7 @@ The ultimate goal is to have **complete test coverage** of the Flesh and Blood C
 ### Section 3: Zones
 - [x] 3.0: General
 - [x] 3.1: Arena
-- [ ] 3.2: Arms
+- [x] 3.2: Arms
 - [ ] 3.3: Arsenal
 - [ ] 3.4: Banished
 - [ ] 3.5: Chest
