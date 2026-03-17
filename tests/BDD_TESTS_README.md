@@ -1900,6 +1900,107 @@ This section tests the supertype property of objects in Flesh and Blood:
 - Card-pool supertype subset validation (Rule 2.11.1)
 - "Generic" type box means no supertypes (Rule 2.14.1a cross-ref)
 
+### Section 2.14: Type Box
+
+**File**: `features/section_2_14_type_box.feature`
+**Step Definitions**: `step_defs/test_section_2_14_type_box.py`
+
+This section tests the type box parsing rules in Flesh and Blood:
+- **Rule 2.14.1**: The type box determines metatypes, supertypes, types, and subtypes; format: "[METATYPES] [SUPERTYPES] [TYPE] [--- SUBTYPES]"
+- **Rule 2.14.1a**: "Generic" as SUPERTYPES means the card has no supertypes
+- **Rule 2.14.1b**: Hybrid cards use "[SUPERTYPES-1] / [SUPERTYPES-2]" format; eligible if EITHER set matches hero's supertypes
+
+#### Test Scenarios:
+
+1. **test_type_box_determines_all_card_classification_components**
+   - Tests: Rule 2.14.1 - Type box determines all card components
+   - Verifies: "Warrior Action - Attack" yields supertype Warrior, type Action, subtype Attack, no metatypes
+
+2. **test_type_box_with_a_metatype_component**
+   - Tests: Rule 2.14.1 - Type box with a metatype before supertypes
+   - Verifies: "Dorinthea Warrior Action - Attack" yields metatype Dorinthea + supertype Warrior + type Action + subtype Attack
+
+3. **test_type_box_with_no_subtypes_component**
+   - Tests: Rule 2.14.1 - Type box can have no subtypes (no long dash)
+   - Verifies: "Ninja Action" yields supertype Ninja, type Action, no subtypes
+
+4. **test_type_box_components_appear_in_correct_order**
+   - Tests: Rule 2.14.1 - Ordering: metatypes before supertypes before type before subtypes
+   - Verifies: "Katsu Ninja Action - Attack" parsed in correct order
+
+5. **test_type_box_with_only_a_type**
+   - Tests: Rule 2.14.1 - Type box can have only a type
+   - Verifies: "Instant" yields only type, no metatypes/supertypes/subtypes
+
+6. **test_type_box_with_multiple_supertypes**
+   - Tests: Rule 2.14.1 - Multiple supertypes recognized
+   - Verifies: "Warrior Draconic Action - Attack" has 2 supertypes
+
+7. **test_type_box_with_multiple_subtypes**
+   - Tests: Rule 2.14.1 - Multiple subtypes after long dash
+   - Verifies: "Ranger Action - Attack Arrow" has 2 subtypes
+
+8. **test_generic_type_box_means_card_has_no_supertypes**
+   - Tests: Rule 2.14.1a - "Generic" keyword means no supertypes
+   - Verifies: "Generic Action" card has no supertypes, has type Action
+
+9. **test_generic_keyword_is_not_a_supertype**
+   - Tests: Rule 2.14.1a - "Generic" is NOT itself a supertype
+   - Verifies: "Generic" does not appear in the supertypes set; zero supertypes total
+
+10. **test_generic_type_box_is_equivalent_to_having_zero_supertypes**
+    - Tests: Rule 2.14.1a - Generic and no-supertype cards are equivalent
+    - Verifies: Both "Generic Action" and "Action" have zero supertypes
+
+11. **test_hybrid_card_has_slash_separated_supertype_sets**
+    - Tests: Rule 2.14.1b - Hybrid card identified by "/" in type box
+    - Verifies: "Warrior / Wizard Action - Attack" is hybrid; set1=Warrior, set2=Wizard
+
+12. **test_hybrid_card_can_be_included_in_card_pool_matching_first_supertype_set**
+    - Tests: Rule 2.14.1b - Hybrid eligible if first set is subset of hero's supertypes
+    - Verifies: Warrior/Wizard hybrid eligible for Warrior hero (set 1 matches)
+
+13. **test_hybrid_card_can_be_included_in_card_pool_matching_second_supertype_set**
+    - Tests: Rule 2.14.1b - Hybrid eligible if second set is subset of hero's supertypes
+    - Verifies: Warrior/Wizard hybrid eligible for Wizard hero (set 2 matches)
+
+14. **test_hybrid_card_cannot_be_included_when_neither_set_matches**
+    - Tests: Rule 2.14.1b - Hybrid not eligible if neither set matches
+    - Verifies: Warrior/Wizard hybrid NOT eligible for Ninja hero
+
+15. **test_hybrid_card_card_pool_check_uses_only_one_supertype_set_at_a_time**
+    - Tests: Rule 2.14.1b - Each set checked independently, not combined
+    - Verifies: Warrior-only hero can include Warrior/Wizard hybrid (Warrior set matches)
+
+16. **test_hybrid_card_has_all_supertypes_outside_card_pool_check**
+    - Tests: Rule 2.14.1b - Outside card-pool check, hybrid card has ALL supertypes from both sets
+    - Verifies: Warrior/Wizard hybrid has both Warrior and Wizard supertypes normally
+
+17. **test_hybrid_card_with_multi_supertype_sets_matches_if_either_is_subset**
+    - Tests: Rule 2.14.1b - Multi-keyword supertype sets; either full set must match
+    - Verifies: "Warrior Draconic / Ninja Shadow" eligible for Warrior+Draconic hero (set 1 matches)
+
+18. **test_hybrid_card_with_partial_set_match_is_not_eligible**
+    - Tests: Rule 2.14.1b - Partial set match is insufficient
+    - Verifies: "Warrior Draconic / Ninja Shadow" NOT eligible for Warrior-only hero (set 1 requires both Warrior AND Draconic)
+
+#### Implementation Notes:
+- All 18 tests pass with stub-based implementation (`TypeBoxParseResult214`, `HeroStub214`, `HybridCardPoolCheckResult214`)
+- `TypeBoxParseResult214.parse()` handles all three format variants: standard, Generic, and hybrid (Rule 2.14.1)
+- `check_hybrid_card_pool_eligibility()` implements the either-set subset check (Rule 2.14.1b)
+- `_ordering` list tracks the position of each component for ordering tests (Rule 2.14.1)
+- `is_generic = True` suppresses all supertypes when "Generic" keyword is found (Rule 2.14.1a)
+- `is_hybrid = True` and `supertype_set_1`/`supertype_set_2` used for hybrid parsing (Rule 2.14.1b)
+
+#### Engine Features Needed:
+- `TypeBoxParser.parse(type_box_str)` -> `TypeBoxParseResult` with components (Rule 2.14.1)
+- `TypeBoxParseResult.metatypes`, `.supertypes`, `.types`, `.subtypes` frozensets (Rule 2.14.1)
+- `TypeBoxParseResult.is_generic` returning True when "Generic" is SUPERTYPES (Rule 2.14.1a)
+- `TypeBoxParseResult.is_hybrid` returning True when "/" separates supertype sets (Rule 2.14.1b)
+- `HybridCard.supertype_set_1` and `HybridCard.supertype_set_2` frozensets (Rule 2.14.1b)
+- `HybridCardPoolEligibility.check(card, hero)` checking either set (Rule 2.14.1b)
+- `CardTemplate.type_box` property storing the raw type box string (Rule 2.14.1)
+
 ### Section 2.6: Metatype
 
 **File**: `features/section_2_6_metatype.feature`
@@ -3486,7 +3587,7 @@ The ultimate goal is to have **complete test coverage** of the Flesh and Blood C
 - [x] 2.11: Supertypes
 - [x] 2.12: Text Box
 - [x] 2.13: Traits
-- [ ] 2.14: Type Box
+- [x] 2.14: Type Box
 - [ ] 2.15: Types
 
 ### Section 3: Zones
