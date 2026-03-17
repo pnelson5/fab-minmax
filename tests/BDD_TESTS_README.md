@@ -1900,6 +1900,127 @@ This section tests the supertype property of objects in Flesh and Blood:
 - Card-pool supertype subset validation (Rule 2.11.1)
 - "Generic" type box means no supertypes (Rule 2.14.1a cross-ref)
 
+### Section 2.15: Types
+
+**File**: `features/section_2_15_types.feature`
+**Step Definitions**: `step_defs/test_section_2_15_types.py`
+
+This section tests the types property of objects in Flesh and Blood:
+- **Rule 2.15.1**: Types are a collection of type keywords; types determine hero-/token-/deck-/arena-card classification and how a deck-card may be played
+- **Rule 2.15.2**: An object can have zero or more types
+- **Rule 2.15.3**: Type determined by type box; printed after supertypes, before long dash and subtypes
+- **Rule 2.15.4**: Activated/triggered-layers inherit the types of their source
+- **Rule 2.15.4a**: Activated ability layer types include types determined by the activated ability
+- **Rule 2.15.5**: Objects can gain or lose types from rules/effects
+- **Rule 2.15.6**: Types are functional keywords and add additional rules to an object
+- **Rule 2.15.6a**: 14 type keywords: Action, Attack Reaction, Block, Companion, Defense Reaction, Demi-Hero, Equipment, Hero, Instant, Macro, Mentor, Resource, Token, Weapon
+
+#### Test Scenarios:
+
+1. **test_action_type_makes_deck_card**
+   - Tests: Rule 2.15.1 - Action type makes a card a deck-card
+   - Verifies: Classification is "deck" and card may start in deck
+
+2. **test_types_determine_how_deck_card_played**
+   - Tests: Rule 2.15.1 - Types determine how deck-cards may be played
+   - Verifies: Action is action-phase-only; Instant can be played anytime
+
+3. **test_hero_type_makes_hero_card**
+   - Tests: Rule 2.15.1 - Hero type makes a hero-card
+   - Verifies: Classification is "hero" and card starts as player's hero
+
+4. **test_token_type_makes_token_card**
+   - Tests: Rule 2.15.1 - Token type makes a token-card
+   - Verifies: Classification is "token" and not part of card-pool
+
+5. **test_equipment_type_makes_arena_card**
+   - Tests: Rule 2.15.1 - Equipment type makes an arena-card
+   - Verifies: Classification is "arena" and cannot start in deck
+
+6. **test_weapon_type_makes_arena_card**
+   - Tests: Rule 2.15.1 - Weapon type makes an arena-card
+
+7. **test_object_with_zero_types**
+   - Tests: Rule 2.15.2 - Object can have zero types
+   - Verifies: Zero types; card still valid game object
+
+8. **test_object_can_have_exactly_one_type**
+   - Tests: Rule 2.15.2 - Object can have exactly one type
+   - Verifies: Type count = 1 and the type name is correct
+
+9. **test_object_can_have_multiple_types**
+   - Tests: Rule 2.15.2 - Object can have multiple types
+   - Verifies: Two types recognized on single card
+
+10. **test_type_determined_from_type_box**
+    - Tests: Rule 2.15.3 - Type determined from type box
+    - Verifies: "Warrior Action - Attack" yields type Action, supertype Warrior, subtype Attack
+
+11. **test_type_box_components_correct_order**
+    - Tests: Rule 2.15.3 - Type appears after supertypes, before subtypes
+    - Verifies: Position ordering in parsed type box
+
+12. **test_activated_layer_inherits_types**
+    - Tests: Rule 2.15.4 - Activated-layer inherits source types
+    - Verifies: Layer types match source card types
+
+13. **test_triggered_layer_inherits_types**
+    - Tests: Rule 2.15.4 - Triggered-layer inherits source types
+    - Verifies: Layer inherits multiple types from source
+
+14. **test_layer_from_no_type_source_has_zero_types**
+    - Tests: Rule 2.15.4 - Layer from no-type source has zero types
+
+15. **test_activated_ability_layer_includes_ability_types**
+    - Tests: Rule 2.15.4a - Activated ability layer includes types from ability
+    - Verifies: Layer has Equipment (from source) + Action (from ability)
+
+16. **test_object_gains_type**
+    - Tests: Rule 2.15.5 - Object gains a type from an effect
+    - Verifies: Type count increases from 1 to 2
+
+17. **test_object_loses_type**
+    - Tests: Rule 2.15.5 - Object loses a type from an effect
+    - Verifies: Type count decreases from 2 to 1
+
+18. **test_types_are_functional**
+    - Tests: Rule 2.15.6 - Types are functional keywords
+    - Verifies: is_functional=True and adds_additional_rules=True
+
+19. **test_types_functional_vs_supertypes_nonfunctional**
+    - Tests: Rule 2.15.6 - Types functional; supertypes non-functional
+    - Verifies: Contrast between functional types and non-functional supertypes
+
+20. **test_all_14_type_keywords_recognized**
+    - Tests: Rule 2.15.6a - All 14 type keywords recognized
+    - Verifies: All 14 keywords present in registry
+
+21. **test_deck_card_types**
+    - Tests: Rule 2.15.6a / 1.3.2c - Types that make deck-cards
+    - Verifies: Action/AR/Block/DR/Instant/Mentor/Resource = deck; Equipment/Hero = not deck
+
+#### Implementation Notes:
+- All 21 tests pass with stub-based implementation (`TypeCardStub`, `TypeBoxParseResult215`, `LayerWithTypesStub215`, `TypeCheckResultStub215`)
+- `TypeCardStub.get_card_classification()` implements the four-way classification (Rule 2.15.1 / 1.3.2a-d)
+- `TypeBoxParseResult215.parse()` handles supertypes/types/subtypes ordering (Rule 2.15.3)
+- `LayerWithTypesStub215.types` adds ability types when `is_activated_ability_layer=True` (Rule 2.15.4a)
+- `TypeCardStub.gain_type()/lose_type()` implement mutable type sets (Rule 2.15.5)
+
+#### Engine Features Needed:
+- `CardTemplate.types` property returning frozenset of type keywords (Rule 2.15.2)
+- `CardInstance.types` property returning resolved frozenset of type keywords (Rule 2.15.2)
+- `CardInstance.has_type(name)` method (Rule 2.15.1)
+- `CardTemplate.get_card_classification()` -> "hero"/"token"/"deck"/"arena" (Rule 2.15.1)
+- `TypeRegistry.ALL_TYPE_KEYWORDS` frozenset with all 14 type keywords (Rule 2.15.6a)
+- `TypeRegistry.is_functional(name)` = True always (Rule 2.15.6)
+- `TypeRegistry.DECK_CARD_TYPES` frozenset of deck-making types (Rule 2.15.1 / 1.3.2c)
+- Type box parser extracting types after supertypes, before subtypes (Rule 2.15.3)
+- `Layer.types` property inheriting from source (Rule 2.15.4)
+- Activated ability layer `types` property including ability-determined types (Rule 2.15.4a)
+- `CardInstance.gain_type(name)` method (Rule 2.15.5)
+- `CardInstance.lose_type(name)` method (Rule 2.15.5)
+- Type-based play rules: Action=action-phase-only; Instant=anytime (Rule 2.15.1)
+
 ### Section 2.14: Type Box
 
 **File**: `features/section_2_14_type_box.feature`
@@ -3588,7 +3709,7 @@ The ultimate goal is to have **complete test coverage** of the Flesh and Blood C
 - [x] 2.12: Text Box
 - [x] 2.13: Traits
 - [x] 2.14: Type Box
-- [ ] 2.15: Types
+- [x] 2.15: Types
 
 ### Section 3: Zones
 - [ ] 3.0: General
