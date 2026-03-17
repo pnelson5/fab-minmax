@@ -2062,6 +2062,90 @@ This section tests the general zone system rules:
 - Token clearing causes cessation not graveyard move (Rule 3.0.12a)
 - `EffectZoneResolver.resolve_zone(effect_controller_id)` (Rule 3.0.13)
 
+### Section 3.1: Arena
+
+**File**: `features/section_3_1_arena.feature`
+**Step Definitions**: `step_defs/test_section_3_1_arena.py`
+
+This section tests the arena concept in Flesh and Blood:
+- **Rule 3.1.1**: The arena is a collection of all arms, chest, combat chain, head, hero, legs, permanent, and weapon zones
+- **Rule 3.1.1a**: Arsenal, banished, deck, graveyard, hand, pitch, and stack zones are NOT part of the arena
+- **Rule 3.1.2**: The arena is not a zone; objects put into arena without specifying a zone go to the permanent zone as permanents
+- **Rule 3.1.2a**: A card is in the arena if it is in any arena zone and is NOT a sub-card under permanent
+
+#### Test Scenarios:
+
+1. **test_arena_is_collection_of_specific_zones**
+   - Tests: Rule 3.1.1 - Arena is a collection of 8 specific zones
+   - Verifies: arms, chest, combat chain, head, hero, legs, permanent, weapon are all arena zones
+   - Status: **FAILS** - Missing ZoneType.PERMANENT and ZoneType.WEAPON (engine uses WEAPON_1/WEAPON_2)
+
+2. **test_arena_contains_exactly_8_zone_types**
+   - Tests: Rule 3.1.1 - Arena has exactly 8 zone types
+   - Verifies: Arena zone count is 8; currently only 6 exist in engine
+   - Status: **FAILS** - Missing ZoneType.PERMANENT and ZoneType.WEAPON
+
+3. **test_non_arena_zones_not_in_arena**
+   - Tests: Rule 3.1.1a - Arsenal, banished, deck, graveyard, hand, pitch, stack are not arena zones
+   - Verifies: All 7 non-arena zones are correctly identified as outside the arena
+
+4. **test_arena_is_not_a_zone**
+   - Tests: Rule 3.1.2 - Arena is not a zone type
+   - Verifies: ZoneType enum does not have an ARENA value
+
+5. **test_object_placed_in_arena_without_zone_goes_to_permanent**
+   - Tests: Rule 3.1.2 - Object in arena without zone goes to permanent zone
+   - Verifies: `place_card_in_arena_no_zone()` places card in permanent zone as permanent
+
+6. **test_object_placed_in_arena_by_effect_without_zone_goes_to_permanent**
+   - Tests: Rule 3.1.2 - Effect-based arena placement without zone uses permanent zone
+   - Verifies: Effect placing card in arena uses permanent zone; no other arena zone used
+
+7. **test_card_in_arena_zone_is_in_arena**
+   - Tests: Rule 3.1.2a - Card in arms zone is in the arena
+   - Verifies: `check_is_in_arena()` returns True for arms zone card
+
+8. **test_card_in_hero_zone_is_in_arena**
+   - Tests: Rule 3.1.2a - Card in hero zone is in the arena
+   - Verifies: `check_is_in_arena()` returns True for hero zone card
+
+9. **test_card_in_permanent_zone_is_in_arena**
+   - Tests: Rule 3.1.2a - Card in permanent zone is in the arena
+   - Verifies: `check_is_in_arena()` returns True for permanent zone card
+
+10. **test_sub_card_under_permanent_is_not_in_arena**
+    - Tests: Rule 3.1.2a - Sub-card under permanent is NOT in the arena
+    - Verifies: `check_is_in_arena()` returns False when `is_sub_card = True`
+
+11. **test_card_in_hand_not_in_arena**
+    - Tests: Rule 3.1.2a / 3.1.1a - Card in hand is NOT in the arena
+    - Verifies: `check_is_in_arena()` returns False for hand zone card
+
+12. **test_card_in_graveyard_not_in_arena**
+    - Tests: Rule 3.1.2a / 3.1.1a - Card in graveyard is NOT in the arena
+    - Verifies: `check_is_in_arena()` returns False for graveyard zone card
+
+13. **test_card_in_deck_not_in_arena**
+    - Tests: Rule 3.1.2a / 3.1.1a - Card in deck is NOT in the arena
+    - Verifies: `check_is_in_arena()` returns False for deck zone card
+
+14. **test_card_in_banished_zone_not_in_arena**
+    - Tests: Rule 3.1.2a / 3.1.1a - Card in banished zone is NOT in the arena
+    - Verifies: `check_is_in_arena()` returns False for banished zone card
+
+15. **test_moving_card_from_arena_zone_to_non_arena_removes_from_arena**
+    - Tests: Rule 3.1.1 / 3.1.2a - Moving card from arms to graveyard removes from arena
+    - Verifies: Arena membership is zone-based; card in graveyard is no longer in arena
+
+#### Engine Features Needed:
+- `ZoneType.PERMANENT` enum value (Rule 3.1.1, 3.1.2) - currently missing
+- `ZoneType.WEAPON` enum value (Rule 3.1.1) - currently split as WEAPON_1/WEAPON_2
+- `Arena.ARENA_ZONES` constant listing all 8 arena zone types (Rule 3.1.1)
+- `Zone.is_arena_zone` property returning True for arena zones (Rule 3.1.1)
+- `GameEngine.is_in_arena(card)` method (Rule 3.1.2a)
+- `GameEngine.place_in_arena(card)` -> places in permanent zone (Rule 3.1.2)
+- `CardInstance.is_sub_card` property for sub-cards under permanent (Rule 3.1.2a)
+
 ### Section 2.15: Types
 
 **File**: `features/section_2_15_types.feature`
@@ -3875,7 +3959,7 @@ The ultimate goal is to have **complete test coverage** of the Flesh and Blood C
 
 ### Section 3: Zones
 - [x] 3.0: General
-- [ ] 3.1: Arena
+- [x] 3.1: Arena
 - [ ] 3.2: Arms
 - [ ] 3.3: Arsenal
 - [ ] 3.4: Banished
