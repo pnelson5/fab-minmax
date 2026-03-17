@@ -2309,6 +2309,99 @@ This section tests the banished zone rules in Flesh and Blood:
 - Banished zone rejects cards whose `owner_id` != zone `owner_id` (Rule 3.4.2)
 - `BanishedZone.add_card()` method validating card ownership (Rule 3.4.2)
 
+### Section 3.5: Chest
+
+**File**: `features/section_3_5_chest.feature`
+**Step Definitions**: `step_defs/test_section_3_5_chest.py`
+
+This section tests the chest zone rules:
+- **Rule 3.5.1**: A chest zone is a public equipment zone in the arena, owned by a player
+- **Rule 3.5.2**: A chest zone can only contain up to one object which is equipped to that zone
+- **Rule 3.5.2a**: An object can only be equipped to a chest zone if it has subtype chest
+- **Rule 3.5.3**: A player may equip a chest card to their chest zone at the start of the game
+
+#### Test Scenarios:
+
+1. **test_chest_zone_is_public_zone**
+   - Tests: Rule 3.5.1 - Chest zone is a public zone
+   - Verifies: `is_public_zone = True` and `is_private_zone = False`
+
+2. **test_chest_zone_is_equipment_zone**
+   - Tests: Rule 3.5.1 - Chest zone is an equipment zone
+   - Verifies: `is_equipment_zone = True`
+
+3. **test_chest_zone_is_in_arena**
+   - Tests: Rule 3.5.1 - Chest zone is in the arena
+   - Verifies: `is_arena_zone = True` (cross-ref Rule 3.1.1)
+
+4. **test_chest_zone_owned_by_player**
+   - Tests: Rule 3.5.1 - Chest zone has a specific owner
+   - Verifies: `owner_id == 0` for player 0's chest zone
+
+5. **test_chest_zone_starts_empty**
+   - Tests: Rule 3.5.2 - Empty chest zone behavior
+   - Verifies: `is_empty = True` and `is_exposed = True` (cross-ref 3.0.1a)
+
+6. **test_chest_zone_can_contain_one_equipped_object**
+   - Tests: Rule 3.5.2 - Chest zone capacity of one
+   - Verifies: `zone_object_count == 1` after equipping chest card
+
+7. **test_chest_zone_cannot_contain_more_than_one_object**
+   - Tests: Rule 3.5.2 - One-object limit
+   - Verifies: Second equip fails with `success = False`
+
+8. **test_card_with_chest_subtype_can_be_equipped**
+   - Tests: Rule 3.5.2a - Chest subtype allows equipping
+   - Verifies: Card with chest subtype successfully equipped
+
+9. **test_card_without_chest_subtype_cannot_be_equipped**
+   - Tests: Rule 3.5.2a - Non-chest card rejected
+   - Verifies: Card without chest subtype rejected, zone remains empty
+
+10. **test_arms_subtype_card_rejected_from_chest_zone**
+    - Tests: Rule 3.5.2a - Arms subtype rejected from chest zone
+    - Verifies: Arms-subtype card rejected, chest zone stays empty
+
+11. **test_chest_card_equipped_to_chest_zone_is_permanent**
+    - Tests: Rule 3.5.2a / 8.5.41 - Equipped card becomes permanent
+    - Verifies: `is_permanent = True` for equipped card
+
+12. **test_player_may_equip_chest_card_at_game_start**
+    - Tests: Rule 3.5.3 - Start-of-game equipping allowed
+    - Verifies: `player_may_equip = True` and card in chest zone as permanent
+
+13. **test_chest_zone_empty_if_no_equip_at_game_start**
+    - Tests: Rule 3.5.3 - Optional equipping (player chooses not to)
+    - Verifies: Zone is empty and exposed when player skips equipping
+
+14. **test_chest_zone_not_empty_with_equipped_permanent**
+    - Tests: Rule 3.0.1a cross-ref - Empty definition for equipment zones
+    - Verifies: Zone with equipped permanent is NOT empty
+
+15. **test_chest_card_equip_requires_empty_zone**
+    - Tests: Rule 8.5.41c cross-ref - Zone must be empty to equip
+    - Verifies: Equip fails with `failure_reason = "zone_not_empty"`
+
+#### Implementation Notes:
+- All 15 tests pass with stub-based implementation (`ChestZoneStub`, `ChestCardStub`, `ChestEquipResultStub`, `ChestStartOfGameEquipResultStub`)
+- Pattern follows Section 3.2: Arms exactly, adapted for chest equipment zone rules
+- `ChestZoneStub.is_empty` returns False when `_equipped_count > 0` (Rule 3.0.1a)
+- `_simulate_chest_equip()` enforces Rule 3.5.2a by checking `_has_chest_subtype`
+
+#### Engine Features Needed:
+- `Zone.is_public_zone` property: True for chest zone (Rule 3.5.1, 3.0.4a)
+- `Zone.is_private_zone` property: False for chest zone (Rule 3.5.1)
+- `Zone.is_equipment_zone` property: True for chest zone (Rule 3.5.1)
+- `Zone.is_arena_zone` property: True for chest zone (Rule 3.5.1, 3.1.1)
+- Chest zone capacity limit of 1 equipped object (Rule 3.5.2)
+- Equip effect validation: only subtype CHEST allowed for chest zone (Rule 3.5.2a)
+- Equip effect (8.5.41): puts object into zone as a permanent
+- 8.5.41c: Zone must be empty before equipping
+- `Zone.is_empty` includes checking for equipped permanents, not just objects (Rule 3.0.1a)
+- `Zone.is_exposed`: True when equipment zone is empty (Rule 3.0.1a)
+- Start-of-game equip procedure (Rule 3.5.3, cross-ref 4.1, 4.1.4a)
+- `Subtype.CHEST` enum value (Rule 3.5.2a - already exists in engine)
+
 ### Section 3.1: Arena
 
 **File**: `features/section_3_1_arena.feature`
@@ -4210,7 +4303,7 @@ The ultimate goal is to have **complete test coverage** of the Flesh and Blood C
 - [x] 3.2: Arms
 - [x] 3.3: Arsenal
 - [x] 3.4: Banished
-- [ ] 3.5: Chest
+- [x] 3.5: Chest
 - [ ] 3.6: Combat Chain
 - [ ] 3.7: Deck
 - [ ] 3.8: Graveyard
