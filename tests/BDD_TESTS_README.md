@@ -2490,6 +2490,121 @@ This section tests the combat chain zone rules:
 - `add_card()` / `add_attack_proxy()` methods on combat chain zone (Rule 3.6.2)
 - `CombatChain.is_empty = True` when closed (Rule 3.6.4, 7.0.2)
 
+### Section 3.7: Deck Zone
+
+**File**: `features/section_3_7_deck.feature`
+**Step Definitions**: `step_defs/test_section_3_7_deck.py`
+
+This section tests the deck zone rules in Flesh and Blood:
+- **Rule 3.7.1**: A deck zone is a private zone outside the arena, owned by a player
+- **Rule 3.7.2**: A deck zone can only contain its owner's deck-cards (cross-ref 1.3.2c)
+- **Rule 3.7.3**: The term "deck" refers to the deck zone
+- **Rule 3.7.4**: A player cannot look at objects in their own deck zone unless specified by a rule or effect
+- **Rule 3.7.5**: Objects in the deck zone are placed face down in an ordered uniform pile
+- **Rule 3.7.6**: A player's starting deck starts the game in their deck zone
+
+#### Test Scenarios:
+
+1. **test_deck_zone_is_private_zone**
+   - Tests: Rule 3.7.1 - Deck zone is a private zone
+   - Verifies: `is_private_zone = True` and `is_public_zone = False`
+
+2. **test_deck_zone_is_outside_arena**
+   - Tests: Rule 3.7.1 - Deck zone is outside the arena
+   - Verifies: `is_arena_zone = False` (cross-ref Rule 3.0.5b)
+
+3. **test_deck_zone_owned_by_player**
+   - Tests: Rule 3.7.1 - Deck zone has a specific owner
+   - Verifies: `owner_id == 0` for player 0's deck zone
+
+4. **test_players_have_separate_deck_zones**
+   - Tests: Rule 3.7.1 - Each player has their own deck zone
+   - Verifies: Player 0 and Player 1 have distinct deck zones with correct owner_ids
+
+5. **test_deck_zone_starts_empty**
+   - Tests: Rule 3.7.2 - Deck zone starts with no cards
+   - Verifies: `is_empty = True` for a new deck zone
+
+6. **test_deck_zone_can_contain_owners_action_card**
+   - Tests: Rule 3.7.2 / 1.3.2c - Action cards are deck-cards valid in deck zone
+   - Verifies: Owner's action card can be placed in deck zone
+
+7. **test_deck_zone_can_contain_attack_reaction_cards**
+   - Tests: Rule 3.7.2 / 1.3.2c - Attack Reaction is a deck-card type
+   - Verifies: Owner's attack reaction card accepted in deck zone
+
+8. **test_deck_zone_can_contain_defense_reaction_cards**
+   - Tests: Rule 3.7.2 / 1.3.2c - Defense Reaction is a deck-card type
+   - Verifies: Owner's defense reaction card accepted in deck zone
+
+9. **test_deck_zone_can_contain_instant_cards**
+   - Tests: Rule 3.7.2 / 1.3.2c - Instant is a deck-card type
+   - Verifies: Owner's instant card accepted in deck zone
+
+10. **test_non_deck_card_cannot_be_placed_in_deck_zone**
+    - Tests: Rule 3.7.2 / 1.3.2d - Equipment is an arena-card, NOT a deck-card
+    - Verifies: Equipment card placement in deck zone is rejected
+
+11. **test_opponents_card_cannot_be_placed_in_deck_zone**
+    - Tests: Rule 3.7.2 - Deck zone can only contain owner's cards
+    - Verifies: Opponent's action card placement is rejected; deck zone remains empty
+
+12. **test_deck_zone_can_contain_multiple_owner_cards**
+    - Tests: Rule 3.7.2 - Multiple deck-cards from same owner can be in deck zone
+    - Verifies: Three owner's action cards all accepted in deck zone
+
+13. **test_term_deck_refers_to_deck_zone**
+    - Tests: Rule 3.7.3 - The term "deck" refers to the deck zone
+    - Verifies: Zone registry resolves "deck" to the deck zone
+
+14. **test_player_cannot_look_at_deck_by_default**
+    - Tests: Rule 3.7.4 - Player cannot look at own deck zone without permission
+    - Verifies: `permitted = False` and `failure_reason = "private_zone_no_permission"` by default
+
+15. **test_player_can_look_at_deck_with_permission**
+    - Tests: Rule 3.7.4 - Rule or effect can grant permission to look at deck
+    - Verifies: `permitted = True` when effect grants permission
+
+16. **test_cards_in_deck_are_face_down**
+    - Tests: Rule 3.7.5 - Cards in deck zone are placed face down
+    - Verifies: `cards_are_face_down = True` for deck zone
+
+17. **test_deck_zone_maintains_ordered_pile**
+    - Tests: Rule 3.7.5 - Deck zone maintains ordered uniform pile
+    - Verifies: All cards present in ordered pile; first-placed card at consistent end
+
+18. **test_starting_deck_starts_in_deck_zone**
+    - Tests: Rule 3.7.6 - Starting deck placed in deck zone at game start
+    - Verifies: `starting_deck_placed = True` and all cards in deck zone
+
+19. **test_empty_deck_zone_still_exists**
+    - Tests: Rule 3.0.1a cross-ref - Empty deck zone persists
+    - Verifies: Empty deck zone still exists as a game object
+
+#### Implementation Notes:
+- All 19 tests pass with stub-based implementation (`DeckZoneStub`, `DeckCardStub`, `DeckPlacementResultStub`, `DeckLookResultStub`, `DeckFaceDownResultStub`, `GameStartResultStub`, `ZoneRegistryStub`)
+- `_is_deck_card()` checks `card.template.types` against `_DECK_CARD_TYPES` and `_ARENA_CARD_TYPES` frozensets (Rule 3.7.2 / 1.3.2c/d)
+- `_simulate_deck_look()` implements stub for Rule 3.7.4 private deck access control
+- `DeckZoneStub.cards_are_face_down = True` implements Rule 3.7.5 face-down semantics
+- Ordered pile test checks first-placed card exists at a consistent end (engine-agnostic ordering)
+
+#### Engine Features Needed:
+- `ZoneType.DECK` with `is_private=True` and `is_arena_zone=False` (Rule 3.7.1)
+- `Zone.is_private_zone` property: True for deck zone (Rule 3.7.1, 3.0.4b)
+- `Zone.is_public_zone` property: False for deck zone (Rule 3.7.1)
+- `Zone.is_arena_zone` property: False for deck zone (Rule 3.7.1, 3.0.5b)
+- `Zone.owner_id` property for per-player zone ownership (Rule 3.7.1)
+- `Zone.is_empty` property (Rule 3.0.1a)
+- Deck zone capacity: unlimited deck-cards (Rule 3.7.2)
+- Deck zone rejects non-deck-card types (equipment, weapon, hero) (Rule 3.7.2, cross-ref 1.3.2c/d)
+- Deck zone rejects cards whose `owner_id != zone.owner_id` (Rule 3.7.2)
+- Zone registry term resolution: "deck" → deck zone (Rule 3.7.3)
+- `Zone.can_be_viewed_by(player_id)` checking permissions (Rule 3.7.4)
+- Deck zone requires explicit permission to view (Rule 3.7.4)
+- `Zone.cards_are_face_down` property: True for deck zone (Rule 3.7.5)
+- Ordered pile semantics: consistent insertion order maintained (Rule 3.7.5)
+- `GameEngine.start_game()` placing starting decks in deck zones (Rule 3.7.6)
+
 ### Section 3.1: Arena
 
 **File**: `features/section_3_1_arena.feature`
@@ -4393,7 +4508,7 @@ The ultimate goal is to have **complete test coverage** of the Flesh and Blood C
 - [x] 3.4: Banished
 - [x] 3.5: Chest
 - [x] 3.6: Combat Chain
-- [ ] 3.7: Deck
+- [x] 3.7: Deck
 - [ ] 3.8: Graveyard
 - [ ] 3.9: Hand
 - [ ] 3.10: Head
