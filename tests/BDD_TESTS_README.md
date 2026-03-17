@@ -11,12 +11,14 @@ tests/
 ├── features/                    # Gherkin feature files
 │   ├── section_1_0_general.feature
 │   ├── section_1_0_2_precedence.feature
-│   └── section_1_3_1a_card_ownership.feature
+│   ├── section_1_3_1a_card_ownership.feature
+│   └── section_3_3_arsenal.feature
 ├── step_defs/                   # Step definitions (test implementation)
 │   ├── conftest.py
 │   ├── test_section_1_0_general.py
 │   ├── test_section_1_0_2_precedence.py
-│   └── test_section_1_3_1a_ownership.py
+│   ├── test_section_1_3_1a_ownership.py
+│   └── test_section_3_3_arsenal.py
 ├── bdd_helpers.py               # Shared test helpers (BDDGameState, TestZone, etc.)
 └── BDD_TESTS_README.md          # This file
 ```
@@ -2149,6 +2151,99 @@ This section tests the arms zone rules:
 - Start-of-game equip procedure (Rule 3.2.3, cross-ref 4.1, 4.1.4a)
 - `Subtype.ARMS` enum value (already exists in engine)
 
+### Section 3.3: Arsenal
+
+**File**: `features/section_3_3_arsenal.feature`
+**Step Definitions**: `step_defs/test_section_3_3_arsenal.py`
+
+This section tests the arsenal zone rules in Flesh and Blood:
+- **Rule 3.3.1**: An arsenal zone is a private zone outside the arena, owned by a player
+- **Rule 3.3.2**: An arsenal zone can only contain up to one of its owner's deck-cards
+- **Rule 3.3.2a**: If an effect would put a card into an arsenal zone that is not empty, or into the arsenal and there are no empty arsenal zones, that effect fails
+- **Rule 3.3.3**: The term "arsenal" refers to all arsenal zones owned by a player and the cards in those zones
+- **Rule 3.3.3a**: A player's arsenal is considered empty if all of their arsenal zones are empty
+- **Rule 3.3.3b**: If a rule or effect would specify a card to move into a player's arsenal, it is moved into one of their empty arsenal zones
+- **Rule 3.3.4**: Cards in an arsenal zone may be played
+
+#### Test Scenarios:
+
+1. **test_arsenal_zone_is_private_zone**
+   - Tests: Rule 3.3.1 - Arsenal is a private zone
+   - Verifies: `is_private_zone = True` and `is_public_zone = False`
+
+2. **test_arsenal_zone_is_outside_arena**
+   - Tests: Rule 3.3.1 - Arsenal is outside the arena
+   - Verifies: `is_arena_zone = False` (cross-ref Rule 3.0.5b)
+
+3. **test_arsenal_zone_owned_by_player**
+   - Tests: Rule 3.3.1 - Arsenal zone has a specific owner
+   - Verifies: `owner_id == 0` for player 0's arsenal zone
+
+4. **test_arsenal_zone_starts_empty**
+   - Tests: Rule 3.3.2 - Empty arsenal zone behavior
+   - Verifies: `is_empty = True` for newly created arsenal zone
+
+5. **test_arsenal_zone_can_contain_one_deck_card**
+   - Tests: Rule 3.3.2 - Arsenal zone can hold one deck-card
+   - Verifies: `zone_card_count == 1` after placing a deck-card
+
+6. **test_arsenal_zone_cannot_contain_more_than_one_card**
+   - Tests: Rule 3.3.2 - Arsenal zone one-card limit
+   - Verifies: Second card placement `success = False` with `zone_card_count == 1`
+
+7. **test_only_deck_cards_in_arsenal**
+   - Tests: Rule 3.3.2 - Only deck-cards in arsenal
+   - Verifies: Non-deck card (equipment) rejected from arsenal zone
+
+8. **test_effect_fails_when_arsenal_not_empty**
+   - Tests: Rule 3.3.2a - Effect fails when zone not empty
+   - Verifies: `effect_failed = True` when placing card in occupied arsenal zone
+
+9. **test_effect_fails_no_empty_arsenal_zones**
+   - Tests: Rule 3.3.2a - Effect fails when no empty zones exist
+   - Verifies: `effect_failed = True` when all arsenal zones are occupied
+
+10. **test_arsenal_refers_to_all_zones_and_cards**
+    - Tests: Rule 3.3.3 - "Arsenal" aggregates all zones
+    - Verifies: Arsenal `all_cards` collects from all arsenal zones
+
+11. **test_arsenal_empty_when_all_zones_empty**
+    - Tests: Rule 3.3.3a - Arsenal empty when all zones empty
+    - Verifies: `Arsenal.is_empty = True` when all zones have no cards
+
+12. **test_arsenal_not_empty_if_any_zone_has_card**
+    - Tests: Rule 3.3.3a - Arsenal not empty if any zone has a card
+    - Verifies: `Arsenal.is_empty = False` when any zone has a card
+
+13. **test_card_moved_to_arsenal_goes_to_empty_zone**
+    - Tests: Rule 3.3.3b - Card placed in empty arsenal zone
+    - Verifies: Card moved to arsenal goes to an empty zone, not the occupied one
+
+14. **test_card_in_arsenal_may_be_played**
+    - Tests: Rule 3.3.4 - Arsenal cards are playable
+    - Verifies: Card in arsenal zone has `is_playable = True`
+
+15. **test_playing_card_from_arsenal_permitted**
+    - Tests: Rule 3.3.4 - Playing from arsenal allowed
+    - Verifies: `play_permitted = True` and arsenal zone is empty after play
+
+#### Implementation Notes:
+- All 15 tests pass with stub-based implementation (`ArsenalZoneStub`, `PlayerArsenalStub`, `ArsenalPlacementResultStub`, `ArsenalEffectResultStub`, `ArsenalMoveResultStub`, `ArsenalPlayResultStub`)
+- `PlayerArsenalStub.is_empty` aggregates all zones for Rule 3.3.3a
+- `PlayerArsenalStub.find_empty_zone()` implements Rule 3.3.3b zone selection
+- Duplicate step texts renamed to unique names: `"checking if the player's all-empty arsenal is empty"` and `"checking if the player's partially-filled arsenal is empty"` to avoid pytest-bdd step shadowing
+
+#### Engine Features Needed:
+- `ZoneType.ARSENAL` with `is_private=True` and `is_arena_zone=False` (Rule 3.3.1)
+- `Arsenal` class aggregating all arsenal zones owned by player (Rule 3.3.3)
+- `Arsenal.is_empty` = True only when ALL zones empty (Rule 3.3.3a)
+- `Arsenal.find_empty_zone()` returning empty zone for placement (Rule 3.3.3b)
+- `Arsenal.all_cards` property collecting from all zones (Rule 3.3.3)
+- Arsenal zone capacity limit of 1 deck-card (Rule 3.3.2)
+- Arsenal zone deck-card type validation (Rule 3.3.2)
+- `ArsenalEffect.fails_if_no_empty_zone = True` (Rule 3.3.2a)
+- `CardInstance.is_playable_from_zone(zone)` with arsenal support (Rule 3.3.4, cross-ref 5.1)
+
 ### Section 3.1: Arena
 
 **File**: `features/section_3_1_arena.feature`
@@ -4048,7 +4143,7 @@ The ultimate goal is to have **complete test coverage** of the Flesh and Blood C
 - [x] 3.0: General
 - [x] 3.1: Arena
 - [x] 3.2: Arms
-- [ ] 3.3: Arsenal
+- [x] 3.3: Arsenal
 - [ ] 3.4: Banished
 - [ ] 3.5: Chest
 - [ ] 3.6: Combat Chain
