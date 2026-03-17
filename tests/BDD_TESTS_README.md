@@ -2244,6 +2244,71 @@ This section tests the arsenal zone rules in Flesh and Blood:
 - `ArsenalEffect.fails_if_no_empty_zone = True` (Rule 3.3.2a)
 - `CardInstance.is_playable_from_zone(zone)` with arsenal support (Rule 3.3.4, cross-ref 5.1)
 
+### Section 3.4: Banished Zone
+
+**File**: `features/section_3_4_banished.feature`
+**Step Definitions**: `step_defs/test_section_3_4_banished.py`
+
+This section tests the banished zone rules in Flesh and Blood:
+- **Rule 3.4.1**: A banished zone is a public zone outside the arena, owned by a player
+- **Rule 3.4.2**: A banished zone can only contain its owner's cards
+
+#### Test Scenarios:
+
+1. **test_banished_zone_is_public_zone**
+   - Tests: Rule 3.4.1 - Banished zone is a public zone
+   - Verifies: `is_public_zone = True` and `is_private_zone = False`
+
+2. **test_banished_zone_is_outside_arena**
+   - Tests: Rule 3.4.1 - Banished zone is outside the arena
+   - Verifies: `is_arena_zone = False` (cross-ref Rule 3.0.5b)
+
+3. **test_banished_zone_owned_by_player**
+   - Tests: Rule 3.4.1 - Banished zone is owned by a specific player
+   - Verifies: `owner_id == 0` for player 0's banished zone
+
+4. **test_players_have_separate_banished_zones**
+   - Tests: Rule 3.4.1 - Each player has their own banished zone
+   - Verifies: Player 0 and Player 1 have distinct banished zones with correct owner_ids
+
+5. **test_banished_zone_starts_empty**
+   - Tests: Rule 3.4.2 - Banished zone starts with no cards
+   - Verifies: `is_empty = True` for a new banished zone
+
+6. **test_banished_zone_can_contain_owners_card**
+   - Tests: Rule 3.4.2 - Banished zone accepts owner's cards
+   - Verifies: Placement of owner's card succeeds; `card_in_zone = True`
+
+7. **test_banished_zone_cannot_contain_opponents_card**
+   - Tests: Rule 3.4.2 - Banished zone rejects opponent's cards
+   - Verifies: Placement of opponent's card fails; zone remains empty
+
+8. **test_cards_in_banished_are_owners**
+   - Tests: Rule 3.4.2 - All cards in banished zone belong to zone owner
+   - Verifies: All card `owner_id` values match zone `owner_id`
+
+9. **test_banished_zone_can_hold_multiple_owner_cards**
+   - Tests: Rule 3.4.2 - Multiple owner cards can be in banished zone
+   - Verifies: Three different owner cards can be placed in zone
+
+10. **test_empty_banished_zone_still_exists**
+    - Tests: Rule 3.0.1a cross-ref - Empty zone persists
+    - Verifies: Banished zone exists even when empty
+
+#### Implementation Notes:
+- All 10 tests pass with stub-based implementation (`BanishedZoneStub`, `BanishedCardStub`, `BanishedPlacementResultStub`)
+- `BanishedZoneStub` tracks `is_public_zone=True`, `is_arena_zone=False`, and `owner_id`
+- `_simulate_place_card_in_banished()` enforces Rule 3.4.2 by comparing card.owner_id to zone.owner_id
+
+#### Engine Features Needed:
+- `ZoneType.BANISHED` with `is_public=True` and `is_arena_zone=False` (Rule 3.4.1)
+- `Zone.is_public_zone` property: True for banished zone (Rule 3.4.1, 3.0.4a)
+- `Zone.is_arena_zone` property: False for banished zone (Rule 3.4.1, 3.0.5b)
+- `Zone.owner_id` property for per-player zone ownership (Rule 3.4.1)
+- `Zone.is_empty` property (Rule 3.0.1a)
+- Banished zone rejects cards whose `owner_id` != zone `owner_id` (Rule 3.4.2)
+- `BanishedZone.add_card()` method validating card ownership (Rule 3.4.2)
+
 ### Section 3.1: Arena
 
 **File**: `features/section_3_1_arena.feature`
@@ -4144,7 +4209,7 @@ The ultimate goal is to have **complete test coverage** of the Flesh and Blood C
 - [x] 3.1: Arena
 - [x] 3.2: Arms
 - [x] 3.3: Arsenal
-- [ ] 3.4: Banished
+- [x] 3.4: Banished
 - [ ] 3.5: Chest
 - [ ] 3.6: Combat Chain
 - [ ] 3.7: Deck
