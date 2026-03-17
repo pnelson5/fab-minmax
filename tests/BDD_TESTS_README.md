@@ -1900,6 +1900,168 @@ This section tests the supertype property of objects in Flesh and Blood:
 - Card-pool supertype subset validation (Rule 2.11.1)
 - "Generic" type box means no supertypes (Rule 2.14.1a cross-ref)
 
+### Section 3.0: Zones - General
+
+**File**: `features/section_3_0_zones_general.feature`
+**Step Definitions**: `step_defs/test_section_3_0_zones_general.py`
+
+This section tests the general zone system rules:
+- **Rule 3.0.1**: A zone is a collection of objects; 15 zone types exist
+- **Rule 3.0.1a**: Empty zone doesn't cease to exist; equipment zone exposed when empty
+- **Rule 3.0.2**: Each player owns their own zones; stack/permanent/combat chain are shared
+- **Rule 3.0.3**: Objects are public or private
+- **Rule 3.0.3a**: Player can look at their own private objects (except deck zone)
+- **Rule 3.0.4**: Public zones vs private zones
+- **Rule 3.0.4a**: arms, banished, chest, combat chain, graveyard, head, hero, legs, permanent, pitch, stack, weapon are public zones
+- **Rule 3.0.4b**: arsenal, deck, hand are private zones
+- **Rule 3.0.4c**: Public zone may contain private objects
+- **Rule 3.0.4d**: Private zone may contain public objects
+- **Rule 3.0.4e**: Rule/effect in public zone requires public source unless stated otherwise (Tome of Torment example)
+- **Rule 3.0.5**: Arena = arms + chest + combat chain + head + hero + legs + permanent + weapon
+- **Rule 3.0.5a**: Arena is not a zone; unspecified placement goes to permanent zone
+- **Rule 3.0.5b**: Arsenal, banished, deck, graveyard, hand, pitch, stack NOT in arena
+- **Rule 3.0.7**: Zone movement is simultaneous; object is never in no zone
+- **Rule 3.0.7a**: Leaving object used for effects; private-to-private has no properties (Levia example)
+- **Rule 3.0.7b**: Same-zone move is a no-op (Mark of the Beast example)
+- **Rule 3.0.9**: Object entering non-arena/non-stack zone resets to new object (Endless Arrow example)
+- **Rule 3.0.9a**: Trigger references new object after zone move (while still public) (Merciful Retribution example)
+- **Rule 3.0.9c**: History preserved in new object (Slithering Shadowpede example)
+- **Rule 3.0.12**: Clearing moves object to owner's graveyard
+- **Rule 3.0.12a**: Tokens, macros, non-card-layers cease to exist when cleared
+- **Rule 3.0.13**: Unspecified zone refers to controller's zone
+
+#### Test Scenarios:
+
+1. **test_there_are_exactly_15_zone_types**
+   - Tests: Rule 3.0.1 - Exactly 15 zone types
+   - Verifies: ZoneType enum has ARMS, ARSENAL, BANISHED, CHEST, COMBAT_CHAIN, DECK, GRAVEYARD, HAND, HEAD, HERO, LEGS, PERMANENT, PITCH, STACK, WEAPON
+   - Status: **FAILS** - Missing ZoneType.PERMANENT and ZoneType.WEAPON (engine has WEAPON_1/WEAPON_2)
+
+2. **test_zone_is_collection_of_objects**
+   - Tests: Rule 3.0.1 - Zone holds objects
+   - Verifies: Adding card to zone makes zone non-empty
+
+3. **test_empty_zone_does_not_cease_to_exist**
+   - Tests: Rule 3.0.1a - Empty zone persists
+   - Verifies: Empty hand zone still exists and reports as empty
+
+4. **test_each_player_has_own_private_zones**
+   - Tests: Rule 3.0.2 - Per-player zones
+   - Verifies: Player 0 and Player 1 have distinct hand zones
+
+5. **test_shared_zones_shared_among_all_players**
+   - Tests: Rule 3.0.2 - Shared stack zone
+   - Verifies: Stack zone is a single shared zone
+
+6. **test_card_can_be_public**
+   - Tests: Rule 3.0.3 - Public object visibility
+   - Verifies: Card in graveyard is "public"
+
+7. **test_card_can_be_private**
+   - Tests: Rule 3.0.3 - Private object visibility
+   - Verifies: Card in hand is "private"
+
+8. **test_player_can_look_at_own_private_objects**
+   - Tests: Rule 3.0.3a - Owner can view their private objects
+   - Verifies: Owner sees private card; non-owner does not
+
+9. **test_graveyard_is_public_zone** / 10. **test_banished_zone_is_public** / 11. **test_pitch_zone_is_public** / 12. **test_stack_zone_is_public**
+   - Tests: Rule 3.0.4a - Public zones
+   - Verifies: Graveyard, banished, pitch, stack zones return "public"
+
+13. **test_hand_zone_is_private** / 14. **test_deck_zone_is_private** / 15. **test_arsenal_zone_is_private**
+   - Tests: Rule 3.0.4b - Private zones
+   - Verifies: Hand, deck, arsenal zones return "private"
+
+16. **test_public_zone_can_contain_private_object**
+   - Tests: Rule 3.0.4c - Public zone holds private objects
+   - Verifies: Private card in graveyard still marked as private; zone still public
+
+17. **test_private_zone_can_contain_public_object**
+   - Tests: Rule 3.0.4d - Private zone holds public objects
+   - Verifies: Public card in arsenal stays "public"; zone still private
+
+18. **test_effect_on_public_zone_requires_public_source**
+   - Tests: Rule 3.0.4e - Tome of Torment example
+   - Verifies: Effect doesn't apply to face-down (private) card in public zone
+
+19. **test_arena_collects_specific_zone_types**
+   - Tests: Rule 3.0.5 - Arena zones
+   - Verifies: ARMS, CHEST, HEAD, HERO, LEGS, PERMANENT, WEAPON in arena
+   - Status: **FAILS** - Missing ZoneType.PERMANENT
+
+20. **test_arena_is_not_itself_a_zone**
+   - Tests: Rule 3.0.5a - Arena not a zone type
+   - Verifies: ZoneType.ARENA doesn't exist; arena is a collection
+
+21. **test_object_placed_into_arena_without_zone_goes_to_permanent**
+   - Tests: Rule 3.0.5a - Default to permanent zone
+   - Verifies: Card placed in "arena" without zone goes to permanent zone
+   - Status: **FAILS** - Missing ZoneType.PERMANENT
+
+22. **test_non_arena_zones_not_in_arena**
+   - Tests: Rule 3.0.5b - Non-arena zones
+   - Verifies: ARSENAL, BANISHED, DECK, GRAVEYARD, HAND, PITCH, STACK not in arena
+
+23. **test_moving_card_between_zones_is_simultaneous**
+   - Tests: Rule 3.0.7 - Atomic zone movement
+   - Verifies: Card leaves origin and enters destination atomically; never in no zone
+
+24. **test_leaving_object_used_for_zone_effects**
+   - Tests: Rule 3.0.7a - Origin properties used for effects
+   - Verifies: Card's power=4 at origin is captured for effects
+
+25. **test_private_to_private_move_has_no_properties**
+   - Tests: Rule 3.0.7a - Levia example
+   - Verifies: Private-to-private move has no properties for effects
+
+26. **test_same_zone_move_is_noop**
+   - Tests: Rule 3.0.7b - Mark of the Beast example
+   - Verifies: Move to same zone doesn't occur
+
+27. **test_card_entering_hand_from_graveyard_resets**
+   - Tests: Rule 3.0.9 - Endless Arrow example
+   - Verifies: Card entering hand (non-arena) resets to new object; effects removed
+
+28. **test_card_becoming_private_resets**
+   - Tests: Rule 3.0.9 - Public-to-private reset
+   - Verifies: Card becoming private resets; go-again effect removed
+
+29. **test_trigger_references_new_object_after_zone_change**
+   - Tests: Rule 3.0.9a - Merciful Retribution example
+   - Verifies: Triggered ability references new object in destination zone
+
+30. **test_reset_object_preserves_history**
+   - Tests: Rule 3.0.9c - Slithering Shadowpede example
+   - Verifies: New object in banished zone remembers it was banished from hand
+
+31. **test_clearing_card_moves_to_graveyard**
+   - Tests: Rule 3.0.12 - Clear moves to graveyard
+   - Verifies: Cleared card moves to owner's graveyard
+
+32. **test_clearing_token_causes_cessation**
+   - Tests: Rule 3.0.12a - Token cessation
+   - Verifies: Token ceases to exist when cleared, not moved to graveyard
+
+33. **test_unspecified_zone_refers_to_controller_zone**
+   - Tests: Rule 3.0.13 - Zone reference resolution
+   - Verifies: "your graveyard" resolves to effect controller's graveyard
+
+#### Engine Features Needed:
+- `ZoneType.PERMANENT` enum value (Rule 3.0.1, 3.0.5) - currently missing
+- `ZoneType.WEAPON` enum value (Rule 3.0.1, 3.0.2) - currently split as WEAPON_1/WEAPON_2
+- `GameState.shared_stack` / `GameState.shared_zones` (Rule 3.0.2)
+- `CardInstance.is_public` / `CardInstance.is_private` (Rule 3.0.3)
+- `Zone.is_public_zone` / `Zone.is_private_zone` property (Rule 3.0.4)
+- `Zone.in_arena` property (Rule 3.0.5)
+- `GameEngine.move_card(card, from_zone, to_zone)` simultaneous move (Rule 3.0.7)
+- `ZoneMoveResult.was_ever_in_no_zone` tracking (Rule 3.0.7)
+- `CardInstance.reset()` when entering non-arena/non-stack zone (Rule 3.0.9)
+- `CardInstance.history` tracking for zone movement (Rule 3.0.9c)
+- `GameEngine.clear_object(obj)` → graveyard or cessation (Rule 3.0.12)
+- Token clearing causes cessation not graveyard move (Rule 3.0.12a)
+- `EffectZoneResolver.resolve_zone(effect_controller_id)` (Rule 3.0.13)
+
 ### Section 2.15: Types
 
 **File**: `features/section_2_15_types.feature`
@@ -3712,7 +3874,7 @@ The ultimate goal is to have **complete test coverage** of the Flesh and Blood C
 - [x] 2.15: Types
 
 ### Section 3: Zones
-- [ ] 3.0: General
+- [x] 3.0: General
 - [ ] 3.1: Arena
 - [ ] 3.2: Arms
 - [ ] 3.3: Arsenal
