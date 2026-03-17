@@ -2402,6 +2402,94 @@ This section tests the chest zone rules:
 - Start-of-game equip procedure (Rule 3.5.3, cross-ref 4.1, 4.1.4a)
 - `Subtype.CHEST` enum value (Rule 3.5.2a - already exists in engine)
 
+### Section 3.6: Combat Chain
+
+**File**: `features/section_3_6_combat_chain.feature`
+**Step Definitions**: `step_defs/test_section_3_6_combat_chain.py`
+
+This section tests the combat chain zone rules:
+- **Rule 3.6.1**: The combat chain zone is a public zone in the arena; there is only one, shared by all players, with no owner
+- **Rule 3.6.2**: The combat chain zone can only contain cards and attack-proxies
+- **Rule 3.6.3**: The term "combat chain" refers to the combat chain zone
+- **Rule 3.6.4**: The combat chain is "open" during combat, "closed" otherwise
+
+#### Test Scenarios:
+
+1. **test_combat_chain_zone_is_public_zone**
+   - Tests: Rule 3.6.1 - Combat chain zone is a public zone
+   - Verifies: `is_public_zone = True` and `is_private_zone = False`
+
+2. **test_combat_chain_zone_is_in_arena**
+   - Tests: Rule 3.6.1 - Combat chain zone is in the arena
+   - Verifies: `is_arena_zone = True` (cross-ref Rule 3.0.5)
+
+3. **test_there_is_exactly_one_combat_chain_zone**
+   - Tests: Rule 3.6.1 - Only one combat chain zone shared by all players
+   - Verifies: `combat_chain_zone_count == 1`
+
+4. **test_combat_chain_zone_is_shared**
+   - Tests: Rule 3.6.1 - Zone is shared among all players
+   - Verifies: Both players access the same combat chain zone object
+
+5. **test_combat_chain_zone_has_no_owner**
+   - Tests: Rule 3.6.1 - Combat chain zone has no owner
+   - Verifies: `owner_id is None`
+
+6. **test_combat_chain_zone_can_contain_cards**
+   - Tests: Rule 3.6.2 - Combat chain zone can contain cards
+   - Verifies: Attack card can be placed in combat chain zone
+
+7. **test_combat_chain_zone_can_contain_attack_proxies**
+   - Tests: Rule 3.6.2 - Combat chain zone can contain attack-proxies (cross-ref 1.4.3)
+   - Verifies: Attack-proxy can be placed in combat chain zone
+
+8. **test_combat_chain_can_hold_multiple_cards**
+   - Tests: Rule 3.6.2 - Combat chain zone can hold multiple cards
+   - Verifies: Two attack cards from different chain links both fit
+
+9. **test_term_combat_chain_refers_to_zone**
+   - Tests: Rule 3.6.3 - The term "combat chain" resolves to the zone
+   - Verifies: Zone registry resolves "combat chain" to combat chain zone
+
+10. **test_combat_chain_starts_closed**
+    - Tests: Rule 3.6.4 - Combat chain starts the game closed
+    - Verifies: `is_closed = True` at game start
+
+11. **test_combat_chain_is_open_during_combat**
+    - Tests: Rule 3.6.4 - Combat chain is open during combat
+    - Verifies: `is_open = True` when combat is active
+
+12. **test_combat_chain_opens_when_combat_starts**
+    - Tests: Rule 3.6.4 - Combat chain transitions from closed to open
+    - Verifies: `open()` transitions to `is_open = True`
+
+13. **test_combat_chain_closes_when_combat_ends**
+    - Tests: Rule 3.6.4 - Combat chain transitions from open to closed
+    - Verifies: `close()` transitions to `is_closed = True`
+
+14. **test_closed_combat_chain_is_empty**
+    - Tests: Rule 3.6.4 / cross-ref 7.0.2 - Closed combat chain is empty
+    - Verifies: `is_empty = True` when combat chain is closed
+
+#### Implementation Notes:
+- All 14 tests pass with stub-based implementation (`CombatChainZoneStub`, `AttackProxyStub`)
+- `CombatChainZoneStub.owner_id = None` (Rule 3.6.1 - no owner)
+- `CombatChainZoneStub._is_open` starts False; `open()`/`close()` transitions implemented (Rule 3.6.4)
+- Tests use real `Zone(ZoneType.COMBAT_CHAIN, owner_id=None)` via engine when available
+
+#### Engine Features Needed:
+- `CombatChainZone` class or `Zone` with `ZoneType.COMBAT_CHAIN` and `owner_id=None` (Rule 3.6.1)
+- `Zone.is_public_zone = True` for combat chain (Rule 3.6.1, 3.0.4a)
+- `Zone.is_arena_zone = True` for combat chain (Rule 3.6.1, 3.0.5)
+- No owner (`owner_id = None`) for combat chain zone (Rule 3.6.1)
+- Single shared combat chain zone per game (Rule 3.6.1)
+- `CombatChain.is_open` / `CombatChain.is_closed` properties (Rule 3.6.4)
+- `CombatChain.open()` / `CombatChain.close()` methods (Rule 3.6.4)
+- Combat chain starts closed; opens when attack added to stack (Rule 3.6.4, 7.0.2a)
+- `AttackProxy` support in combat chain zone (Rule 3.6.2, 1.4.3)
+- `add_card()` / `add_attack_proxy()` methods on combat chain zone (Rule 3.6.2)
+- `CombatChain.is_empty = True` when closed (Rule 3.6.4, 7.0.2)
+
 ### Section 3.1: Arena
 
 **File**: `features/section_3_1_arena.feature`
@@ -4304,7 +4392,7 @@ The ultimate goal is to have **complete test coverage** of the Flesh and Blood C
 - [x] 3.3: Arsenal
 - [x] 3.4: Banished
 - [x] 3.5: Chest
-- [ ] 3.6: Combat Chain
+- [x] 3.6: Combat Chain
 - [ ] 3.7: Deck
 - [ ] 3.8: Graveyard
 - [ ] 3.9: Hand
