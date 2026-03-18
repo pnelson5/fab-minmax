@@ -2681,6 +2681,97 @@ This section tests the graveyard zone rules in Flesh and Blood:
 - `GraveyardZone.add_card()` method validating card ownership (Rule 3.8.2)
 - Zone registry term resolution: "graveyard" → graveyard zone (Rule 3.8.3)
 
+### Section 3.9: Hand
+
+**File**: `features/section_3_9_hand.feature`
+**Step Definitions**: `step_defs/test_section_3_9_hand.py`
+
+This section tests the hand zone rules in Flesh and Blood:
+- **Rule 3.9.1**: A hand zone is a private zone outside the arena, owned by a player
+- **Rule 3.9.2**: A hand zone can only contain its owner's deck-cards (cross-ref 1.3.2c)
+- **Rule 3.9.3**: The term "hand" refers to the hand zone
+
+#### Test Scenarios:
+
+1. **test_hand_zone_is_private_zone**
+   - Tests: Rule 3.9.1 - Hand zone is a private zone
+   - Verifies: `is_private_zone = True` and `is_public_zone = False`
+
+2. **test_hand_zone_is_outside_arena**
+   - Tests: Rule 3.9.1 - Hand zone is outside the arena
+   - Verifies: `is_arena_zone = False` (cross-ref Rule 3.0.5b)
+
+3. **test_hand_zone_owned_by_player**
+   - Tests: Rule 3.9.1 - Hand zone has a specific owner
+   - Verifies: `owner_id == 0` for player 0's hand zone
+
+4. **test_players_have_separate_hand_zones**
+   - Tests: Rule 3.9.1 - Each player has their own hand zone
+   - Verifies: Player 0 and Player 1 have distinct hand zones with correct owner_ids
+
+5. **test_hand_zone_starts_empty**
+   - Tests: Rule 3.9.2 - Hand zone starts with no cards
+   - Verifies: `is_empty = True` for a new hand zone
+
+6. **test_hand_zone_can_contain_owners_action_card**
+   - Tests: Rule 3.9.2 / 1.3.2c - Action cards are deck-cards valid in hand zone
+   - Verifies: Owner's action card can be placed in hand zone
+
+7. **test_hand_zone_can_contain_attack_reaction_card**
+   - Tests: Rule 3.9.2 / 1.3.2c - Attack Reaction is a deck-card type
+   - Verifies: Owner's attack reaction card accepted in hand zone
+
+8. **test_hand_zone_can_contain_defense_reaction_card**
+   - Tests: Rule 3.9.2 / 1.3.2c - Defense Reaction is a deck-card type
+   - Verifies: Owner's defense reaction card accepted in hand zone
+
+9. **test_hand_zone_can_contain_instant_card**
+   - Tests: Rule 3.9.2 / 1.3.2c - Instant is a deck-card type
+   - Verifies: Owner's instant card accepted in hand zone
+
+10. **test_hand_zone_cannot_contain_equipment_card**
+    - Tests: Rule 3.9.2 / 1.3.2d - Equipment is an arena-card, NOT a deck-card
+    - Verifies: Equipment card placement in hand zone is rejected
+
+11. **test_hand_zone_cannot_contain_opponents_card**
+    - Tests: Rule 3.9.2 - Hand zone can only contain owner's cards
+    - Verifies: Opponent's action card placement is rejected; hand zone remains empty
+
+12. **test_cards_in_hand_zone_are_owners**
+    - Tests: Rule 3.9.2 - All cards in hand zone belong to zone owner
+    - Verifies: All card `owner_id` values match zone `owner_id`
+
+13. **test_hand_zone_can_hold_multiple_cards**
+    - Tests: Rule 3.9.2 - Multiple deck-cards from same owner can be in hand zone
+    - Verifies: Three owner's action cards all accepted in hand zone
+
+14. **test_term_hand_refers_to_hand_zone**
+    - Tests: Rule 3.9.3 - The term "hand" refers to the hand zone
+    - Verifies: Zone registry resolves "hand" to the hand zone
+
+15. **test_empty_hand_zone_still_exists**
+    - Tests: Rule 3.0.1a cross-ref - Empty hand zone persists
+    - Verifies: Empty hand zone still exists as a game object
+
+#### Implementation Notes:
+- All 15 tests pass with stub-based implementation (`HandZoneStub`, `HandCardStub`, `HandPlacementResultStub`, `HandZoneRegistryStub`)
+- `HandZoneStub` tracks `is_private_zone=True`, `is_public_zone=False`, `is_arena_zone=False` (Rule 3.9.1)
+- `_simulate_place_card_in_hand()` enforces Rule 3.9.2 by comparing card.owner_id to zone.owner_id AND checking deck-card type
+- `_is_deck_card()` validates card type against `_DECK_CARD_TYPES` frozenset (Rule 3.9.2 / 1.3.2c)
+
+#### Engine Features Needed:
+- `ZoneType.HAND` with `is_private=True` and `is_arena_zone=False` (Rule 3.9.1)
+    - `ZoneType.HAND` ALREADY EXISTS in engine (fab_engine/zones/zone.py)
+- `Zone.is_private_zone` property: True for hand zone (Rule 3.9.1, 3.0.4b) - NOT YET IMPLEMENTED
+- `Zone.is_public_zone` property: False for hand zone (Rule 3.9.1) - NOT YET IMPLEMENTED
+- `Zone.is_arena_zone` property: False for hand zone (Rule 3.9.1, 3.0.5b) - NOT YET IMPLEMENTED
+- `Zone.owner_id` ALREADY EXISTS in engine (fab_engine/zones/zone.py)
+- `Zone.is_empty` ALREADY EXISTS in engine (fab_engine/zones/zone.py)
+- Hand zone can only contain owner's deck-cards (Rule 3.9.2 / 1.3.2c) - NOT YET IMPLEMENTED
+- Hand zone rejects cards whose `owner_id != zone.owner_id` (Rule 3.9.2) - NOT YET IMPLEMENTED
+- Hand zone rejects non-deck-cards (equipment, weapon, hero, token) (Rule 3.9.2 / 1.3.2c/d) - NOT YET IMPLEMENTED
+- Zone registry term resolution: "hand" → hand zone (Rule 3.9.3) - NOT YET IMPLEMENTED
+
 ### Section 3.1: Arena
 
 **File**: `features/section_3_1_arena.feature`
@@ -4586,7 +4677,7 @@ The ultimate goal is to have **complete test coverage** of the Flesh and Blood C
 - [x] 3.6: Combat Chain
 - [x] 3.7: Deck
 - [x] 3.8: Graveyard
-- [ ] 3.9: Hand
+- [x] 3.9: Hand
 - [ ] 3.10: Head
 - [ ] 3.11: Hero
 - [ ] 3.12: Legs
