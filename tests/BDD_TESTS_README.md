@@ -2772,6 +2772,100 @@ This section tests the hand zone rules in Flesh and Blood:
 - Hand zone rejects non-deck-cards (equipment, weapon, hero, token) (Rule 3.9.2 / 1.3.2c/d) - NOT YET IMPLEMENTED
 - Zone registry term resolution: "hand" → hand zone (Rule 3.9.3) - NOT YET IMPLEMENTED
 
+### Section 3.10: Head
+
+**File**: `features/section_3_10_head.feature`
+**Step Definitions**: `step_defs/test_section_3_10_head.py`
+
+This section tests the head zone rules in Flesh and Blood:
+- **Rule 3.10.1**: A head zone is a public equipment zone in the arena, owned by a player
+- **Rule 3.10.2**: A head zone can only contain up to one object which is equipped to that zone
+- **Rule 3.10.2a**: An object can only be equipped to a head zone if it has subtype head
+- **Rule 3.10.3**: A player may equip a head card to their head zone at the start of the game
+
+#### Test Scenarios:
+
+1. **test_head_zone_is_public_zone**
+   - Tests: Rule 3.10.1 - Head zone is a public equipment zone
+   - Verifies: `is_public_zone = True` and `is_private_zone = False`
+
+2. **test_head_zone_is_equipment_zone**
+   - Tests: Rule 3.10.1 - Head zone is an equipment zone
+   - Verifies: `is_equipment_zone = True`
+
+3. **test_head_zone_is_in_arena**
+   - Tests: Rule 3.10.1 - Head zone is in the arena
+   - Verifies: `is_arena_zone = True` (cross-ref Rule 3.1.1)
+
+4. **test_head_zone_owned_by_player**
+   - Tests: Rule 3.10.1 - Head zone has a specific owner
+   - Verifies: `owner_id == 0` for player 0's head zone
+
+5. **test_head_zone_starts_empty**
+   - Tests: Rule 3.10.2 - Empty head zone behavior
+   - Verifies: `is_empty = True` and `is_exposed = True` (cross-ref 3.0.1a)
+
+6. **test_head_zone_can_contain_one_equipped_object**
+   - Tests: Rule 3.10.2 - Head zone capacity of one
+   - Verifies: `zone_object_count == 1` after equipping head card
+
+7. **test_head_zone_cannot_contain_more_than_one_object**
+   - Tests: Rule 3.10.2 - One-object limit
+   - Verifies: Second equip fails with `success = False`
+
+8. **test_card_with_head_subtype_can_be_equipped**
+   - Tests: Rule 3.10.2a - Head subtype allows equipping
+   - Verifies: Card with head subtype successfully equipped
+
+9. **test_card_without_head_subtype_cannot_be_equipped**
+   - Tests: Rule 3.10.2a - Non-head card rejected
+   - Verifies: Card without head subtype rejected, zone remains empty
+
+10. **test_arms_subtype_card_rejected_from_head_zone**
+    - Tests: Rule 3.10.2a - Arms subtype rejected from head zone
+    - Verifies: Arms-subtype card rejected, head zone stays empty
+
+11. **test_head_card_equipped_to_head_zone_is_permanent**
+    - Tests: Rule 3.10.2a / 8.5.41 - Equipped card becomes permanent
+    - Verifies: `is_permanent = True` for equipped card
+
+12. **test_player_may_equip_head_card_at_game_start**
+    - Tests: Rule 3.10.3 - Start-of-game equipping allowed
+    - Verifies: `player_may_equip = True` and card in head zone as permanent
+
+13. **test_head_zone_empty_if_no_equip_at_game_start**
+    - Tests: Rule 3.10.3 - Optional equipping (player chooses not to)
+    - Verifies: Zone is empty and exposed when player skips equipping
+
+14. **test_head_zone_not_empty_with_equipped_permanent**
+    - Tests: Rule 3.0.1a cross-ref - Empty definition for equipment zones
+    - Verifies: Zone with equipped permanent is NOT empty
+
+15. **test_head_card_equip_requires_empty_zone**
+    - Tests: Rule 8.5.41c cross-ref - Zone must be empty to equip
+    - Verifies: Equip fails with `failure_reason = "zone_not_empty"`
+
+#### Implementation Notes:
+- All 15 tests pass with stub-based implementation (`HeadZoneStub`, `HeadCardStub`, `HeadEquipResultStub`, `HeadStartOfGameEquipResultStub`)
+- Pattern follows Section 3.2: Arms exactly, adapted for head equipment zone rules
+- `HeadZoneStub.is_empty` returns False when `_equipped_count > 0` (Rule 3.0.1a)
+- `_simulate_head_equip()` enforces Rule 3.10.2a by checking `_has_head_subtype`
+- `Subtype.HEAD` ALREADY EXISTS in engine (fab_engine/cards/model.py)
+
+#### Engine Features Needed:
+- `Zone.is_public_zone` property: True for head zone (Rule 3.10.1, 3.0.4a)
+- `Zone.is_private_zone` property: False for head zone (Rule 3.10.1)
+- `Zone.is_equipment_zone` property: True for head zone (Rule 3.10.1)
+- `Zone.is_arena_zone` property: True for head zone (Rule 3.10.1, 3.1.1)
+- Head zone capacity limit of 1 equipped object (Rule 3.10.2)
+- Equip effect validation: only subtype HEAD allowed for head zone (Rule 3.10.2a)
+- Equip effect (8.5.41): puts object into zone as a permanent
+- 8.5.41c: Zone must be empty before equipping
+- `Zone.is_empty` includes checking for equipped permanents, not just objects (Rule 3.0.1a)
+- `Zone.is_exposed`: True when equipment zone is empty (Rule 3.0.1a)
+- Start-of-game equip procedure (Rule 3.10.3, cross-ref 4.1, 4.1.4a)
+- `Subtype.HEAD` enum value (Rule 3.10.2a - already exists in engine)
+
 ### Section 3.1: Arena
 
 **File**: `features/section_3_1_arena.feature`
@@ -4678,7 +4772,7 @@ The ultimate goal is to have **complete test coverage** of the Flesh and Blood C
 - [x] 3.7: Deck
 - [x] 3.8: Graveyard
 - [x] 3.9: Hand
-- [ ] 3.10: Head
+- [x] 3.10: Head
 - [ ] 3.11: Hero
 - [ ] 3.12: Legs
 - [ ] 3.13: Permanent
