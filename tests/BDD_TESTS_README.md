@@ -12,13 +12,15 @@ tests/
 │   ├── section_1_0_general.feature
 │   ├── section_1_0_2_precedence.feature
 │   ├── section_1_3_1a_card_ownership.feature
-│   └── section_3_3_arsenal.feature
+│   ├── section_3_3_arsenal.feature
+│   └── section_3_8_graveyard.feature
 ├── step_defs/                   # Step definitions (test implementation)
 │   ├── conftest.py
 │   ├── test_section_1_0_general.py
 │   ├── test_section_1_0_2_precedence.py
 │   ├── test_section_1_3_1a_ownership.py
-│   └── test_section_3_3_arsenal.py
+│   ├── test_section_3_3_arsenal.py
+│   └── test_section_3_8_graveyard.py
 ├── bdd_helpers.py               # Shared test helpers (BDDGameState, TestZone, etc.)
 └── BDD_TESTS_README.md          # This file
 ```
@@ -2605,6 +2607,80 @@ This section tests the deck zone rules in Flesh and Blood:
 - Ordered pile semantics: consistent insertion order maintained (Rule 3.7.5)
 - `GameEngine.start_game()` placing starting decks in deck zones (Rule 3.7.6)
 
+### Section 3.8: Graveyard Zone
+
+**File**: `features/section_3_8_graveyard.feature`
+**Step Definitions**: `step_defs/test_section_3_8_graveyard.py`
+
+This section tests the graveyard zone rules in Flesh and Blood:
+- **Rule 3.8.1**: A graveyard zone is a public zone outside the arena, owned by a player
+- **Rule 3.8.2**: A graveyard zone can only contain its owner's cards
+- **Rule 3.8.3**: The term "graveyard" refers to the graveyard zone
+
+#### Test Scenarios:
+
+1. **test_graveyard_zone_is_public_zone**
+   - Tests: Rule 3.8.1 - Graveyard zone is a public zone
+   - Verifies: `is_public_zone = True` and `is_private_zone = False`
+
+2. **test_graveyard_zone_is_outside_arena**
+   - Tests: Rule 3.8.1 - Graveyard zone is outside the arena
+   - Verifies: `is_arena_zone = False` (cross-ref Rule 3.0.5b)
+
+3. **test_graveyard_zone_owned_by_player**
+   - Tests: Rule 3.8.1 - Graveyard zone has a specific owner
+   - Verifies: `owner_id == 0` for player 0's graveyard zone
+
+4. **test_players_have_separate_graveyard_zones**
+   - Tests: Rule 3.8.1 - Each player has their own graveyard zone
+   - Verifies: Player 0 and Player 1 have distinct graveyard zones with correct owner_ids
+
+5. **test_graveyard_zone_starts_empty**
+   - Tests: Rule 3.8.2 - Graveyard zone starts with no cards
+   - Verifies: `is_empty = True` for a new graveyard zone
+
+6. **test_graveyard_zone_can_contain_owners_card**
+   - Tests: Rule 3.8.2 - Graveyard zone accepts owner's cards
+   - Verifies: Placement of owner's card succeeds; `card_in_zone = True`
+
+7. **test_graveyard_zone_cannot_contain_opponents_card**
+   - Tests: Rule 3.8.2 - Graveyard zone rejects opponent's cards
+   - Verifies: Placement of opponent's card fails; zone remains empty
+
+8. **test_cards_in_graveyard_are_owners**
+   - Tests: Rule 3.8.2 - All cards in graveyard zone belong to zone owner
+   - Verifies: All card `owner_id` values match zone `owner_id`
+
+9. **test_graveyard_zone_can_hold_multiple_owner_cards**
+   - Tests: Rule 3.8.2 - Multiple owner cards can be in graveyard zone
+   - Verifies: Three different owner cards can be placed in zone
+
+10. **test_term_graveyard_refers_to_graveyard_zone**
+    - Tests: Rule 3.8.3 - Term "graveyard" refers to graveyard zone
+    - Verifies: Zone registry resolves "graveyard" to graveyard zone
+
+11. **test_empty_graveyard_zone_still_exists**
+    - Tests: Rule 3.0.1a cross-ref - Empty zone persists
+    - Verifies: Graveyard zone exists even when empty
+
+#### Implementation Notes:
+- All 11 tests pass with stub-based implementation (`GraveyardZoneStub`, `GraveyardCardStub`, `GraveyardPlacementResultStub`, `ZoneRegistryStub`)
+- `GraveyardZoneStub` tracks `is_public_zone=True`, `is_arena_zone=False`, and `owner_id`
+- `_simulate_place_card_in_graveyard()` enforces Rule 3.8.2 by comparing card.owner_id to zone.owner_id
+- `ZoneRegistryStub` implements term-to-zone resolution for Rule 3.8.3
+- `ZoneType.GRAVEYARD` EXISTS in engine; ownership validation and is_public_zone/is_arena_zone properties need implementation
+
+#### Engine Features Needed:
+- `Zone.is_public_zone` property: True for graveyard zone (Rule 3.8.1, 3.0.4a) - NOT YET IMPLEMENTED
+- `Zone.is_private_zone` property: False for graveyard zone (Rule 3.8.1) - NOT YET IMPLEMENTED
+- `Zone.is_arena_zone` property: False for graveyard zone (Rule 3.8.1, 3.0.5b) - NOT YET IMPLEMENTED
+- `ZoneType.GRAVEYARD` ALREADY EXISTS in engine (fab_engine/zones/zone.py)
+- `Zone.owner_id` ALREADY EXISTS in engine (fab_engine/zones/zone.py)
+- `Zone.is_empty` ALREADY EXISTS in engine (fab_engine/zones/zone.py)
+- Graveyard zone rejects cards whose `owner_id != zone.owner_id` (Rule 3.8.2)
+- `GraveyardZone.add_card()` method validating card ownership (Rule 3.8.2)
+- Zone registry term resolution: "graveyard" → graveyard zone (Rule 3.8.3)
+
 ### Section 3.1: Arena
 
 **File**: `features/section_3_1_arena.feature`
@@ -4509,7 +4585,7 @@ The ultimate goal is to have **complete test coverage** of the Flesh and Blood C
 - [x] 3.5: Chest
 - [x] 3.6: Combat Chain
 - [x] 3.7: Deck
-- [ ] 3.8: Graveyard
+- [x] 3.8: Graveyard
 - [ ] 3.9: Hand
 - [ ] 3.10: Head
 - [ ] 3.11: Hero
