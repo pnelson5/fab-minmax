@@ -2866,6 +2866,112 @@ This section tests the head zone rules in Flesh and Blood:
 - Start-of-game equip procedure (Rule 3.10.3, cross-ref 4.1, 4.1.4a)
 - `Subtype.HEAD` enum value (Rule 3.10.2a - already exists in engine)
 
+### Section 3.11: Hero Zone
+
+**File**: `features/section_3_11_hero.feature`
+**Step Definitions**: `step_defs/test_section_3_11_hero.py`
+
+This section tests the hero zone rules in Flesh and Blood:
+- **Rule 3.11.1**: A hero zone is a public zone in the arena, owned by a player
+- **Rule 3.11.2**: A hero zone can only contain one card, with the type hero, and zero or more cards in the hero's soul
+- **Rule 3.11.3**: The term "hero" refers to the card with the type hero in the hero zone
+- **Rule 3.11.4**: A player must start the game with their hero card in their hero zone
+- **Rule 3.11.5**: A hero's soul refers to the collection of sub-objects under the hero card (cross-ref 3.0.14)
+
+#### Test Scenarios:
+
+1. **test_hero_zone_is_public_zone**
+   - Tests: Rule 3.11.1 - Hero zone is a public zone
+   - Verifies: `is_public_zone = True` and `is_private_zone = False`
+
+2. **test_hero_zone_is_in_arena**
+   - Tests: Rule 3.11.1 - Hero zone is in the arena
+   - Verifies: `is_arena_zone = True` (cross-ref Rule 3.0.5)
+
+3. **test_hero_zone_owned_by_player**
+   - Tests: Rule 3.11.1 - Hero zone has a specific owner
+   - Verifies: `owner_id == 0` for player 0's hero zone
+
+4. **test_hero_zones_are_per_player**
+   - Tests: Rule 3.11.1 / 3.0.2 - Each player has their own hero zone
+   - Verifies: Player 0 and Player 1 have distinct hero zones with correct owner_ids
+
+5. **test_hero_zone_starts_empty**
+   - Tests: Rule 3.11.2 - Hero zone starts empty
+   - Verifies: `is_empty = True` for a new hero zone
+
+6. **test_hero_zone_can_contain_hero_card**
+   - Tests: Rule 3.11.2 - Hero zone can contain one hero-type card
+   - Verifies: Hero card placed successfully; hero card count = 1
+
+7. **test_hero_zone_cannot_contain_two_hero_cards**
+   - Tests: Rule 3.11.2 - Hero zone cannot contain more than one hero card
+   - Verifies: Second hero card placement rejected; still only 1 hero card
+
+8. **test_hero_zone_rejects_non_hero_cards**
+   - Tests: Rule 3.11.2 - Hero zone only accepts cards with type hero
+   - Verifies: Action card placement rejected; zone remains empty
+
+9. **test_hero_zone_can_contain_soul_cards**
+   - Tests: Rule 3.11.2 - Hero zone can contain soul cards (sub-cards under hero)
+   - Verifies: Soul card count >= 1 after placing card in soul
+
+10. **test_hero_term_refers_to_hero_card**
+    - Tests: Rule 3.11.3 - The term "hero" refers to hero-type card in hero zone
+    - Verifies: Resolved hero object name is "Dorinthea Ironsong"
+
+11. **test_hero_term_not_action_card**
+    - Tests: Rule 3.11.3 - Term "hero" resolves to hero-type card, not action cards
+    - Verifies: Resolved hero is not the action card in hand
+
+12. **test_player_must_start_game_with_hero**
+    - Tests: Rule 3.11.4 - Player must start with hero card in hero zone
+    - Verifies: Hero card in hero zone after game start procedure
+
+13. **test_game_start_places_hero_card**
+    - Tests: Rule 3.11.4 - Game start places hero card into hero zone
+    - Verifies: Setup hero card placed successfully
+
+14. **test_hero_soul_is_sub_objects_under_hero**
+    - Tests: Rule 3.11.5 - Hero soul is sub-objects under the hero card
+    - Verifies: Hero soul is accessible as an iterable collection
+
+15. **test_hero_soul_starts_empty**
+    - Tests: Rule 3.11.5 - Hero soul starts empty
+    - Verifies: Soul contains 0 cards initially
+
+16. **test_cards_can_be_added_to_hero_soul**
+    - Tests: Rule 3.11.5 - Cards can be added to the hero's soul
+    - Verifies: Soul contains 1 card after charging
+
+17. **test_hero_soul_can_have_multiple_cards**
+    - Tests: Rule 3.11.5 - Hero soul can contain multiple cards
+    - Verifies: Soul contains 2 cards after two charges
+
+18. **test_empty_hero_zone_still_exists**
+    - Tests: Rule 3.0.1a cross-ref - Empty hero zone doesn't cease to exist
+    - Verifies: Empty hero zone still exists as a game object
+
+#### Implementation Notes:
+- All 18 tests pass with stub-based implementation (`HeroZoneStub`, `HeroPlacementResultStub`, `SoulPlacementResultStub`)
+- `_simulate_hero_zone_placement()` validates hero-type and enforces 1-hero limit (Rule 3.11.2)
+- `_simulate_soul_placement()` adds cards to `_soul_cards` list on the zone stub (Rule 3.11.5)
+- `HeroZoneStub.get_hero_card()` implements the term "hero" resolution (Rule 3.11.3)
+- `ZoneType.HERO` may or may not exist in the engine - the stub provides fallback
+
+#### Engine Features Needed:
+- `ZoneType.HERO` enum value with `is_public=True`, `is_arena_zone=True` (Rule 3.11.1)
+- `Zone.is_public_zone` property: True for hero zone (Rule 3.11.1, 3.0.4a)
+- `Zone.is_arena_zone` property: True for hero zone (Rule 3.11.1, 3.0.5)
+- `Zone.owner_id` property for per-player zone ownership (Rule 3.11.1)
+- Hero zone capacity limit: 1 hero-type card (Rule 3.11.2)
+- Hero zone type validation: only `CardType.HERO` allowed as main card (Rule 3.11.2)
+- Hero zone can contain soul cards (sub-cards under hero) (Rule 3.11.2)
+- `ZoneResolver.resolve_term("hero", player_id)` -> hero-type card in zone (Rule 3.11.3)
+- `GameEngine.start_game()` placing hero card in hero zone (Rule 3.11.4)
+- `HeroCard.soul` or `CardInstance.sub_cards` for soul tracking (Rule 3.11.5, cross-ref 3.0.14)
+- `ChargeEffect` to place card into hero's soul (cross-ref 8.5.29)
+
 ### Section 3.1: Arena
 
 **File**: `features/section_3_1_arena.feature`
@@ -4773,7 +4879,7 @@ The ultimate goal is to have **complete test coverage** of the Flesh and Blood C
 - [x] 3.8: Graveyard
 - [x] 3.9: Hand
 - [x] 3.10: Head
-- [ ] 3.11: Hero
+- [x] 3.11: Hero
 - [ ] 3.12: Legs
 - [ ] 3.13: Permanent
 - [ ] 3.14: Pitch
