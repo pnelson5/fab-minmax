@@ -81,7 +81,7 @@ Per-section test documentation is in `BDD_TESTS_README.md`.
 - [x] 6.1: Discrete Effects
 - [x] 6.2: Continuous Effects
 - [x] 6.3: Continuous Effect Interactions
-- [ ] 6.4: Replacement Effects
+- [x] 6.4: Replacement Effects
 - [ ] 6.5: Replacement Effect Interactions
 - [ ] 6.6: Triggered Effects
 
