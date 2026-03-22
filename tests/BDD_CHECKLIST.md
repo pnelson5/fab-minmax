@@ -77,7 +77,7 @@ Per-section test documentation is in `BDD_TESTS_README.md`.
 - [x] 5.4: Static Abilities
 
 ### Section 6: Effects
-- [ ] 6.0: General
+- [x] 6.0: General
 - [ ] 6.1: Discrete Effects
 - [ ] 6.2: Continuous Effects
 - [ ] 6.3: Continuous Effect Interactions
