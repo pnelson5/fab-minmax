@@ -58,7 +58,7 @@ Per-section test documentation is in `BDD_TESTS_README.md`.
 - [x] 3.12: Legs
 - [x] 3.13: Permanent
 - [x] 3.14: Pitch
-- [ ] 3.15: Stack
+- [x] 3.15: Stack
 - [ ] 3.16: Weapon
 
 ### Section 4: Game Structure
