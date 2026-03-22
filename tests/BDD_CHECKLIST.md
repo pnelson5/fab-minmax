@@ -67,7 +67,7 @@ Per-section test documentation is in `BDD_TESTS_README.md`.
 - [x] 4.2: Start Phase
 - [x] 4.3: Action Phase
 - [x] 4.4: End Phase
-- [ ] 4.5: Ending a Game
+- [x] 4.5: Ending a Game
 
 ### Section 5: Layers, Cards, & Abilities
 - [ ] 5.0: General
