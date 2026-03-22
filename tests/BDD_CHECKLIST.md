@@ -82,7 +82,7 @@ Per-section test documentation is in `BDD_TESTS_README.md`.
 - [x] 6.2: Continuous Effects
 - [x] 6.3: Continuous Effect Interactions
 - [x] 6.4: Replacement Effects
-- [ ] 6.5: Replacement Effect Interactions
+- [x] 6.5: Replacement Effect Interactions
 - [ ] 6.6: Triggered Effects
 
 ### Section 7: Combat
