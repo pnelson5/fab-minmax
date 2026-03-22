@@ -62,7 +62,7 @@ Per-section test documentation is in `BDD_TESTS_README.md`.
 - [x] 3.16: Weapon
 
 ### Section 4: Game Structure
-- [ ] 4.0: General
+- [x] 4.0: General
 - [ ] 4.1: Starting a Game
 - [ ] 4.2: Start Phase
 - [ ] 4.3: Action Phase
