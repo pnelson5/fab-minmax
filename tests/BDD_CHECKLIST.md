@@ -56,7 +56,7 @@ Per-section test documentation is in `BDD_TESTS_README.md`.
 - [x] 3.10: Head
 - [x] 3.11: Hero
 - [x] 3.12: Legs
-- [ ] 3.13: Permanent
+- [x] 3.13: Permanent
 - [ ] 3.14: Pitch
 - [ ] 3.15: Stack
 - [ ] 3.16: Weapon
