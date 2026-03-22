@@ -72,7 +72,7 @@ Per-section test documentation is in `BDD_TESTS_README.md`.
 ### Section 5: Layers, Cards, & Abilities
 - [x] 5.0: General
 - [x] 5.1: Playing Cards
-- [ ] 5.2: Activated Abilities
+- [x] 5.2: Activated Abilities
 - [ ] 5.3: Resolution Abilities & Resolving Layers
 - [ ] 5.4: Static Abilities
 
