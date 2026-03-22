@@ -86,7 +86,7 @@ Per-section test documentation is in `BDD_TESTS_README.md`.
 - [x] 6.6: Triggered Effects
 
 ### Section 7: Combat
-- [ ] 7.0: General
+- [x] 7.0: General
 - [ ] 7.1: Layer Step
 - [ ] 7.2: Attack Step
 - [ ] 7.3: Defend Step
