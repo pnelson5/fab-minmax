@@ -64,7 +64,7 @@ Per-section test documentation is in `BDD_TESTS_README.md`.
 ### Section 4: Game Structure
 - [x] 4.0: General
 - [x] 4.1: Starting a Game
-- [ ] 4.2: Start Phase
+- [x] 4.2: Start Phase
 - [ ] 4.3: Action Phase
 - [ ] 4.4: End Phase
 - [ ] 4.5: Ending a Game
