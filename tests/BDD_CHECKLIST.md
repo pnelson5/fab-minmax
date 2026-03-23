@@ -96,7 +96,7 @@ Per-section test documentation is in `BDD_TESTS_README.md`.
 - [x] 7.7: Close Step
 
 ### Section 8: Keywords
-- [ ] 8.0: General
+- [x] 8.0: General
 - [ ] 8.1: Type Keywords
 - [ ] 8.2: Subtype Keywords
 - [ ] 8.3: Ability Keywords
