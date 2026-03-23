@@ -92,7 +92,7 @@ Per-section test documentation is in `BDD_TESTS_README.md`.
 - [x] 7.3: Defend Step
 - [x] 7.4: Reaction Step
 - [x] 7.5: Damage Step
-- [ ] 7.6: Resolution Step
+- [x] 7.6: Resolution Step
 - [ ] 7.7: Close Step
 
 ### Section 8: Keywords
