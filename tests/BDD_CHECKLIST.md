@@ -89,7 +89,7 @@ Per-section test documentation is in `BDD_TESTS_README.md`.
 - [x] 7.0: General
 - [x] 7.1: Layer Step
 - [x] 7.2: Attack Step
-- [ ] 7.3: Defend Step
+- [x] 7.3: Defend Step
 - [ ] 7.4: Reaction Step
 - [ ] 7.5: Damage Step
 - [ ] 7.6: Resolution Step

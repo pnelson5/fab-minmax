@@ -342,6 +342,7 @@ class BDDGameState:
         cost: int = 0,
         card_type: CardType = CardType.ACTION,
         owner_id: int = 0,  # Rule 1.3.1a: Card ownership
+        defense: int = None,  # Optional defense value (None = no defense property)
     ) -> CardInstance:
         """Create a test card with specified properties."""
         # Convert string color to Color enum
@@ -375,8 +376,8 @@ class BDDGameState:
             has_cost=cost >= 0,
             power=0,
             has_power=False,
-            defense=0,
-            has_defense=False,
+            defense=defense if defense is not None else 0,
+            has_defense=defense is not None,
             arcane=0,
             has_arcane=False,
             life=0,
