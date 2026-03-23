@@ -97,7 +97,7 @@ Per-section test documentation is in `BDD_TESTS_README.md`.
 
 ### Section 8: Keywords
 - [x] 8.0: General
-- [ ] 8.1: Type Keywords
+- [x] 8.1: Type Keywords
 - [ ] 8.2: Subtype Keywords
 - [ ] 8.3: Ability Keywords
 - [ ] 8.4: Label Keywords
