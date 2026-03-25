@@ -65,7 +65,7 @@ The command will guide you through:
 2. Plan test scenarios
 3. Write the Gherkin feature file
 4. Write step definitions
-5. Update bdd_helpers.py if needed
+5. Update bdd_helpers/ if needed
 6. Run and verify tests
 7. Update documentation
 8. Complete the task

@@ -44,7 +44,7 @@ Before starting, ensure you have:
 1. Read the Comprehensive Rules section from `en-fab-cr.txt`
 2. Understood the existing BDD test structure in `tests/BDD_TESTS_README.md`
 3. Reviewed the existing example: `tests/features/section_1_0_2_precedence.feature` and `tests/step_defs/test_section_1_0_2_precedence.py`
-4. Understood the real engine integration via `tests/bdd_helpers.py`
+4. Understood the real engine integration via `tests/bdd_helpers/`
 
 ## Implementation Steps
 
@@ -69,7 +69,7 @@ Before starting, ensure you have:
 4. **Understand dependencies**:
    - **Follow the links**: Click referenced rules to understand full context
    - What engine components are needed? (zones, cards, effects, etc.)
-   - What existing helper functions can be reused from `tests/bdd_helpers.py`?
+   - What existing helper functions can be reused from `tests/bdd_helpers/`?
    - What new helper functions might be needed?
 
 ### Step 2: Plan Test Scenarios
@@ -185,7 +185,7 @@ def game_state():
 - ✅ Use REAL engine components via `BDDGameState` and helpers
 - ✅ Include detailed docstrings with rule references
 - ✅ Name functions clearly (`test_restriction_overrides_allowance`)
-- ✅ Use the `game_state` fixture from `bdd_helpers.py`
+- ✅ Use the `game_state` fixture from `bdd_helpers`
 - ✅ Add assertions that verify the rule is followed
 - ✅ Reuse existing step definitions when possible
 - ✅ Use `game_state.create_card()` for test cards
@@ -199,7 +199,7 @@ def game_state():
 - ❌ Don't write steps that depend on execution order across scenarios
 - ❌ Don't access private methods (starting with `_`) from the engine
 
-### Step 5: Update bdd_helpers.py (if needed)
+### Step 5: Update bdd_helpers (if needed)
 
 If the rule requires NEW helper functionality:
 
@@ -278,7 +278,7 @@ This is a **test specification task**, not an engine implementation task. Your j
    
    TypeError: create_card() takes 2 positional arguments but 3 were given
    → Broken test code (wrong API usage)
-   → ACTION: Check bdd_helpers.py and fix the call
+   → ACTION: Check bdd_helpers package and fix the call
    ```
 
 3. **Decision Tree**:
@@ -288,7 +288,7 @@ This is a **test specification task**, not an engine implementation task. Your j
    ├─ Is it a syntax/import/fixture error?
    │  └─ YES → Fix the TEST code, re-run
    │
-   ├─ Is it missing a method/attribute from bdd_helpers.py?
+   ├─ Is it missing a method/attribute from bdd_helpers?
    │  └─ YES → Add helper method (if generic), fix TEST code
    │
    ├─ Is it missing engine functionality?
@@ -300,7 +300,7 @@ This is a **test specification task**, not an engine implementation task. Your j
       │  └─ YES → ✅ PERFECT! Engine needs work, move on
       │  └─ NO  → Fix the TEST to match the rules
       │
-      └─ Is bdd_helpers.py doing the wrong thing?
+      └─ Is bdd_helpers doing the wrong thing?
          └─ YES → Fix the HELPER code (if it's test infrastructure)
    ```
 
@@ -310,7 +310,7 @@ This is a **test specification task**, not an engine implementation task. Your j
    - ✅ Missing fixtures
    - ✅ Incorrect use of bdd_helpers API
    - ✅ Test logic that doesn't match comprehensive rules
-   - ✅ Missing helper methods in bdd_helpers.py (test infrastructure)
+   - ✅ Missing helper methods in bdd_helpers package (test infrastructure)
 
 5. **What You CANNOT Fix**:
    - ❌ Missing engine features (e.g., `PrecedenceManager.add_restriction()`)
@@ -420,7 +420,7 @@ This is a **test specification task**, not an engine implementation task. Your j
    - tests/step_defs/test_section_X_Y_name.py (M step definitions)
    
    ### Helpers Added (if any)
-   - tests/bdd_helpers.py: Added TestPlayer.method_name()
+   - tests/bdd_helpers/: Added TestPlayer.method_name()
    
    ### Test Status
    - All tests fail as expected (missing engine features)
@@ -602,7 +602,7 @@ def step(game_state):  # Added game_state parameter
 # Test fails with:
 TypeError: create_card() takes 2 arguments but 3 were given
 
-# DIAGNOSIS: Check bdd_helpers.py - wrong API usage
+# DIAGNOSIS: Check bdd_helpers package - wrong API usage
 # ACTION: Fix the test code to use correct API
 card = game_state.create_card(name="Test", color=Color.RED)  # Correct usage
 ```

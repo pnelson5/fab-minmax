@@ -90,9 +90,9 @@ AttributeError: 'TestPlayer' has no attribute 'card_pool'
 
 ### DO ✅
 1. Write tests that match the comprehensive rules exactly
-2. Use real engine components via `bdd_helpers.py`
+2. Use real engine components via `bdd_helpers`
 3. Fix broken test code (syntax, imports, fixtures)
-4. Add generic helper methods to `bdd_helpers.py`
+4. Add generic helper methods to `bdd_helpers/`
 5. Document what engine features are needed
 6. Mark tests complete when they fail for the right reasons
 7. Move on to the next rule
@@ -120,7 +120,7 @@ AttributeError: 'TestPlayer' has no attribute 'card_pool'
 - Document what you expected
 - Move on
 
-### "The helper in bdd_helpers.py doesn't do what I need"
+### "The helper in bdd_helpers doesn't do what I need"
 
 **If it's test infrastructure** (not engine logic):
 - ✅ OK to add/modify: `TestPlayer.clear_restrictions()`

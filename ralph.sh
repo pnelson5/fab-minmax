@@ -4,15 +4,24 @@
 
 set -e  # Exit on error
 
-# Parse optional model argument (defaults to anthropic/claude-sonnet-4-6)
-MODEL_ID="${1:-anthropic/claude-sonnet-4-6}"
+# Parse optional model argument (defaults to sonnet)
+MODEL_ID="${1:-sonnet}"
+
+# Path to the ralph loop prompt
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROMPT_FILE="$SCRIPT_DIR/.opencode/commands/ralph_loop.md"
+
+if [ ! -f "$PROMPT_FILE" ]; then
+    echo "Error: Ralph loop prompt not found at $PROMPT_FILE"
+    exit 1
+fi
 
 echo "Starting Ralph Loop Iteration..."
 echo ""
 echo "Using model: $MODEL_ID"
 echo ""
 echo "This will:"
-echo "  1. Find the next unchecked rule in tests/BDD_TESTS_README.md"
+echo "  1. Find the next unchecked rule in tests/BDD_CHECKLIST.md"
 echo "  2. Implement BDD tests for that rule"
 echo "  3. Verify tests are correct"
 echo "  4. Mark the rule complete"
@@ -21,8 +30,12 @@ echo ""
 echo "Press Ctrl+C to cancel, or Enter to continue..."
 read -r
 
-# Use --command to invoke the ralph_loop slash command directly
-opencode run --model "$MODEL_ID" --command ralph_loop
+# Use claude CLI with the ralph_loop prompt as system instructions
+claude -p \
+    --model "$MODEL_ID" \
+    --dangerously-skip-permissions \
+    --append-system-prompt-file "$PROMPT_FILE" \
+    "Execute the Ralph Loop. Find the next unchecked rule in tests/BDD_CHECKLIST.md and implement BDD tests for it, following all steps in your system prompt."
 
 echo ""
 echo "Ralph loop iteration complete!"

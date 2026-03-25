@@ -12,7 +12,7 @@
                          ↓
 ┌─────────────────────────────────────────────────────────────────┐
 │                    TEST HELPERS LAYER                           │
-│                   (tests/bdd_helpers.py)                        │
+│                   (tests/bdd_helpers/)                           │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐         │
 │  │ BDDGameState │  │  TestPlayer  │  │  TestAttack  │         │
 │  │              │  │              │  │              │         │
@@ -181,7 +181,7 @@ This proves tests are using real zones.
 ### 3. If We Only Touched Test Code...
 
 ```python
-# In tests/bdd_helpers.py
+# In tests/bdd_helpers/core.py
 class TestPlayer:
     def add_restriction(self, id):
         self.precedence.add_restriction(id)

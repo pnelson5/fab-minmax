@@ -1,0 +1,817 @@
+# Feature file for Section 8.3: Ability Keywords
+# Reference: Flesh and Blood Comprehensive Rules Section 8.3
+#
+# 8.3.1 Attack
+#   Attack is a static ability. A layer with the attack ability is an attack-proxy.
+#   8.3.1a When an attack-proxy resolves on the stack, it and its source move onto the
+#           combat chain as a chain link.
+#   8.3.1b If an attack-proxy is added to the stack, the combat chain opens (if it is
+#           closed) and the Layer Step of combat begins.
+#   8.3.1c To add an attack-proxy onto the stack, a legal attackable target must be
+#           declared as the target of the attack.
+#
+# 8.3.2 Battleworn
+#   Battleworn is a triggered-static ability that means "When the combat chain closes,
+#   if this defended, put a -1{d} counter on it."
+#
+# 8.3.3 Blade Break
+#   Blade Break is a triggered-static ability that means "When the combat chain closes,
+#   if this defended, destroy it."
+#
+# 8.3.4 Dominate
+#   Dominate is a static ability that means "This can't be defended by more than one
+#   card from hand."
+#   8.3.4a If an attack with dominate is currently defended by a card from hand, an
+#           additional card cannot be added as a defending card if the card comes from
+#           a player's hand.
+#   8.3.4b If an attack with dominate is currently defended by a card from hand on the
+#           activate chain link, defense reaction cards cannot be played from hand.
+#   8.3.4c If an attack is defended by two or more cards from hand and then the attack
+#           gains dominate, no cards are retroactively removed from defending.
+#
+# 8.3.5 Go again
+#   Go again is a special resolution ability that means "Gain 1 action point."
+#   8.3.5a If go again is an ability of a non-attack layer on the stack, the controlling
+#           player gains 1 action point after all other resolution abilities have resolved.
+#   8.3.5b If go again is an ability of an attack on the active chain link, the controlling
+#           player gains 1 action point at the beginning of the Resolution Step of combat.
+#   8.3.5c An object cannot have more than one "go again" ability. If an effect would give
+#           the "go again" ability to an object that already has it, that part fails.
+#
+# 8.3.6 Legendary
+#   Legendary is a meta-static ability that means "You may only have 1 of this in your
+#   constructed deck."
+#
+# 8.3.7 Specialization
+#   Specialization is a meta-static ability. Specialization is written as "[HERO]
+#   Specialization" which means "You may only have this in your deck if your hero is
+#   [HERO]."
+#
+# 8.3.8 Arcane Barrier
+#   Arcane Barrier is a static ability written as "Arcane Barrier N" which means "If you
+#   would be dealt arcane damage, you may pay N{r} to prevent N of that damage."
+#
+# 8.3.9 Boost
+#   Boost is an optional additional-cost play-static ability that means "As an additional
+#   cost to play this, you may banish the top card of your deck. If you do, if it's a
+#   Mechanologist card, this gets go again."
+#   8.3.9a If a player pays the additional cost, the player is considered to have boosted,
+#           even if the banished card is not a Mechanologist card.
+#   8.3.9b A player cannot boost if they cannot pay the additional cost.
+#
+# 8.3.10 Temper
+#   Temper is a triggered-static ability that means "When the combat chain closes, if this
+#   defended, put a -1{d} counter on it, then destroy it if it has zero {d}."
+#
+# 8.3.11 Blood Debt
+#   Blood debt is a triggered-static ability. Blood debt means "While this is in your
+#   banished zone, at the beginning of your end phase, lose 1{h}."
+#   8.3.11a Blood debt only triggers if its source is public in the banished zone at the
+#            beginning of the owner's end phase.
+#
+# 8.3.13 Phantasm
+#   Phantasm is a triggered-static ability that means "Whenever this is defended by a
+#   non-Illusionist attack action card with 6 or more {p}, destroy this."
+#   8.3.13a The state-condition is met if defender is non-Illusionist attack action card
+#            with power 6+; triggered-layer is put on stack and resolves to destroy attack.
+#   8.3.13b If an attack is destroyed by phantasm before damage is calculated, the combat
+#            chain closes. If destroyed after damage is calculated, it does not close.
+#
+# 8.3.14 Spectra
+#   Spectra is a static ability and a triggered-static ability that mean "this can be
+#   attacked" and "When this becomes the target of an attack, destroy this."
+#   8.3.14a An object with Spectra can be the target of an attack, even if not living.
+#   8.3.14b When an object with Spectra becomes the target of an attack, a triggered-layer
+#            is put on the stack and when it resolves, the Spectra object is destroyed. If
+#            there are no other legal attack-targets, the combat chain closes.
+#
+# 8.3.15 Spellvoid
+#   Spellvoid is a static ability written as "Spellvoid N" which means "If you would be
+#   dealt arcane damage, you may destroy this to prevent N of that damage."
+#   8.3.15a If the controlling player cannot destroy the object with Spellvoid, they
+#            cannot apply the optional prevention effect.
+#
+# 8.3.16 Essence
+#   Essence is a meta-static ability written as "Essence of [SUPERTYPES]" which means
+#   "You may have [SUPERTYPES] cards in your deck, as though your hero had those supertypes."
+#
+# 8.3.17 Fusion
+#   Fusion is an optional additional-cost play-static ability written as "[SUPERTYPES]
+#   Fusion" which means "As an additional cost to play this, you may reveal (a/an)
+#   [SUPERTYPES] card(s) from your hand."
+#   8.3.17a If a player pays the cost, they are considered to have fused those supertypes.
+#   8.3.17b A player cannot fuse if they cannot reveal the specified cards from hand.
+#   8.3.17c A player may only reveal up to one card for each supertype. A single card may
+#            count for multiple supertypes.
+#   8.3.17d "and" requires revealing cards with all supertypes. "and/or" requires at least one.
+#
+# 8.3.18 Heave
+#   Heave is a hidden triggered ability written as "Heave N" which means "While this is
+#   in your hand, at the beginning of your end phase, you may pay N{r} and put this
+#   face-up into your arsenal. If you do, create N Seismic Surge tokens."
+#   8.3.18a If a player pays the cost, the player is considered to have heaved.
+#   8.3.18b A player cannot heave if they cannot pay the cost or put the card into arsenal.
+#
+# 8.3.19 Quell
+#   Quell is a static ability written as "Quell N" which means "If you would be dealt
+#   damage, you may pay N{r} to prevent N of that damage. If you do, destroy this at
+#   the beginning of the end phase."
+#
+# 8.3.20 Ward
+#   Ward is a static ability written as "Ward N" which means "If you would be dealt
+#   damage, destroy this to prevent N of that damage."
+#
+# 8.3.21 Ephemeral
+#   Ephemeral is a meta-static ability and a static ability that mean "You can't start
+#   the game with this in your deck" and "If this would be put into a graveyard from
+#   anywhere, instead it ceases to exist."
+#   8.3.21a A player cannot include a card with Ephemeral in their card-pool.
+#   8.3.21b A card that ceases to exist from Ephemeral is removed from the game.
+#
+# 8.3.22 Overpower
+#   Overpower is a static ability that means "This can't be defended by more than one
+#   action card."
+#   8.3.22a If an attack with overpower is currently defended by an action card, an
+#            additional action card cannot be added as a defending card.
+#   8.3.22b If an attack is defended by two or more action cards and then gains overpower,
+#            no cards are retroactively removed.
+#
+# 8.3.23 Piercing
+#   Piercing is a static ability written as "Piercing N" which means "If this is defended
+#   by an equipment, it gets +N{p}."
+#
+# 8.3.24 Stealth
+#   Stealth is an ability that means nothing.
+#
+# 8.3.25 Mirage
+#   Mirage is a triggered-static ability that means "When this is defending a
+#   non-Illusionist attack with 6 or more {p}, destroy this."
+#
+# 8.3.26 Pairs [with OBJECT]
+#   Pairs is a static ability that means "Equip this only with an OBJECT."
+#   8.3.26a A card with pairs can only be equipped if the player already has an OBJECT
+#            equipped, or if an OBJECT is being equipped as part of the same event.
+#
+# 8.3.27 Rune Gate
+#   Rune Gate is a play-static ability that means "If you control Runechants >= this's
+#   {r} cost, you may play it from your banished zone without paying its {r} cost."
+#   8.3.27a If a player plays from banished using rune gate, they are considered to have
+#            rune gated.
+#
+# 8.3.28 Ambush
+#   Ambush is a while-static ability that means "While this is in your arsenal, you may
+#   defend with it."
+#
+# 8.3.29 Crank
+#   Crank is a static ability that means "As this enters the arena, you may remove a
+#   steam counter from it. If you do, gain an action point."
+#   8.3.29a If a player removes a steam counter using crank, they are considered to have
+#            cranked.
+#
+# 8.3.30 Modular
+#   Modular is a static ability that means "This may be equipped to any of your equipment
+#   zones. It has the subtype of the zone it's equipped to."
+#   8.3.30a The equipment zones are Arms, Chest, Head, and Legs.
+#   8.3.30b A card can only be equipped to its owner's equipment zones with Modular.
+#   8.3.30c A card with modular does not have any equipment subtypes until equipped.
+#
+# 8.3.31 Protect
+#   Protect is a static ability that means "You may defend any hero attacked by an
+#   opponent with this."
+#   8.3.31a If a player defends with a card with protect, they and the card are considered
+#            to have protected.
+#
+# 8.3.32 Scrap
+#   Scrap is a play-static ability that means "As an additional cost to play this, you
+#   may banish an item or equipment from your graveyard."
+#   8.3.32a If a player pays the cost, they are considered to have scrapped.
+#   8.3.32b A player cannot scrap if they cannot banish an item or equipment from graveyard.
+#
+# 8.3.33 Beat Chest
+#   Beat Chest is a play-static ability that means "As an additional cost to play this,
+#   you may discard a card with 6 or more {p}."
+#   8.3.33a If a player pays the cost, they are considered to have beaten chest.
+#   8.3.33b A player cannot beat chest if they cannot discard a card with 6+ {p}.
+#
+# 8.3.34 Guardwell
+#   Guardwell is a static ability that means "When the combat chain closes, if this
+#   defended, put -1{d} counters on it equal to its {d}."
+#
+# 8.3.35 Universal
+#   Universal is a while-static ability that means "While in any zone, it is the same
+#   class as your hero."
+#
+# 8.3.36 Cloaked
+#   Cloaked is a static ability that means "Equip this face-down."
+#
+# 8.3.37 Arcane Shelter
+#   Arcane Shelter is a static ability written as "Arcane Shelter N" which means "If you
+#   would be dealt arcane damage, destroy this to prevent N of that damage."
+#
+# 8.3.38 Meld
+#   Meld is a static ability that means "You may pay twice the base cost of this to play
+#   both halves of this."
+#   8.3.38a If a player pays the alternative cost, the card is considered melded.
+#   8.3.38b Meld sets the asset-cost before increases/decreases are applied.
+#   8.3.38c A melded card has properties of both sides on a split-card.
+#
+# 8.3.39 Perched
+#   Perched is a static ability that means "This can be equipped in addition to a 2H
+#   weapon. This can't be attacked while it's equipped."
+#   8.3.39a A card with perched may be equipped to a weapon zone a two-hander occupies
+#            but does not occupy; otherwise requires an empty zone.
+#   8.3.39b A card with perched cannot be equipped unless it has a qualifying subtype.
+#   8.3.39c An equipped card with perched cannot be the target of an attack.
+#
+# 8.3.40 Unlimited
+#   Unlimited is a meta-static ability that means "You may have any number of this card
+#   in your deck."
+#
+# 8.3.41 Watery Grave
+#   Watery Grave is a triggered-static ability that means "When this is put into your
+#   graveyard from the arena, turn it face-down."
+#
+# 8.3.42 Suspense
+#   Suspense is a static ability and two triggered-static abilities that mean: "This
+#   enters the arena with 2 suspense counters," "At the start of your turn, remove a
+#   suspense counter from this," and "When this has no suspense counters, destroy it."
+
+Feature: Section 8.3 - Ability Keywords
+    As a game engine
+    I need to correctly implement ability keywords
+    So that cards with special abilities function according to the rules
+
+    # ===== 8.3.1 Attack =====
+
+    Scenario: Attack keyword makes a layer an attack-proxy
+        Given a card has the attack keyword ability
+        Then that card's layer is an attack-proxy
+
+    Scenario: Playing an attack opens the combat chain
+        Given the combat chain is closed
+        And a player has an attack card in hand
+        When the player plays the attack card
+        Then the combat chain opens
+        And the Layer Step of combat begins
+
+    Scenario: Attacking requires a legal attackable target
+        Given a player has an attack card in hand
+        When the player attempts to play the attack without declaring a target
+        Then the action is illegal
+
+    Scenario: Attack-proxy moves to combat chain on resolution
+        Given an attack-proxy is on the stack
+        When the attack-proxy resolves
+        Then it and its source move onto the combat chain as a chain link
+
+    # ===== 8.3.2 Battleworn =====
+
+    Scenario: Battleworn puts a minus defense counter when defending closes chain
+        Given a piece of equipment has battleworn
+        And the equipment defended this combat chain
+        When the combat chain closes
+        Then a -1 defense counter is placed on the equipment
+
+    Scenario: Battleworn does not trigger if equipment did not defend
+        Given a piece of equipment has battleworn
+        And the equipment did not defend this combat chain
+        When the combat chain closes
+        Then no -1 defense counter is placed on the equipment from battleworn
+
+    # ===== 8.3.3 Blade Break =====
+
+    Scenario: Blade Break destroys equipment when defending closes chain
+        Given a piece of equipment has blade break
+        And the equipment defended this combat chain
+        When the combat chain closes
+        Then the equipment is destroyed
+
+    Scenario: Blade Break does not trigger if equipment did not defend
+        Given a piece of equipment has blade break
+        And the equipment did not defend this combat chain
+        When the combat chain closes
+        Then the equipment is not destroyed by blade break
+
+    # ===== 8.3.4 Dominate =====
+
+    Scenario: Dominate prevents a second hand card from defending
+        Given an attacking card has dominate
+        And the defending player has already defended with one card from hand
+        When the defending player attempts to add a second card from hand as a defender
+        Then the additional defense is not allowed
+
+    Scenario: Dominate prevents defense reactions from hand when defended by hand card
+        Given an attacking card has dominate
+        And the defending player has defended with a card from hand on the active chain link
+        When the defending player attempts to play a defense reaction from hand
+        Then the defense reaction play is not allowed
+
+    Scenario: Dominate does not retroactively remove defenders added before it was gained
+        Given an attack was defended by two cards from hand
+        When the attack gains dominate after the defenses were added
+        Then neither defending card is removed
+
+    Scenario: Dominate does not restrict defense from non-hand sources
+        Given an attacking card has dominate
+        And the defending player has already defended with one card from hand
+        When the defending player adds a card from their arsenal as a defender
+        Then the arsenal defense is allowed
+
+    # ===== 8.3.5 Go again =====
+
+    Scenario: Go again on non-attack layer grants action point after resolution
+        Given a non-attack card with go again is on the stack
+        When the non-attack card resolves
+        Then the controlling player gains 1 action point
+        And the action point is granted after all other resolution abilities resolve
+
+    Scenario: Go again on attack grants action point at start of Resolution Step
+        Given an attack with go again is the active chain link
+        When the Resolution Step of combat begins
+        Then the controlling player gains 1 action point
+
+    Scenario: Go again cannot be duplicated on the same object
+        Given a card already has the go again ability
+        When an effect attempts to give go again to that card
+        Then that part of the effect fails
+
+    # ===== 8.3.6 Legendary =====
+
+    Scenario: Legendary limits deck to one copy in constructed
+        Given a card has the legendary keyword
+        When a player tries to include two copies in their constructed deck
+        Then only one copy is allowed
+
+    # ===== 8.3.7 Specialization =====
+
+    Scenario: Specialization requires matching hero in deck
+        Given a card has Dorinthea Specialization
+        And a player's hero is not Dorinthea
+        When the player attempts to include the card in their deck
+        Then the card is not allowed in the deck
+
+    Scenario: Specialization allows card in deck when hero matches
+        Given a card has Dorinthea Specialization
+        And a player's hero is Dorinthea
+        When the player includes the card in their deck
+        Then the card is allowed in the deck
+
+    # ===== 8.3.8 Arcane Barrier =====
+
+    Scenario: Arcane Barrier can prevent arcane damage by paying resource cost
+        Given a player has an object with Arcane Barrier 2
+        When the player would be dealt 5 arcane damage
+        And the player pays 2 resource points to activate Arcane Barrier
+        Then 2 arcane damage is prevented
+
+    Scenario: Arcane Barrier is optional
+        Given a player has an object with Arcane Barrier 2
+        When the player would be dealt arcane damage
+        And the player chooses not to pay the Arcane Barrier cost
+        Then the full arcane damage is dealt
+
+    # ===== 8.3.9 Boost =====
+
+    Scenario: Boost banishes top card of deck as additional cost
+        Given a card has boost
+        When a player plays the card and pays the boost cost
+        Then the top card of their deck is banished
+        And the player is considered to have boosted
+
+    Scenario: Boost grants go again if banished card is Mechanologist
+        Given a card has boost
+        When a player boosts and the banished card is a Mechanologist card
+        Then the played card gets go again
+
+    Scenario: Boost does not grant go again for non-Mechanologist card
+        Given a card has boost
+        When a player boosts and the banished card is not a Mechanologist card
+        Then the played card does not get go again from boost
+        And the player is still considered to have boosted
+
+    Scenario: Player cannot boost if they have no cards in deck
+        Given a card has boost
+        And a player's deck is empty
+        When the player attempts to play the card with the boost cost
+        Then the boost additional cost cannot be paid
+
+    # ===== 8.3.10 Temper =====
+
+    Scenario: Temper puts minus defense counter and destroys at zero defense
+        Given a piece of equipment has temper with 1 defense remaining
+        And the equipment defended this combat chain
+        When the combat chain closes
+        Then a -1 defense counter is placed on the equipment
+        And the equipment is destroyed because it has zero defense
+
+    Scenario: Temper puts minus defense counter without destroying when defense remains
+        Given a piece of equipment has temper with 2 defense remaining
+        And the equipment defended this combat chain
+        When the combat chain closes
+        Then a -1 defense counter is placed on the equipment
+        And the equipment is not destroyed because it has defense remaining
+
+    # ===== 8.3.11 Blood Debt =====
+
+    Scenario: Blood Debt causes life loss at beginning of owner's end phase
+        Given a card with blood debt is in the public banished zone
+        When the beginning of the owner's end phase occurs
+        Then the owner loses 1 life from blood debt
+
+    Scenario: Blood Debt does not trigger if card is face-down in banished zone
+        Given a card with blood debt is face-down in the banished zone
+        When the beginning of the owner's end phase occurs
+        Then no life is lost from blood debt
+
+    Scenario: Blood Debt does not trigger if card is not in banished zone
+        Given a card with blood debt is in the graveyard
+        When the beginning of the owner's end phase occurs
+        Then no life is lost from blood debt
+
+    # ===== 8.3.13 Phantasm =====
+
+    Scenario: Phantasm attack is destroyed when defended by non-Illusionist 6+ power card
+        Given an attacking card has phantasm
+        When it is defended by a non-Illusionist attack action card with 6 or more power
+        Then a triggered-layer is put on the stack to destroy the phantasm attack
+
+    Scenario: Phantasm triggered-layer resolves to destroy the attack
+        Given an attacking card with phantasm has a destroy triggered-layer on the stack
+        And the trigger condition is still met
+        When the triggered-layer resolves
+        Then the phantasm attack is destroyed
+
+    Scenario: Phantasm destruction before damage closes the combat chain
+        Given a phantasm attack is destroyed before damage is calculated
+        When phantasm destroys the attack
+        Then the combat chain closes
+
+    Scenario: Phantasm destruction after damage does not close the combat chain
+        Given a phantasm attack is destroyed after damage is calculated
+        When phantasm destroys the attack
+        Then the combat chain does not close due to phantasm
+
+    Scenario: Phantasm does not trigger when defended by Illusionist attack card
+        Given an attacking card has phantasm
+        When it is defended by an Illusionist attack action card with 6 or more power
+        Then phantasm does not trigger
+
+    # ===== 8.3.14 Spectra =====
+
+    Scenario: Spectra allows non-living object to be targeted by attacks
+        Given a non-living permanent has spectra
+        When a player attempts to target it with an attack
+        Then the non-living object is a valid attack target
+
+    Scenario: Spectra object is destroyed when it becomes target of attack
+        Given a permanent has spectra
+        When it becomes the target of an attack
+        Then a triggered-layer is put on the stack to destroy the spectra object
+
+    Scenario: Spectra destruction closes combat chain if no other legal targets
+        Given a permanent with spectra was targeted by an attack
+        And there are no other legal attack targets
+        When the spectra triggered-layer resolves and destroys the object
+        Then the combat chain closes
+
+    # ===== 8.3.15 Spellvoid =====
+
+    Scenario: Spellvoid allows destroying the object to prevent arcane damage
+        Given a player has an object with Spellvoid 3
+        When the player would be dealt arcane damage
+        And the player chooses to activate Spellvoid
+        Then the object is destroyed
+        And 3 arcane damage is prevented
+
+    Scenario: Spellvoid cannot be used if the object cannot be destroyed
+        Given a player has an object with Spellvoid 3 that cannot be destroyed
+        When the player would be dealt arcane damage
+        Then the player cannot apply the Spellvoid prevention effect
+
+    # ===== 8.3.16 Essence =====
+
+    Scenario: Essence allows including supertype cards in deck
+        Given a hero card has Essence of Earth
+        When a player includes Earth cards in their deck
+        Then the Earth cards are allowed as if the hero had the Earth supertype
+
+    # ===== 8.3.17 Fusion =====
+
+    Scenario: Fusion allows revealing supertype cards from hand as additional cost
+        Given a card has Lightning Fusion
+        And a player has a Lightning card in hand
+        When the player plays the card and reveals the Lightning card for the fusion cost
+        Then the player is considered to have fused Lightning
+
+    Scenario: Fusion cannot be paid if no matching supertype card in hand
+        Given a card has Lightning Fusion
+        And a player has no Lightning cards in hand
+        When the player attempts to pay the fusion cost
+        Then the fusion additional cost cannot be paid
+
+    Scenario: Fusion with "and" requires revealing cards for all listed supertypes
+        Given a card has Earth and Lightning Fusion
+        And a player has an Earth card but no Lightning card in hand
+        When the player attempts to pay the fusion cost
+        Then the fusion cannot be paid because not all required supertypes can be revealed
+
+    Scenario: Fusion with "and/or" requires at least one matching supertype card
+        Given a card has Earth and/or Lightning Fusion
+        And a player has only an Earth card in hand
+        When the player attempts to pay the fusion cost with the Earth card
+        Then the fusion can be paid
+
+    Scenario: Single card can satisfy multiple supertype requirements for fusion
+        Given a card has Earth and/or Lightning Fusion
+        And a player has a card that has both Earth and Lightning supertypes
+        When the player reveals that single card for fusion
+        Then it satisfies both supertype requirements
+
+    # ===== 8.3.18 Heave =====
+
+    Scenario: Heave allows moving card from hand to arsenal at end phase
+        Given a card in hand has Heave 2
+        And a player has 2 or more resource points
+        When the beginning of the end phase occurs
+        And the player pays the heave cost
+        Then the card is placed face-up in the arsenal
+        And 2 Seismic Surge tokens are created
+        And the player is considered to have heaved
+
+    Scenario: Heave cannot be activated without sufficient resources
+        Given a card in hand has Heave 2
+        And a player has only 1 resource point
+        When the beginning of the end phase occurs
+        Then the player cannot pay the heave cost
+
+    # ===== 8.3.19 Quell =====
+
+    Scenario: Quell prevents damage by paying resource cost
+        Given a permanent has Quell 2
+        When the permanent's controller would be dealt damage
+        And the controller pays 2 resource points to activate Quell
+        Then 2 damage is prevented
+        And the permanent is destroyed at the beginning of the end phase
+
+    # ===== 8.3.20 Ward =====
+
+    Scenario: Ward prevents damage by destroying itself
+        Given a permanent has Ward 3
+        When the permanent's controller would be dealt damage
+        And the controller activates Ward
+        Then the permanent is destroyed
+        And 3 damage is prevented
+
+    # ===== 8.3.21 Ephemeral =====
+
+    Scenario: Ephemeral card cannot be included in card-pool
+        Given a card has the ephemeral keyword
+        When a player attempts to include the card in their card-pool
+        Then the card is not allowed in the card-pool
+
+    Scenario: Ephemeral card ceases to exist instead of going to graveyard
+        Given a card with ephemeral would be put into the graveyard
+        When the card would enter the graveyard
+        Then the card ceases to exist instead
+        And the card is removed from the game
+
+    # ===== 8.3.22 Overpower =====
+
+    Scenario: Overpower prevents a second action card from defending
+        Given an attacking card has overpower
+        And the defending player has already defended with one action card
+        When the defending player attempts to add a second action card as a defender
+        Then the second action card defense is not allowed
+
+    Scenario: Overpower does not retroactively remove action card defenders added before it was gained
+        Given an attack was defended by two action cards
+        When the attack gains overpower after the defenses were added
+        Then neither defending action card is removed
+
+    # ===== 8.3.23 Piercing =====
+
+    Scenario: Piercing increases attack power when defended by equipment
+        Given an attacking card has Piercing 2
+        When the attack is defended by an equipment
+        Then the attack gets +2 power
+
+    Scenario: Piercing does not increase power when not defended by equipment
+        Given an attacking card has Piercing 2
+        When the attack is defended by a card that is not equipment
+        Then the attack power is not increased by piercing
+
+    # ===== 8.3.25 Mirage =====
+
+    Scenario: Mirage is destroyed when defending a non-Illusionist attack with 6 or more power
+        Given a defending card has mirage
+        When it is defending a non-Illusionist attack with 6 or more power
+        Then the mirage card is destroyed
+
+    Scenario: Mirage does not trigger when defending an Illusionist attack
+        Given a defending card has mirage
+        When it is defending an Illusionist attack with 6 or more power
+        Then mirage does not trigger
+
+    # ===== 8.3.26 Pairs =====
+
+    Scenario: Pairs restricts equipping to only when the paired object is present
+        Given a card has Pairs with Dawnblade
+        And the player does not have Dawnblade equipped
+        When the player attempts to equip the card
+        Then the equipment is not allowed without the paired object
+
+    Scenario: Pairs allows equipping when the paired object is being equipped simultaneously
+        Given a card has Pairs with Dawnblade
+        And Dawnblade is being equipped as part of the same event
+        When both cards are equipped together
+        Then the pairs card can be equipped
+
+    # ===== 8.3.27 Rune Gate =====
+
+    Scenario: Rune Gate allows playing from banished zone when Runechants meet cost
+        Given a card with Rune Gate and cost 3 is in the banished zone
+        And a player controls 3 or more Runechants
+        When the player plays the card using rune gate
+        Then the card is played without paying the resource cost
+        And the player is considered to have rune gated
+
+    Scenario: Rune Gate cannot be used if Runechants are fewer than the cost
+        Given a card with Rune Gate and cost 3 is in the banished zone
+        And a player controls only 2 Runechants
+        When the player attempts to use rune gate
+        Then rune gate cannot be activated
+
+    # ===== 8.3.28 Ambush =====
+
+    Scenario: Ambush allows defending with a card from arsenal
+        Given a card with ambush is in a player's arsenal
+        When an opponent's attack resolves and the player defends
+        Then the player can use the ambush card from arsenal to defend
+
+    # ===== 8.3.29 Crank =====
+
+    Scenario: Crank allows removing a steam counter for an action point on entering arena
+        Given a card with crank enters the arena with a steam counter on it
+        When the player removes the steam counter using crank
+        Then the player gains 1 action point
+        And the player is considered to have cranked
+
+    # ===== 8.3.30 Modular =====
+
+    Scenario: Modular allows equipping to any equipment zone
+        Given a card has modular
+        When the player equips it to their Head zone
+        Then the card is equipped to the Head zone
+
+    Scenario: Modular card gains the subtype of its equipped zone
+        Given a card with modular is equipped to the Chest zone
+        Then the card has the Chest equipment subtype
+
+    Scenario: Modular card has no equipment subtype before equipping
+        Given a card has modular and is not yet equipped
+        Then the card has no equipment subtype
+
+    Scenario: Modular only allows equipping to owner's zones
+        Given a card has modular
+        When a player attempts to equip the card to an opponent's equipment zone
+        Then the equipment is not allowed
+
+    # ===== 8.3.31 Protect =====
+
+    Scenario: Protect allows defending an ally hero attacked by opponent
+        Given a player has a card with protect
+        And an opponent is attacking a different allied hero
+        When the player uses the protect card to defend
+        Then the defense is allowed
+        And the player and card are considered to have protected
+
+    # ===== 8.3.32 Scrap =====
+
+    Scenario: Scrap allows banishing item or equipment from graveyard as additional cost
+        Given a card has scrap
+        And a player has an equipment card in their graveyard
+        When the player plays the card and pays the scrap cost by banishing the equipment
+        Then the equipment is banished from the graveyard
+        And the player is considered to have scrapped
+
+    Scenario: Scrap cannot be paid without an item or equipment in graveyard
+        Given a card has scrap
+        And a player's graveyard has no items or equipment
+        When the player attempts to pay the scrap cost
+        Then the scrap additional cost cannot be paid
+
+    # ===== 8.3.33 Beat Chest =====
+
+    Scenario: Beat Chest allows discarding a high-power card as additional cost
+        Given a card has beat chest
+        And a player has a card with 6 or more power in hand
+        When the player plays the card and pays the beat chest cost
+        Then the high-power card is discarded
+        And the player is considered to have beaten chest
+
+    Scenario: Beat Chest cannot be paid without a 6 or more power card in hand
+        Given a card has beat chest
+        And a player has no cards with 6 or more power in hand
+        When the player attempts to pay the beat chest cost
+        Then the beat chest additional cost cannot be paid
+
+    # ===== 8.3.34 Guardwell =====
+
+    Scenario: Guardwell puts minus defense counters equal to current defense when chain closes
+        Given a permanent has guardwell with 3 current defense
+        And the permanent defended this combat chain
+        When the combat chain closes
+        Then 3 minus-1-defense counters are placed on the permanent
+
+    # ===== 8.3.35 Universal =====
+
+    Scenario: Universal makes the card the same class as the hero in any zone
+        Given a card has universal
+        And the player's hero is a Ranger
+        When the card is in the player's hand
+        Then the card is considered to be a Ranger card
+
+    # ===== 8.3.36 Cloaked =====
+
+    Scenario: Cloaked requires equipping the card face-down
+        Given a card has cloaked
+        When the player equips the card
+        Then the card is equipped face-down
+
+    # ===== 8.3.37 Arcane Shelter =====
+
+    Scenario: Arcane Shelter prevents arcane damage by destroying itself
+        Given a player has an object with Arcane Shelter 2
+        When the player would be dealt arcane damage
+        And the player activates Arcane Shelter
+        Then the object is destroyed
+        And 2 arcane damage is prevented
+
+    # ===== 8.3.38 Meld =====
+
+    Scenario: Meld allows paying twice the base cost to play both halves of a split-card
+        Given a split-card has meld with a base cost of 2
+        When the player pays 4 resources to meld the card
+        Then the card is considered melded
+        And the card has properties of both sides
+
+    Scenario: Meld cost is set before increases and decreases are applied
+        Given a split-card has meld with a base cost of 2
+        And there is a cost increase effect in play
+        When the meld cost is calculated
+        Then the meld alternative cost is set to 4 before increases are applied
+
+    # ===== 8.3.39 Perched =====
+
+    Scenario: Perched allows equipping alongside a two-handed weapon
+        Given a player has a two-handed weapon equipped occupying one weapon zone
+        And a card with perched has a valid equipment subtype
+        When the player equips the perched card to the unoccupied weapon zone
+        Then the perched card is equipped alongside the two-handed weapon
+
+    Scenario: Perched card cannot be targeted by attacks while equipped
+        Given a player has a card with perched equipped
+        When an opponent attempts to target the perched card with an attack
+        Then the perched card cannot be targeted by the attack
+
+    Scenario: Perched card can be targeted by non-attack effects
+        Given a player has a card with perched equipped
+        When a non-attack effect targets the perched card
+        Then the perched card is a valid target for the non-attack effect
+
+    # ===== 8.3.40 Unlimited =====
+
+    Scenario: Unlimited allows any number of copies in constructed deck
+        Given a card has the unlimited keyword
+        When a player includes 4 copies in their constructed deck
+        Then all 4 copies are allowed
+
+    # ===== 8.3.41 Watery Grave =====
+
+    Scenario: Watery Grave turns card face-down when put into graveyard from arena
+        Given a card in the arena has watery grave
+        When the card is put into the graveyard from the arena
+        Then the card is turned face-down in the graveyard
+
+    Scenario: Watery Grave does not apply when card goes to graveyard from a non-arena source
+        Given a card with watery grave is in hand
+        When the card is put into the graveyard from hand
+        Then the card is not turned face-down by watery grave
+
+    # ===== 8.3.42 Suspense =====
+
+    Scenario: Suspense causes card to enter arena with 2 suspense counters
+        Given a card has suspense
+        When the card enters the arena
+        Then the card has 2 suspense counters on it
+
+    Scenario: Suspense removes a counter at the start of each turn
+        Given a card with suspense is in the arena with 2 suspense counters
+        When the start of the controlling player's turn occurs
+        Then one suspense counter is removed from the card
+
+    Scenario: Suspense destroys the card when it has no counters remaining
+        Given a card with suspense is in the arena with 1 suspense counter
+        When the start of the controlling player's turn occurs
+        Then the suspense counter is removed
+        And the card is destroyed because it has no suspense counters

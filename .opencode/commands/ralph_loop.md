@@ -25,7 +25,7 @@ Your job is **NOT**:
 
 ## What This Does
 
-1. Reads `tests/BDD_TESTS_README.md` to find the next unchecked rule
+1. Reads `tests/BDD_CHECKLIST.md` to find the next unchecked rule
 2. Researches the rule section in the comprehensive rules document
 3. Plans and writes BDD test scenarios (feature file + step definitions)
 4. Verifies tests were written correctly
@@ -74,44 +74,53 @@ That's it! No arguments needed. The command:
 
 ### Step 1: Find Next Rule
 
-1. Read `tests/BDD_TESTS_README.md`
-2. Parse the "Rule Coverage Goals" section
-3. Find the FIRST unchecked `[ ]` item at the TOP LEVEL (not indented subsections)
-4. Extract section number and name
+1. Read `tests/BDD_CHECKLIST.md`
+2. Find the FIRST unchecked `[ ]` item using these rules:
+   - Scan top-level items first
+   - If a top-level item has **unchecked subsections**, implement the FIRST unchecked subsection (not the parent)
+   - If a top-level item has **no subsections**, implement the top-level item itself
+   - If a top-level item has subsections but they're ALL checked, check if parent rules remain (see "If No Rules Left" below)
+3. Extract section number and name
 
-**Example:**
+**Example 1: Top-level item, no subsections**
 ```markdown
 ### Section 1: Game Concepts
-- [ ] 1.0: General           <- FIRST unchecked, select this
-  - [x] 1.0.2: Precedence
+- [ ] 1.0: General           <- FIRST unchecked, no subsections, select this
 - [ ] 1.1: Players
-- [ ] 1.2: Objects
 ```
-
 **Result:** Next rule is `1.0 General`
+
+**Example 2: Top-level item with unchecked subsections**
+```markdown
+- [ ] 8.3: Ability Keywords
+  - [x] 8.3.1: Attack        <- Already done, skip
+  - [ ] 8.3.2: Battleworn    <- FIRST unchecked subsection, select this
+  - [ ] 8.3.3: Blade Break
+```
+**Result:** Next rule is `8.3.2 Battleworn` (implement ONLY this subsection, not all of 8.3)
 
 ### Step 2: Research the Rule Section
 
-1. **Read the comprehensive rules** for the section:
-   - Use `/fab_search "<section_number>" -n 10` to find relevant rules
-   - Read directly from `fab-rules/en-fab-cr.md` (markdown format with clear structure)
-   - **The markdown file has clickable links**: Rule references like `[1.0.1a](#101a)` are hyperlinked to their sections
-   - Alternative: `en-fab-cr.txt` (plain text format, no links)
+1. **Search the comprehensive rules** for the section using qmd (DO NOT read the entire rules file):
+   - Use `qmd search "<section_number> <topic>" -c fab-rules -n 10 --full` for keyword search
+   - Use `qmd query "<topic description>" -c fab-rules -n 10` for semantic search
+   - Use `qmd get "qmd://fab-rules/en-fab-cr.md:<line>" -l 100` to read specific sections by line number
+   - **DO NOT** read `fab-rules/en-fab-cr.md` directly — it is 300KB and wastes tokens
 
 2. **Identify all sub-rules** within the section (e.g., 1.0.2, 1.0.2a, 1.0.2b)
    - Look for numbered rules (X.Y.Z) and lettered sub-rules (X.Y.Za, X.Y.Zb, etc.)
-   - **Follow cross-references**: Click on rule references to understand dependencies
-   - Each rule has an HTML anchor: `<a id="102a"></a>` for easy navigation
+   - Follow cross-references by searching for referenced rule numbers with qmd
 
 3. **Extract examples** from the rulebook for each sub-rule
-   - Examples are in blockquotes (>) in the markdown file
+   - Examples are in blockquotes (>) in the rules file
+   - Use `qmd get` with line numbers to read specific examples
    - Use these as the basis for test scenarios
-   - Examples often reference other rules with clickable links
 
 4. **Understand dependencies**:
-   - **Follow the links**: Click referenced rules to understand full context
+   - Search for referenced rules with `qmd search` to understand full context
    - What engine components are needed? (zones, cards, effects, etc.)
-   - What existing helper functions can be reused from `tests/bdd_helpers.py`?
+   - Check available helpers by running: `grep -n "^class \|^    def " tests/bdd_helpers/core.py tests/bdd_helpers/game_state.py`
+     The `tests/bdd_helpers/` package is split into `core.py` (TestZone, TestPlayer, etc.), `game_state.py` (BDDGameState), and `stubs.py` (stub classes). Only read the specific file/methods you need.
    - What new helper functions might be needed?
 
 5. **Check for already-completed subsections**:
@@ -231,7 +240,7 @@ def game_state():
 - Use REAL engine components via `BDDGameState` and helpers
 - Include detailed docstrings with rule references
 - Name functions clearly (`test_restriction_overrides_allowance`)
-- Use the `game_state` fixture from `bdd_helpers.py`
+- Use the `game_state` fixture from `bdd_helpers`
 - Add assertions that verify the rule is followed
 - Reuse existing step definitions when possible
 - Use `game_state.create_card()` for test cards
@@ -245,7 +254,7 @@ def game_state():
 - Don't write steps that depend on execution order across scenarios
 - Don't access private methods (starting with `_`) from the engine
 
-### Step 6: Update bdd_helpers.py (if needed)
+### Step 6: Update bdd_helpers (if needed)
 
 If the rule requires NEW helper functionality:
 
@@ -322,7 +331,7 @@ If the rule requires NEW helper functionality:
 
    TypeError: create_card() takes 2 positional arguments but 3 were given
    -> Broken test code (wrong API usage)
-   -> ACTION: Check bdd_helpers.py and fix the call
+   -> ACTION: Check bdd_helpers package and fix the call
    ```
 
 3. **Decision Tree**:
@@ -332,7 +341,7 @@ If the rule requires NEW helper functionality:
    +- Is it a syntax/import/fixture error?
    |  -> YES: Fix the TEST code, re-run
    |
-   +- Is it missing a method/attribute from bdd_helpers.py?
+   +- Is it missing a method/attribute from bdd_helpers?
    |  -> YES: Add helper method (if generic), fix TEST code
    |
    +- Is it missing engine functionality?
@@ -344,7 +353,7 @@ If the rule requires NEW helper functionality:
       |  -> YES: PERFECT! Engine needs work, move on
       |  -> NO:  Fix the TEST to match the rules
       |
-      +- Is bdd_helpers.py doing the wrong thing?
+      +- Is bdd_helpers doing the wrong thing?
          -> YES: Fix the HELPER code (if it's test infrastructure)
    ```
 
@@ -354,7 +363,7 @@ If the rule requires NEW helper functionality:
    - Missing fixtures
    - Incorrect use of bdd_helpers API
    - Test logic that doesn't match comprehensive rules
-   - Missing helper methods in bdd_helpers.py (test infrastructure)
+   - Missing helper methods in bdd_helpers package (test infrastructure)
 
 5. **What You CANNOT Fix**:
    - Missing engine features (e.g., `PrecedenceManager.add_restriction()`)
@@ -382,67 +391,36 @@ If the rule requires NEW helper functionality:
 
 ### Step 8: Update Documentation
 
-1. **Update `tests/BDD_TESTS_README.md`**:
-   - Add a new section documenting the test under "Test Organization"
-   - Include scenario names and what they test
-   - Follow the pattern of Section 1.0.2
-
-2. **Example documentation**:
-   ```markdown
-   ### Section X.Y: [Rule Title]
-
-   **File**: `features/section_X_Y_name.feature`
-   **Step Definitions**: `step_defs/test_section_X_Y_name.py`
-
-   This section tests [rule concept]:
-   - **Rule X.Y.Z**: [Main rule]
-   - **Rule X.Y.Za**: [Sub-rule a]
-
-   #### Test Scenarios:
-
-   1. **test_scenario_one**
-      - Tests: Rule X.Y.Z - [Aspect]
-      - Verifies: [What it verifies]
-   ```
-
-3. **Document Engine Requirements** in the test file or BDD_TESTS_README.md:
+1. **Document Engine Requirements** as a docstring at the top of the step definitions file:
    ```python
    """
    Engine Features Needed for Section X.Y:
    - [ ] Player.card_pool property (stores deck + arena cards)
    - [ ] Player.hero property (reference to hero card)
-   - [ ] Supertype validation (check subset of hero's supertypes)
-
-   These features will be implemented in a separate task.
-   Current status: Tests written, Engine pending
    """
    ```
 
+2. **DO NOT update `tests/BDD_TESTS_README.md`** — the feature files and step definitions are self-documenting.
+
 ### Step 9: Mark Section Complete
 
-Update `tests/BDD_TESTS_README.md`:
+Update `tests/BDD_CHECKLIST.md`:
 
-**Find the section:**
+**If you implemented a subsection (e.g., 8.3.2):**
 ```markdown
-- [ ] 1.0: General
+- [ ] 8.3: Ability Keywords
+  - [x] 8.3.1: Attack          <- Already done
+  - [x] 8.3.2: Battleworn      <- Mark THIS complete
+  - [ ] 8.3.3: Blade Break      <- Leave unchecked
 ```
+Mark only the subsection you implemented. Do NOT mark the parent `[x]` unless ALL subsections are `[x]`.
 
-**Change to:**
+**If you implemented a top-level item with no subsections (e.g., 1.1):**
 ```markdown
-- [x] 1.0: General
+- [x] 1.1: Players             <- Mark this complete
 ```
 
 Use the Edit tool to make this change.
-
-**Critical:** Only mark the TOP-LEVEL section, not subsections.
-
-**Example:**
-```markdown
-### Section 1: Game Concepts
-- [x] 1.0: General           <- Mark this complete
-  - [x] 1.0.2: Precedence    <- This was already done
-- [ ] 1.1: Players           <- Leave unchecked
-```
 
 ### Step 10: Git Commit and Push
 
@@ -450,9 +428,9 @@ Commit all new and modified files, then push to remote:
 
 1. **Stage all relevant files**:
    ```bash
-   git add tests/features/section_X_Y_name.feature tests/step_defs/test_section_X_Y_name.py tests/BDD_TESTS_README.md tests/bdd_helpers.py
+   git add tests/features/section_X_Y_name.feature tests/step_defs/test_section_X_Y_name.py tests/BDD_CHECKLIST.md tests/bdd_helpers/
    ```
-   Only include `tests/bdd_helpers.py` if it was modified. Do NOT stage files outside the `tests/` directory or any files in `fab_engine/`.
+   Only include `tests/bdd_helpers/` if it was modified. Do NOT stage files outside the `tests/` directory or any files in `fab_engine/`.
 
 2. **Commit with a descriptive message**:
    ```bash
@@ -549,10 +527,11 @@ Some sections have subsections:
 ```
 
 **Rules:**
-1. If parent section is unchecked `[ ] 1.0: General`, implement the PARENT, not subsections
-2. The subsection `1.0.2` is already done, so skip it when implementing `1.0`
-3. Focus on rules NOT covered by existing subsections
-4. Mark only the PARENT complete when done
+1. If a parent has unchecked subsections, implement the FIRST unchecked subsection only
+2. Already-checked subsections are done — skip them
+3. Mark only the SUBSECTION complete when done (not the parent)
+4. If a parent has NO subsections, implement the parent directly and mark it complete
+5. Only mark a parent `[x]` when ALL its subsections are `[x]`
 
 ### If No Rules Left in a Section
 
@@ -681,7 +660,7 @@ def step(game_state):  # Added game_state parameter
 # Test fails with:
 TypeError: create_card() takes 2 arguments but 3 were given
 
-# DIAGNOSIS: Check bdd_helpers.py - wrong API usage
+# DIAGNOSIS: Check bdd_helpers package - wrong API usage
 # ACTION: Fix the test code to use correct API
 card = game_state.create_card(name="Test", color=Color.RED)  # Correct usage
 ```
@@ -756,7 +735,7 @@ Before marking complete and exiting, verify:
 - [ ] `pytest --collect-only` succeeds
 - [ ] Tests fail with AttributeError, NotImplementedError, or AssertionError
 - [ ] Tests do NOT fail with SyntaxError, ImportError, NameError
-- [ ] `tests/BDD_TESTS_README.md` is updated with test documentation
+- [ ] `tests/BDD_CHECKLIST.md` is updated to mark section complete
 - [ ] Section is marked `[x]` in checklist
 - [ ] Changes are committed and pushed to git
 - [ ] Summary report is provided

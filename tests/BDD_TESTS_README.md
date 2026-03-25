@@ -21,7 +21,11 @@ tests/
 │   ├── test_section_1_3_1a_ownership.py
 │   ├── test_section_3_3_arsenal.py
 │   └── test_section_3_8_graveyard.py
-├── bdd_helpers.py               # Shared test helpers (BDDGameState, TestZone, etc.)
+├── bdd_helpers/                  # Shared test helpers (BDDGameState, TestZone, etc.)
+│   ├── __init__.py              # Re-exports all classes
+│   ├── core.py                  # TestZone, TestPlayer, result dataclasses
+│   ├── game_state.py            # BDDGameState
+│   └── stubs.py                 # Stub classes for unimplemented engine features
 └── BDD_TESTS_README.md          # This file
 ```
 
@@ -1043,7 +1047,7 @@ This section tests effect rules in Flesh and Blood:
 #### Implementation Notes:
 - `CardTemplate` is a frozen dataclass — set instance metadata on `CardInstance` using `card._has_no_cost_property = True` or `card._has_no_pitch_property = True` instead of modifying the template
 - Duplicate step text across scenarios causes pytest-bdd to use the LAST definition; all step texts were made unique per scenario
-- Helper stubs added to `bdd_helpers.py`: `DamageEffectStub`, `OptionalEffectStub`, `MultiTargetEffectStub`, `EffectResolutionResultStub`
+- Helper stubs added to `bdd_helpers/stubs.py`: `DamageEffectStub`, `OptionalEffectStub`, `MultiTargetEffectStub`, `EffectResolutionResultStub`
 - New helper methods added to `BDDGameState`: `create_damage_effect`, `check_card_has_effect`, `create_optional_effect`, `resolve_optional_effect`, `create_multi_target_damage_effect`, `resolve_targeted_effect`
 
 #### Engine Features Needed:

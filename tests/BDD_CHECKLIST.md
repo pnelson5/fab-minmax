@@ -100,6 +100,48 @@ Per-section test documentation is in `BDD_TESTS_README.md`.
 - [x] 8.1: Type Keywords
 - [x] 8.2: Subtype Keywords
 - [ ] 8.3: Ability Keywords
+  - [ ] 8.3.1: Attack
+  - [ ] 8.3.2: Battleworn
+  - [ ] 8.3.3: Blade Break
+  - [ ] 8.3.4: Dominate
+  - [ ] 8.3.5: Go again
+  - [ ] 8.3.6: Legendary
+  - [ ] 8.3.7: Specialization
+  - [ ] 8.3.8: Arcane Barrier
+  - [ ] 8.3.9: Boost
+  - [ ] 8.3.10: Temper
+  - [ ] 8.3.11: Blood Debt
+  - [ ] 8.3.12: Mentor
+  - [ ] 8.3.13: Phantasm
+  - [ ] 8.3.14: Spectra
+  - [ ] 8.3.15: Spellvoid
+  - [ ] 8.3.16: Essence
+  - [ ] 8.3.17: Fusion
+  - [ ] 8.3.18: Heave
+  - [ ] 8.3.19: Quell
+  - [ ] 8.3.20: Ward
+  - [ ] 8.3.21: Ephemeral
+  - [ ] 8.3.22: Overpower
+  - [ ] 8.3.23: Piercing
+  - [ ] 8.3.24: Stealth
+  - [ ] 8.3.25: Mirage
+  - [ ] 8.3.26: Pairs
+  - [ ] 8.3.27: Rune Gate
+  - [ ] 8.3.28: Ambush
+  - [ ] 8.3.29: Crank
+  - [ ] 8.3.30: Modular
+  - [ ] 8.3.31: Protect
+  - [ ] 8.3.32: Scrap
+  - [ ] 8.3.33: Beat Chest
+  - [ ] 8.3.34: Guardwell
+  - [ ] 8.3.35: Universal
+  - [ ] 8.3.36: Cloaked
+  - [ ] 8.3.37: Arcane Shelter
+  - [ ] 8.3.38: Meld
+  - [ ] 8.3.39: Perched
+  - [ ] 8.3.40: Unlimited
+  - [ ] 8.3.41: Watery Grave
+  - [ ] 8.3.42: Suspense
 - [ ] 8.4: Label Keywords
 - [ ] 8.5: Effect Keywords
 - [ ] 8.6: Token Keywords

@@ -33,7 +33,7 @@ Engine Features Needed for Section 3.14:
     - No deck-card type validation or ownership validation on Zone.add() - Engine Feature Needed
 - [ ] Zone.is_empty property EXISTS in engine (fab_engine/zones/zone.py) ✓
 - [ ] Zone.cards property EXISTS in engine (fab_engine/zones/zone.py) ✓
-- [ ] TestPlayer.pitch_zone EXISTS in bdd_helpers.py ✓ (uses ZoneType.PITCH)
+- [ ] TestPlayer.pitch_zone EXISTS in bdd_helpers/core.py ✓ (uses ZoneType.PITCH)
 
 Current status: Tests written, Engine pending for zone visibility/restriction features
 """
@@ -1075,7 +1075,7 @@ def game_state():
     Uses BDDGameState which integrates with the real engine.
     Reference: Rule 3.14
 
-    Note: TestPlayer.pitch_zone already exists in bdd_helpers.py using ZoneType.PITCH.
+    Note: TestPlayer.pitch_zone already exists in bdd_helpers/core.py using ZoneType.PITCH.
     """
     from tests.bdd_helpers import BDDGameState
 

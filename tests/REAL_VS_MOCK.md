@@ -28,7 +28,7 @@ These are actual production code from `fab_engine/`:
 
 ### 🔧 Thin Test Wrappers (Delegate to Real Engine)
 
-These are minimal adapters in `tests/bdd_helpers.py` that expose real engine functionality with a test-friendly interface:
+These are minimal adapters in `tests/bdd_helpers/` that expose real engine functionality with a test-friendly interface:
 
 1. **`TestZone`**
    ```python
@@ -186,7 +186,7 @@ These real engine components exist but aren't integrated into BDD tests yet:
 
 1. **Defined in `tests/` directory**
    ```python
-   # In tests/bdd_helpers.py
+   # In tests/bdd_helpers/core.py
    class TestZone:  # Test wrapper (but delegates to real Zone!)
    class TestPlayer:  # Test coordinator (but uses real components!)
    ```

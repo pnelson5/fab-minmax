@@ -73,7 +73,7 @@ You now have a complete system for implementing BDD tests for all Flesh and Bloo
 # 4. Create todo list for all scenarios
 # 5. Write tests/features/section_1_1_players.feature
 # 6. Write tests/step_defs/test_section_1_1_players.py
-# 7. Update tests/bdd_helpers.py if needed
+# 7. Update tests/bdd_helpers/ if needed
 # 8. Run: uv run pytest tests/step_defs/test_section_1_1_players.py -v
 # 9. Update tests/BDD_TESTS_README.md with documentation
 # 10. Mark [x] 1.1: Players in the checklist
@@ -87,7 +87,7 @@ tests/BDD_TESTS_README.md                  # The checklist
 fab-rules/en-fab-cr.md                     # Rules with links
 BDD_TEST_PHILOSOPHY.md                     # ⚠️ READ THIS FIRST
 convert_to_md.py                           # Conversion script
-tests/bdd_helpers.py                       # Test helpers
+tests/bdd_helpers/                         # Test helpers (core.py, game_state.py, stubs.py)
 tests/features/                            # Gherkin scenarios
 tests/step_defs/                           # Step definitions
 ```
@@ -133,7 +133,7 @@ SyntaxError: invalid syntax in test file
 ### DO ✅
 - Use clickable links to understand rule context
 - Extract examples from the rulebook for test scenarios
-- Use real engine components (via bdd_helpers.py)
+- Use real engine components (via bdd_helpers)
 - **Write tests that FAIL due to missing engine features**
 - Document what engine features are needed
 - Fix broken TEST code (syntax, imports, fixtures)
