@@ -112,7 +112,7 @@ Per-section test documentation is in `BDD_TESTS_README.md`.
   - [x] 8.3.10: Temper
   - [x] 8.3.11: Blood Debt
   - [x] 8.3.12: Mentor
-  - [ ] 8.3.13: Phantasm
+  - [x] 8.3.13: Phantasm
   - [ ] 8.3.14: Spectra
   - [ ] 8.3.15: Spellvoid
   - [ ] 8.3.16: Essence
