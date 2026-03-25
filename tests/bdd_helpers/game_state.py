@@ -30,6 +30,7 @@ from tests.bdd_helpers.stubs import (
     TypeBoxParseResultStub211, SupertypeCheckResultStub211, LayerWithSupertypesStub211,
     GoAgainAbilityStub, NonAttackGoAgainResolutionResultStub, ResolutionStepResultStub,
     GoAgainGrantResultStub, GoAgainLKIEvaluationResultStub, ResetCardStub,
+    ArcaneBarrierAbilityStub, ArcaneBarrierActivationResultStub,
 )
 
 
@@ -2671,5 +2672,50 @@ class BDDGameState:
         ) or (card_a.template.has_pitch != card_b.template.has_pitch)
 
         return name_differs or pitch_differs
+
+    # ===== Section 8.3.8: Arcane Barrier helpers =====
+
+    def get_arcane_barrier_ability(self, card: Any) -> Any:
+        """
+        Return the Arcane Barrier ability object of a card (Rule 8.3.8).
+
+        Engine Feature Needed:
+        - [ ] ArcaneBarrierAbility class with is_static = True (Rule 8.3.8)
+        - [ ] Card.get_ability(keyword) returning ArcaneBarrierAbility (Rule 8.3.8)
+        - [ ] ArcaneBarrierAbility.value == N in "Arcane Barrier N" (Rule 8.3.8)
+        """
+        value = getattr(card, "_arcane_barrier_value", None)
+        if value is None:
+            return None
+        return ArcaneBarrierAbilityStub(value=value)
+
+    def attempt_arcane_barrier_activation(
+        self, equipment: Any, available_resources: int, damage_type: str
+    ) -> Any:
+        """
+        Attempt to activate an Arcane Barrier ability (Rule 8.3.8).
+
+        Arcane Barrier can only be activated:
+        - Against arcane damage (not regular combat damage)
+        - If player has >= N resources available
+
+        Engine Feature Needed:
+        - [ ] ArcaneBarrierAbility.can_activate(player, damage_type) (Rule 8.3.8)
+        - [ ] ArcaneBarrierAbility.activate(player) spends N resources, prevents N arcane damage (Rule 8.3.8)
+        - [ ] DamageEvent.damage_type distinguishing arcane vs regular combat damage (Rule 8.3.8)
+        """
+        value = getattr(equipment, "_arcane_barrier_value", None)
+        if value is None:
+            return ArcaneBarrierActivationResultStub(activated=False, can_activate=False)
+
+        is_arcane = damage_type == "arcane"
+        has_resources = available_resources >= value
+        can_activate = is_arcane and has_resources
+
+        return ArcaneBarrierActivationResultStub(
+            activated=can_activate,
+            can_activate=can_activate,
+            prevented=value if can_activate else 0,
+        )
 
 

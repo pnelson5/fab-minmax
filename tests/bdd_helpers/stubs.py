@@ -1052,6 +1052,47 @@ class GoAgainLKIEvaluationResultStub:
         self.action_points_granted = action_points_granted
 
 
+class ArcaneBarrierAbilityStub:
+    """
+    Stub for the Arcane Barrier ability (Rule 8.3.8).
+
+    Engine Feature Needed:
+    - [ ] ArcaneBarrierAbility class with is_static = True (Rule 8.3.8)
+    - [ ] ArcaneBarrierAbility.value == N in "Arcane Barrier N" (Rule 8.3.8)
+    - [ ] ArcaneBarrierAbility.meaning == "If you would be dealt arcane damage, you may pay N{r} to prevent N of that damage" (Rule 8.3.8)
+    - [ ] AbilityKeyword.ARCANE_BARRIER enum value (Rule 8.3.8)
+    """
+
+    def __init__(self, value: int = 1):
+        self.is_static: bool = True
+        self.is_triggered: bool = False
+        self.is_meta_static: bool = False
+        self.is_resolution: bool = False
+        self.is_activated: bool = False
+        self.value: int = value
+        self.keyword: str = f"Arcane Barrier {value}"
+        self.meaning: str = (
+            f"If you would be dealt arcane damage, you may pay {value}{{r}} to prevent {value} of that damage"
+        )
+
+
+class ArcaneBarrierActivationResultStub:
+    """
+    Stub for the result of attempting to activate Arcane Barrier (Rule 8.3.8).
+
+    Engine Feature Needed:
+    - [ ] ArcaneBarrierAbility.can_activate(player, damage_type) checks resources and damage type (Rule 8.3.8)
+    - [ ] ArcaneBarrierAbility.activate(player) spends N resources and prevents N arcane damage (Rule 8.3.8)
+    - [ ] ArcaneBarrierActivationResult.activated == True if cost was paid and damage prevented (Rule 8.3.8)
+    - [ ] ArcaneBarrierActivationResult.can_activate == False if wrong damage type or insufficient resources (Rule 8.3.8)
+    """
+
+    def __init__(self, activated: bool = False, can_activate: bool = False, prevented: int = 0):
+        self.activated: bool = activated
+        self.can_activate: bool = can_activate
+        self.prevented: int = prevented
+
+
 class ResetCardStub:
     """
     Stub representing a card that has become a new object after zone transition (Rule 3.0.9).
