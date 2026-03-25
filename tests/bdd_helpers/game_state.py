@@ -28,6 +28,8 @@ from tests.bdd_helpers.stubs import (
     LifeCostPaymentResultStub, ActionCostPaymentResultStub, EffectCostPaymentResultStub,
     HoodActivationResultStub, MultiEffectCostResultStub,
     TypeBoxParseResultStub211, SupertypeCheckResultStub211, LayerWithSupertypesStub211,
+    GoAgainAbilityStub, NonAttackGoAgainResolutionResultStub, ResolutionStepResultStub,
+    GoAgainGrantResultStub, GoAgainLKIEvaluationResultStub, ResetCardStub,
 )
 
 
@@ -177,9 +179,10 @@ class BDDGameState:
             card.temp_power_mod = power
         if has_go_again:
             card._has_go_again = True
-        else:
+        elif not getattr(card, "_has_go_again", False):
             card._has_go_again = False
         self._combat_chain.append(card)
+        return card  # Return card as chain link reference
 
     def remove_from_combat_chain(self, card: CardInstance) -> Any:
         """
@@ -1519,6 +1522,160 @@ class BDDGameState:
         current = self.get_hero_life_total(player)
         self.set_hero_life_total(player, current + amount)
         return LifeGainResultStub(amount_gained=amount)
+
+    # ===== Section 8.3.5: Go again helpers =====
+
+    def get_go_again_ability(self, card: Any) -> Any:
+        """
+        Return the go again ability object of a card (Rule 8.3.5).
+
+        Engine Feature Needed:
+        - [ ] AbilityKeyword.GO_AGAIN resolution ability (Rule 8.3.5)
+        - [ ] Card.get_ability(keyword) returning ability with is_resolution=True
+        - [ ] GoAgainAbility.meaning == "Gain 1 action point" (Rule 8.3.5)
+        """
+        has_go_again = getattr(card, "_has_go_again", False)
+        if not has_go_again:
+            return None
+        return GoAgainAbilityStub()
+
+    def resolve_non_attack_layer_with_go_again(
+        self, card: Any, player: Any
+    ) -> Any:
+        """
+        Resolve a non-attack layer that has go again (Rule 8.3.5a / 5.3.5).
+
+        Go again fires AFTER all other resolution abilities on the layer.
+
+        Engine Feature Needed:
+        - [ ] LayerResolver.resolve_layer() with ordering: resolution abilities first, then go again (Rule 5.3.5)
+        - [ ] GoAgainAbility grants 1 AP to controller after other abilities resolve (Rule 8.3.5a)
+        - [ ] NonAttackGoAgainResult.go_again_was_last flag
+        """
+        has_go_again = getattr(card, "_has_go_again", False)
+        in_action_phase = getattr(player, "_in_action_phase", False)
+
+        action_points_granted = 0
+        go_again_was_last = has_go_again  # go again always resolves last if present
+
+        if has_go_again and in_action_phase:
+            current = self.get_player_action_points(player)
+            self.set_player_action_points(player, current + 1)
+            action_points_granted = 1
+
+        return NonAttackGoAgainResolutionResultStub(
+            go_again_was_last=go_again_was_last,
+            action_points_granted=action_points_granted,
+        )
+
+    def begin_resolution_step(self, chain_link: Any, player: Any) -> Any:
+        """
+        Begin the Resolution Step of combat, granting AP if attack has go again (Rule 8.3.5b / 7.6.2).
+
+        If the attack is no longer on the combat chain, LKI is used to determine go again (Rule 7.6.2a).
+
+        Engine Feature Needed:
+        - [ ] ResolutionStep.begin(chain_link, player) checks go again (Rule 7.6.2)
+        - [ ] ChainLink.had_go_again via LKI when attack off chain (Rule 7.6.2a)
+        - [ ] ResolutionStepResult with action_points_granted and used_last_known_information
+        """
+        in_action_phase = getattr(player, "_in_action_phase", False)
+
+        # Determine if go again applies — check chain link or its LKI
+        used_lki = False
+        has_go_again = False
+
+        if chain_link is None:
+            # No chain link at all — no go again
+            pass
+        elif isinstance(chain_link, LastKnownInformationStub):
+            # Chain link has been removed; use LKI
+            used_lki = True
+            has_go_again = getattr(chain_link, "had_go_again", False)
+        else:
+            # Active chain link still present
+            source_card = getattr(chain_link, "_card", None)
+            if source_card is not None:
+                has_go_again = getattr(source_card, "_has_go_again", False)
+            else:
+                has_go_again = getattr(chain_link, "_has_go_again", False)
+
+        action_points_granted = 0
+        if has_go_again and in_action_phase:
+            current = self.get_player_action_points(player)
+            self.set_player_action_points(player, current + 1)
+            action_points_granted = 1
+
+        return ResolutionStepResultStub(
+            action_points_granted=action_points_granted,
+            used_last_known_information=used_lki,
+        )
+
+    def grant_go_again(self, card: Any) -> Any:
+        """
+        Attempt to grant go again to an object (Rule 8.3.5c).
+
+        If the object already has go again, the grant fails — an object
+        cannot have more than one go again ability.
+
+        Engine Feature Needed:
+        - [ ] GoAgainEffect.grant(card) with duplicate check (Rule 8.3.5c)
+        - [ ] GoAgainGrantResult.success = False when card already has go again
+        """
+        already_has = getattr(card, "_has_go_again", False)
+        if already_has:
+            return GoAgainGrantResultStub(success=False)
+        card._has_go_again = True  # type: ignore[attr-defined]
+        return GoAgainGrantResultStub(success=True)
+
+    def count_go_again_abilities(self, card: Any) -> int:
+        """
+        Count the number of go again abilities on a card (Rule 8.3.5c).
+
+        An object can have at most one go again ability.
+
+        Engine Feature Needed:
+        - [ ] Card.ability_count(keyword) returning count of that ability (Rule 8.3.5c)
+        """
+        has_go_again = getattr(card, "_has_go_again", False)
+        return 1 if has_go_again else 0
+
+    def evaluate_go_again_from_lki(self, lki: Any, player: Any) -> Any:
+        """
+        Evaluate go again using last known information of a non-attack layer (Rule 5.3.5a).
+
+        Engine Feature Needed:
+        - [ ] GoAgainResolver.evaluate_from_lki(lki, player) (Rule 5.3.5a)
+        - [ ] LastKnownInformation.had_go_again snapshot used (Rule 1.2.3a)
+        """
+        in_action_phase = getattr(player, "_in_action_phase", False)
+        had_go_again = getattr(lki, "had_go_again", False)
+
+        action_points_granted = 0
+        if had_go_again and in_action_phase:
+            current = self.get_player_action_points(player)
+            self.set_player_action_points(player, current + 1)
+            action_points_granted = 1
+
+        return GoAgainLKIEvaluationResultStub(
+            used_last_known_information=True,
+            action_points_granted=action_points_granted,
+        )
+
+    def move_card_to_zone_causing_reset(self, card: Any) -> Any:
+        """
+        Move a card to a zone that causes an object reset (Rule 3.0.9).
+
+        When an object enters a zone that is not the arena and not the stack,
+        it resets — its previous existence ceases and it becomes a new object
+        with no relation to its previous existence.
+
+        Engine Feature Needed:
+        - [ ] Zone.move_card() triggers object reset for non-arena/non-stack (Rule 3.0.9)
+        - [ ] New object has no gained abilities from previous existence (Rule 3.0.9)
+        - [ ] ResetCard.is_new_object = True (Rule 3.0.9)
+        """
+        return ResetCardStub(original_card=card)
 
     # ===== Section 1.14: Costs helpers =====
 

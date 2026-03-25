@@ -104,7 +104,7 @@ Per-section test documentation is in `BDD_TESTS_README.md`.
   - [x] 8.3.2: Battleworn
   - [x] 8.3.3: Blade Break
   - [x] 8.3.4: Dominate
-  - [ ] 8.3.5: Go again
+  - [x] 8.3.5: Go again
   - [ ] 8.3.6: Legendary
   - [ ] 8.3.7: Specialization
   - [ ] 8.3.8: Arcane Barrier

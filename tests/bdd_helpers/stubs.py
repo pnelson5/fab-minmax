@@ -968,3 +968,101 @@ class LayerWithSupertypesStub211:
         if self._source is None:
             return set()
         return getattr(self._source, "_supertypes", set())
+
+
+# ===== Section 8.3.5: Go again stubs =====
+
+
+class GoAgainAbilityStub:
+    """
+    Stub for the go again ability (Rule 8.3.5).
+
+    Engine Feature Needed:
+    - [ ] GoAgainAbility class with is_resolution = True (Rule 8.3.5)
+    - [ ] GoAgainAbility.meaning == "Gain 1 action point" (Rule 8.3.5)
+    - [ ] AbilityKeyword.GO_AGAIN enum value (Rule 8.3.5)
+    """
+
+    is_resolution: bool = True
+    is_static: bool = False
+    is_activated: bool = False
+    meaning: str = "Gain 1 action point"
+    keyword: str = "go again"
+
+
+class NonAttackGoAgainResolutionResultStub:
+    """
+    Stub for the result of resolving a non-attack layer with go again (Rule 8.3.5a / 5.3.5).
+
+    Engine Feature Needed:
+    - [ ] LayerResolver.resolve_go_again() for non-attack layers (Rule 8.3.5a)
+    - [ ] LayerResolver fires go again AFTER all other resolution abilities (Rule 5.3.5)
+    - [ ] NonAttackLayerResolutionResult.go_again_was_last attribute
+    """
+
+    def __init__(self, go_again_was_last: bool = False, action_points_granted: int = 0):
+        self.go_again_was_last = go_again_was_last
+        self.action_points_granted = action_points_granted
+
+
+class ResolutionStepResultStub:
+    """
+    Stub for the result of the Resolution Step in combat (Rule 8.3.5b / 7.6.2).
+
+    Engine Feature Needed:
+    - [ ] ResolutionStep.begin() grants AP if attack had go again (Rule 7.6.2)
+    - [ ] ResolutionStep uses LKI when attack no longer on chain (Rule 7.6.2a)
+    - [ ] ResolutionStepResult.action_points_granted attribute
+    - [ ] ResolutionStepResult.used_last_known_information attribute
+    """
+
+    def __init__(
+        self,
+        action_points_granted: int = 0,
+        used_last_known_information: bool = False,
+    ):
+        self.action_points_granted = action_points_granted
+        self.used_last_known_information = used_last_known_information
+
+
+class GoAgainGrantResultStub:
+    """
+    Stub for the result of granting go again to an object (Rule 8.3.5c).
+
+    Engine Feature Needed:
+    - [ ] GoAgainEffect.grant(card) fails if card already has go again (Rule 8.3.5c)
+    - [ ] GoAgainGrantResult.success == False when card already has go again
+    """
+
+    def __init__(self, success: bool = True):
+        self.success = success
+
+
+class GoAgainLKIEvaluationResultStub:
+    """
+    Stub for evaluating go again from last known information (Rule 5.3.5a).
+
+    Engine Feature Needed:
+    - [ ] GoAgainResolver.evaluate_from_lki(lki, player) (Rule 5.3.5a)
+    - [ ] GoAgainLKIResult.used_last_known_information = True
+    """
+
+    def __init__(self, used_last_known_information: bool = True, action_points_granted: int = 0):
+        self.used_last_known_information = used_last_known_information
+        self.action_points_granted = action_points_granted
+
+
+class ResetCardStub:
+    """
+    Stub representing a card that has become a new object after zone transition (Rule 3.0.9).
+
+    Engine Feature Needed:
+    - [ ] Zone.move_card() triggers object reset for non-arena/non-stack destination (Rule 3.0.9)
+    - [ ] New object has no relation to previous existence (Rule 3.0.9)
+    - [ ] Gained abilities (e.g., go again) are NOT retained on reset
+    """
+
+    def __init__(self, original_card=None):
+        self.is_new_object = True
+        self._has_go_again = False  # Reset card has no gained abilities
+        self.name = getattr(original_card, "name", "Reset Card") if original_card else "Reset Card"
