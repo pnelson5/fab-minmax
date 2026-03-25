@@ -102,7 +102,7 @@ Per-section test documentation is in `BDD_TESTS_README.md`.
 - [ ] 8.3: Ability Keywords
   - [x] 8.3.1: Attack
   - [x] 8.3.2: Battleworn
-  - [ ] 8.3.3: Blade Break
+  - [x] 8.3.3: Blade Break
   - [ ] 8.3.4: Dominate
   - [ ] 8.3.5: Go again
   - [ ] 8.3.6: Legendary
