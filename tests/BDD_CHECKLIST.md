@@ -118,7 +118,7 @@ Per-section test documentation is in `BDD_TESTS_README.md`.
   - [x] 8.3.16: Essence
   - [x] 8.3.17: Fusion
   - [x] 8.3.18: Heave
-  - [ ] 8.3.19: Quell
+  - [x] 8.3.19: Quell
   - [ ] 8.3.20: Ward
   - [ ] 8.3.21: Ephemeral
   - [ ] 8.3.22: Overpower
