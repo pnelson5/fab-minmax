@@ -121,7 +121,7 @@ Per-section test documentation is in `BDD_TESTS_README.md`.
   - [x] 8.3.19: Quell
   - [x] 8.3.20: Ward
   - [x] 8.3.21: Ephemeral
-  - [ ] 8.3.22: Overpower
+  - [x] 8.3.22: Overpower
   - [ ] 8.3.23: Piercing
   - [ ] 8.3.24: Stealth
   - [ ] 8.3.25: Mirage
