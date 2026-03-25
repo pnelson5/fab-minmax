@@ -106,7 +106,7 @@ Per-section test documentation is in `BDD_TESTS_README.md`.
   - [x] 8.3.4: Dominate
   - [x] 8.3.5: Go again
   - [x] 8.3.6: Legendary
-  - [ ] 8.3.7: Specialization
+  - [x] 8.3.7: Specialization
   - [ ] 8.3.8: Arcane Barrier
   - [ ] 8.3.9: Boost
   - [ ] 8.3.10: Temper
