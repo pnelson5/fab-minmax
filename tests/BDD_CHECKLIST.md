@@ -110,7 +110,7 @@ Per-section test documentation is in `BDD_TESTS_README.md`.
   - [x] 8.3.8: Arcane Barrier
   - [x] 8.3.9: Boost
   - [x] 8.3.10: Temper
-  - [ ] 8.3.11: Blood Debt
+  - [x] 8.3.11: Blood Debt
   - [ ] 8.3.12: Mentor
   - [ ] 8.3.13: Phantasm
   - [ ] 8.3.14: Spectra
