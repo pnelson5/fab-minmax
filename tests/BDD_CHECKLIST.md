@@ -115,7 +115,7 @@ Per-section test documentation is in `BDD_TESTS_README.md`.
   - [x] 8.3.13: Phantasm
   - [x] 8.3.14: Spectra
   - [x] 8.3.15: Spellvoid
-  - [ ] 8.3.16: Essence
+  - [x] 8.3.16: Essence
   - [ ] 8.3.17: Fusion
   - [ ] 8.3.18: Heave
   - [ ] 8.3.19: Quell
