@@ -31,6 +31,7 @@ from tests.bdd_helpers.stubs import (
     GoAgainAbilityStub, NonAttackGoAgainResolutionResultStub, ResolutionStepResultStub,
     GoAgainGrantResultStub, GoAgainLKIEvaluationResultStub, ResetCardStub,
     ArcaneBarrierAbilityStub, ArcaneBarrierActivationResultStub,
+    SpellvoidAbilityStub, SpellvoidActivationResultStub,
 )
 
 
@@ -2713,6 +2714,49 @@ class BDDGameState:
         can_activate = is_arcane and has_resources
 
         return ArcaneBarrierActivationResultStub(
+            activated=can_activate,
+            can_activate=can_activate,
+            prevented=value if can_activate else 0,
+        )
+
+    def get_spellvoid_ability(self, card: Any) -> Any:
+        """
+        Return the Spellvoid ability object of a card (Rule 8.3.15).
+
+        Engine Feature Needed:
+        - [ ] SpellvoidAbility class with is_static = True (Rule 8.3.15)
+        - [ ] Card.get_ability(keyword) returning SpellvoidAbility (Rule 8.3.15)
+        - [ ] SpellvoidAbility.value == N in "Spellvoid N" (Rule 8.3.15)
+        """
+        value = getattr(card, "_spellvoid_value", None)
+        if value is None:
+            return None
+        return SpellvoidAbilityStub(value=value)
+
+    def attempt_spellvoid_activation(
+        self, obj: Any, damage_type: str
+    ) -> Any:
+        """
+        Attempt to activate a Spellvoid ability (Rule 8.3.15).
+
+        Spellvoid can only be activated:
+        - Against arcane damage (not regular combat damage)
+        - If the object can be destroyed (Rule 8.3.15a)
+
+        Engine Feature Needed:
+        - [ ] SpellvoidAbility.can_activate(obj, damage_type) checks destroyability and damage type (Rule 8.3.15a)
+        - [ ] SpellvoidAbility.activate(obj) destroys obj, prevents N arcane damage (Rule 8.3.15)
+        - [ ] DamageEvent.damage_type distinguishing arcane vs regular combat damage (Rule 8.3.15)
+        """
+        value = getattr(obj, "_spellvoid_value", None)
+        if value is None:
+            return SpellvoidActivationResultStub(activated=False, can_activate=False)
+
+        is_arcane = damage_type == "arcane"
+        can_be_destroyed = getattr(obj, "_can_be_destroyed", True)
+        can_activate = is_arcane and can_be_destroyed
+
+        return SpellvoidActivationResultStub(
             activated=can_activate,
             can_activate=can_activate,
             prevented=value if can_activate else 0,

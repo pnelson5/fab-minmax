@@ -1093,6 +1093,47 @@ class ArcaneBarrierActivationResultStub:
         self.prevented: int = prevented
 
 
+class SpellvoidAbilityStub:
+    """
+    Stub for the Spellvoid ability (Rule 8.3.15).
+
+    Engine Feature Needed:
+    - [ ] SpellvoidAbility class with is_static = True (Rule 8.3.15)
+    - [ ] SpellvoidAbility.value == N in "Spellvoid N" (Rule 8.3.15)
+    - [ ] SpellvoidAbility.meaning == "If you would be dealt arcane damage, you may destroy this to prevent N of that damage" (Rule 8.3.15)
+    - [ ] AbilityKeyword.SPELLVOID enum value (Rule 8.3.15)
+    """
+
+    def __init__(self, value: int = 1):
+        self.is_static: bool = True
+        self.is_triggered: bool = False
+        self.is_meta_static: bool = False
+        self.is_resolution: bool = False
+        self.is_activated: bool = False
+        self.value: int = value
+        self.keyword: str = f"Spellvoid {value}"
+        self.meaning: str = (
+            f"If you would be dealt arcane damage, you may destroy this to prevent {value} of that damage"
+        )
+
+
+class SpellvoidActivationResultStub:
+    """
+    Stub for the result of attempting to activate Spellvoid (Rule 8.3.15).
+
+    Engine Feature Needed:
+    - [ ] SpellvoidAbility.can_activate(obj, damage_type) checks if obj can be destroyed and damage is arcane (Rule 8.3.15a)
+    - [ ] SpellvoidAbility.activate(obj) destroys the object and prevents N arcane damage (Rule 8.3.15)
+    - [ ] SpellvoidActivationResult.activated == True if obj was destroyed and damage prevented (Rule 8.3.15)
+    - [ ] SpellvoidActivationResult.can_activate == False if wrong damage type or obj cannot be destroyed (Rule 8.3.15a)
+    """
+
+    def __init__(self, activated: bool = False, can_activate: bool = False, prevented: int = 0):
+        self.activated: bool = activated
+        self.can_activate: bool = can_activate
+        self.prevented: int = prevented
+
+
 class ResetCardStub:
     """
     Stub representing a card that has become a new object after zone transition (Rule 3.0.9).
