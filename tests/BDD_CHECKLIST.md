@@ -130,7 +130,7 @@ Per-section test documentation is in `BDD_TESTS_README.md`.
   - [x] 8.3.28: Ambush
   - [x] 8.3.29: Crank
   - [x] 8.3.30: Modular
-  - [ ] 8.3.31: Protect
+  - [x] 8.3.31: Protect
   - [ ] 8.3.32: Scrap
   - [ ] 8.3.33: Beat Chest
   - [ ] 8.3.34: Guardwell
