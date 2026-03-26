@@ -127,7 +127,7 @@ Per-section test documentation is in `BDD_TESTS_README.md`.
   - [x] 8.3.25: Mirage
   - [x] 8.3.26: Pairs
   - [x] 8.3.27: Rune Gate
-  - [ ] 8.3.28: Ambush
+  - [x] 8.3.28: Ambush
   - [ ] 8.3.29: Crank
   - [ ] 8.3.30: Modular
   - [ ] 8.3.31: Protect
