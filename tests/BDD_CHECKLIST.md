@@ -136,7 +136,7 @@ Per-section test documentation is in `BDD_TESTS_README.md`.
   - [x] 8.3.34: Guardwell
   - [x] 8.3.35: Universal
   - [x] 8.3.36: Cloaked
-  - [ ] 8.3.37: Arcane Shelter
+  - [x] 8.3.37: Arcane Shelter
   - [ ] 8.3.38: Meld
   - [ ] 8.3.39: Perched
   - [ ] 8.3.40: Unlimited
