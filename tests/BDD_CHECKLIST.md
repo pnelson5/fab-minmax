@@ -134,7 +134,7 @@ Per-section test documentation is in `BDD_TESTS_README.md`.
   - [x] 8.3.32: Scrap
   - [x] 8.3.33: Beat Chest
   - [x] 8.3.34: Guardwell
-  - [ ] 8.3.35: Universal
+  - [x] 8.3.35: Universal
   - [ ] 8.3.36: Cloaked
   - [ ] 8.3.37: Arcane Shelter
   - [ ] 8.3.38: Meld
