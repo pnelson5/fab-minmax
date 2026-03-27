@@ -142,7 +142,7 @@ Per-section test documentation is in `BDD_TESTS_README.md`.
   - [x] 8.3.40: Unlimited
   - [x] 8.3.41: Watery Grave
   - [x] 8.3.42: Suspense
-- [ ] 8.4: Label Keywords
+- [x] 8.4: Label Keywords
 - [ ] 8.5: Effect Keywords
 - [ ] 8.6: Token Keywords
 
