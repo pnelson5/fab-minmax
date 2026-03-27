@@ -138,6 +138,7 @@ class TestPlayer:
             ZoneType.STACK, player_id
         )  # For simplicity, use STACK for arena cards
         self.pitch_zone = TestZone(ZoneType.PITCH, player_id)  # Rule 3.14: Pitch zone
+        self.graveyard = TestZone(ZoneType.GRAVEYARD, player_id)  # Rule 3.8: Graveyard zone
 
     def add_restriction(self, identifier: str):
         """Add a restriction effect to the player."""

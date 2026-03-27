@@ -132,7 +132,7 @@ Per-section test documentation is in `BDD_TESTS_README.md`.
   - [x] 8.3.30: Modular
   - [x] 8.3.31: Protect
   - [x] 8.3.32: Scrap
-  - [ ] 8.3.33: Beat Chest
+  - [x] 8.3.33: Beat Chest
   - [ ] 8.3.34: Guardwell
   - [ ] 8.3.35: Universal
   - [ ] 8.3.36: Cloaked
