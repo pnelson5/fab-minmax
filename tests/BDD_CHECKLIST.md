@@ -138,7 +138,7 @@ Per-section test documentation is in `BDD_TESTS_README.md`.
   - [x] 8.3.36: Cloaked
   - [x] 8.3.37: Arcane Shelter
   - [x] 8.3.38: Meld
-  - [ ] 8.3.39: Perched
+  - [x] 8.3.39: Perched
   - [ ] 8.3.40: Unlimited
   - [ ] 8.3.41: Watery Grave
   - [ ] 8.3.42: Suspense
